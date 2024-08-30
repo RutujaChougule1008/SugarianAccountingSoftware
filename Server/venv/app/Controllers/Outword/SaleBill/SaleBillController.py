@@ -252,34 +252,40 @@ def insert_SaleBill():
         company_parameters = fetch_company_parameters(headData['Company_Code'], headData['Year_Code'])
         
         gledger_entries = []
-
+       
+        
         saleacnarration = (
-            get_acShort_Name(headData.get('mill_code', '') or '', headData.get('Company_Code', '') or '') + ' Qntl: ' +
-            str(headData.get('NETQNTL', '') or '') + ' L: ' + str(headData.get('LORRYNO', '') or '') + 
-            ' SB: ' + get_acShort_Name(headData.get('Ac_Code', '') or '', headData.get('Company_Code', '') or '')
-        )
-
+            str(get_acShort_Name(headData.get('mill_code', '') or '', headData.get('Company_Code', '') or '') or '') + 
+            ' Qntl: ' + str(headData.get('NETQNTL', '') or '') + 
+            ' L: ' + str(headData.get('LORRYNO', '') or '') + 
+            ' SB: ' + str(get_acShort_Name(headData.get('Ac_Code', '') or '', headData.get('Company_Code', '') or '') or '')
+)
+       
         Transportnarration = (
             'Qntl: ' + str(headData.get('NETQNTL', '') or '') + ' ' + str(headData.get('cash_advance', '') or '') +
-            get_acShort_Name(headData.get('mill_code', '') or '', headData.get('Company_Code', '') or '') +
-            get_acShort_Name(headData.get('Transport_Code', '') or '', headData.get('Company_Code', '') or '') +
-            ' L: ' + str(headData.get('LORRYNO', '') or '')
-        )
+                str(get_acShort_Name(headData.get('mill_code', '') or '', headData.get('Company_Code', '') or '') or '') +
+                str(get_acShort_Name(headData.get('Transport_Code', '') or '', headData.get('Company_Code', '') or '') or '') +
+                ' L: ' + str(headData.get('LORRYNO', '') or '')
+            )
 
         if accode == unitcode:
             creditnarration = (
-                get_acShort_Name(headData.get('mill_code', '') or '', headData.get('Company_Code', '') or '') +
-                str(headData.get('NETQNTL', '') or '') + ' L: ' + str(headData.get('LORRYNO', '') or '') + 
-                ' PB' + str(headData.get('PURCNO', '') or '') + ' R: ' + str(headData.get('LESS_FRT_RATE', '') or '')
+                str(get_acShort_Name(headData.get('mill_code', '') or '', headData.get('Company_Code', '') or '') or '') +
+                str(headData.get('NETQNTL', '') or '') + 
+                ' L: ' + str(headData.get('LORRYNO', '') or '') + 
+                ' PB' + str(headData.get('PURCNO', '') or '') + 
+                ' R: ' + str(headData.get('LESS_FRT_RATE', '') or '')
             )
         else:
             creditnarration = (
-                get_acShort_Name(headData.get('mill_code', '') or '', headData.get('Company_Code', '') or '') +
-                str(headData.get('NETQNTL', '') or '') + ' L: ' + str(headData.get('LORRYNO', '') or '') + 
-                ' PB' + str(headData.get('PURCNO', '') or '') + ' R: ' + str(headData.get('LESS_FRT_RATE', '') or '') +
-                ' Shiptoname: ' + get_acShort_Name(headData.get('Unit_Code', '') or '', headData.get('Company_Code', '') or '')
+                str(get_acShort_Name(headData.get('mill_code', '') or '', headData.get('Company_Code', '') or '') or '') +
+                str(headData.get('NETQNTL', '') or '') + 
+                ' L: ' + str(headData.get('LORRYNO', '') or '') + 
+                ' PB' + str(headData.get('PURCNO', '') or '') + 
+                ' R: ' + str(headData.get('LESS_FRT_RATE', '') or '') +
+                ' Shiptoname: ' + str(get_acShort_Name(headData.get('Unit_Code', '') or '', headData.get('Company_Code', '') or '') or '')
             )
-
+        print('creditnarration',creditnarration)
         if CGSTAmount > 0:
             ac_code = company_parameters.CGSTAc
             accoid = get_accoid(ac_code, headData['Company_Code'])
@@ -341,7 +347,7 @@ def insert_SaleBill():
             'TRAN_TYPE': "SB"
         }
 
-        response = requests.post("http://localhost:8080/api/sugarian/create-Record-gLedger", params=query_params, json=gledger_entries)
+        response = requests.post("http://localhost:5000/api/sugarian/create-Record-gLedger", params=query_params, json=gledger_entries)
 
         if response.status_code == 201:
             db.session.commit()
@@ -522,8 +528,6 @@ def update_SaleBill():
         str(headData['LESS_FRT_RATE'])  +
         ' Shiptoname: '+ get_acShort_Name(headData['Unit_Code'], headData['Company_Code']) )
 
-
-      
         ordercode=0
         if CGSTAmount > 0:
               ordercode=ordercode+1
@@ -544,11 +548,9 @@ def update_SaleBill():
               accoid = get_accoid(ac_code,headData['Company_Code'])
               add_gledger_entry(gledger_entries, headData, IGSTAmount, 'C', ac_code, accoid,creditnarration,ordercode)
 
-       
-       
         if TCS_Amt > 0:
             ordercode=ordercode+1
-            ac_code = headData['ac_code']
+            ac_code = headData['Ac_Code']
             accoid = get_accoid(ac_code,headData['Company_Code'])
             add_gledger_entry(gledger_entries, headData, TCS_Amt, 'D', ac_code, accoid,creditnarration,ordercode)
 
@@ -559,7 +561,7 @@ def update_SaleBill():
 
         if TDS_Amt > 0:
             ordercode=ordercode+1
-            ac_code = headData['ac_code']
+            ac_code = headData['Ac_Code']
             accoid = get_accoid(ac_code,headData['Company_Code'])
             add_gledger_entry(gledger_entries, headData, TDS_Amt, 'C', ac_code, accoid,creditnarration,ordercode)
 
@@ -600,10 +602,6 @@ def update_SaleBill():
              accoid = get_accoid(company_parameters.RoundOff)
              add_gledger_entry(gledger_entries, headData, Bill_Amount, 'D', ac_code, accoid,creditnarration,ordercode)
 
-
-    
-       
-       
         query_params = {
             'Company_Code': headData['Company_Code'],
             'DOC_NO': updateddoc_no,
@@ -611,7 +609,7 @@ def update_SaleBill():
             'TRAN_TYPE': "SB",
         }
 
-        response = requests.post("http://localhost:8080/api/sugarian/create-Record-gLedger", params=query_params, json=gledger_entries)
+        response = requests.post("http://localhost:5000/api/sugarian/create-Record-gLedger", params=query_params, json=gledger_entries)
 
         if response.status_code == 201:
             db.session.commit()
@@ -628,9 +626,9 @@ def update_SaleBill():
         }), 201
 
     except Exception as e:
-        print('Traceback',traceback.format_exc())
         db.session.rollback()
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
 
 
 
@@ -666,7 +664,7 @@ def delete_data_by_saleid():
             }
 
             # Make the external request
-            response = requests.delete("http://localhost:8080/api/sugarian/delete-Record-gLedger", params=query_params)
+            response = requests.delete("http://localhost:5000/api/sugarian/delete-Record-gLedger", params=query_params)
             
             if response.status_code != 200:
                 raise Exception("Failed to create record in gLedger")
@@ -870,3 +868,77 @@ def get_nextSaleBill_navigation():
         return jsonify(response), 200
     except Exception as e:
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+
+@app.route(API_URL + "/Generate_SaleBill", methods=["PUT"])
+def Generate_SaleBill():
+    def get_max_doc_no():
+        return db.session.query(func.max(SaleBillHead.doc_no)).scalar() or 0
+
+    try:
+        max_doc_no = get_max_doc_no()
+        updated_doc_no = max_doc_no + 1
+        print("New Update Document Number:", updated_doc_no)
+
+        saleid = request.args.get('saleid')
+        Company_Code = request.args.get('CompanyCode')
+        Year_Code = request.args.get('Year_Code')
+        Do_no = request.args.get('DoNo')
+        
+        if not saleid:
+            return jsonify({"error": "Missing 'saleid' parameter"}), 400
+
+        with db.session.begin_nested():
+            # Update Doc No to saleBill
+            sale_bill_update = db.session.execute(
+                text('''UPDATE nt_1_sugarsale 
+                        SET doc_no = :doc_no
+                        WHERE Year_Code = :Year_Code 
+                        AND Company_Code = :Company_Code 
+                        AND saleid = :saleid'''),
+                {'Year_Code': Year_Code, 'Company_Code': Company_Code,
+                 'doc_no': updated_doc_no, 'saleid': saleid}
+            )
+            #update saleBilldetail
+            db.session.execute(
+                text('''UPDATE nt_1_sugarsaledetails 
+                        SET doc_no = :doc_no
+                        WHERE Year_Code = :Year_Code 
+                        AND Company_Code = :Company_Code 
+                        AND saleid = :saleid'''),
+                {'Year_Code': Year_Code, 'Company_Code': Company_Code,
+                 'doc_no': updated_doc_no, 'saleid': saleid}
+            )
+
+            
+            # Update SaleBill No. to DO
+            db.session.execute(
+                text('''UPDATE nt_1_deliveryorder 
+                        SET SB_No = :SB_No
+                        WHERE Year_Code = :Year_Code 
+                        AND company_code = :Company_Code 
+                        AND doc_no = :Do_no'''),
+                {'Year_Code': Year_Code, 'Company_Code': Company_Code,
+                 'SB_No': updated_doc_no, 'Do_no': Do_no}
+            )
+            
+            # Update saleBill Docno to gledger
+            db.session.execute(
+                text('''UPDATE nt_1_gledger 
+                        SET DOC_NO = :DOC_NO
+                        WHERE Year_Code = :Year_Code 
+                        AND COMPANY_CODE = :Company_Code 
+                        AND saleid = :saleid
+                        AND TRAN_TYPE = 'SB' '''),
+                {'Year_Code': Year_Code, 'Company_Code': Company_Code,
+                 'DOC_NO': updated_doc_no, 'saleid': saleid}
+            )
+
+        db.session.commit()    
+        
+        return jsonify({'Successfully Updated': updated_doc_no}), 200
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        return jsonify({"error": "Database error", "message": str(e)}), 500
+    except Exception as e:
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500        

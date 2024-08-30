@@ -97,15 +97,15 @@ def getdata_DO():
         if not company_code or not year_code:
             return jsonify({"error": "Missing 'Company_Code' or 'Year_Code' parameter"}), 400
 
-        query = ('''SELECT dbo.nt_1_deliveryorder.doc_no, dbo.nt_1_deliveryorder.doc_date, dbo.nt_1_deliveryorder.purc_no, dbo.nt_1_deliveryorder.tenderdetailid, dbo.nt_1_deliveryorder.quantal, dbo.nt_1_deliveryorder.sale_rate, 
-                  dbo.nt_1_deliveryorder.Tender_Commission, dbo.nt_1_deliveryorder.tran_type, dbo.nt_1_deliveryorder.truck_no, dbo.nt_1_deliveryorder.SB_No, dbo.nt_1_deliveryorder.EWay_Bill_No, dbo.nt_1_deliveryorder.doid, 
-                  mill.Short_Name AS millName, transport.Short_Name AS transportName, saleBillTo.Short_Name AS saleBillName, shipTo.Short_Name AS shipToName, dbo.nt_1_deliveryorder.Delivery_Type, shipTo.cityname AS shipToCityName, 
-                  saleBillTo.cityname AS sbCityName, dbo.nt_1_deliveryorder.MM_Rate
-FROM     dbo.nt_1_deliveryorder INNER JOIN
-                  dbo.nt_1_accountmaster AS mill ON dbo.nt_1_deliveryorder.mc = mill.accoid INNER JOIN
-                  dbo.qrymstaccountmaster AS shipTo ON dbo.nt_1_deliveryorder.st = shipTo.accoid INNER JOIN
-                  dbo.qrymstaccountmaster AS saleBillTo ON dbo.nt_1_deliveryorder.sb = saleBillTo.accoid INNER JOIN
-                  dbo.nt_1_accountmaster AS transport ON dbo.nt_1_deliveryorder.tc = transport.accoid
+        query = ('''SELECT        dbo.nt_1_deliveryorder.doc_no, dbo.nt_1_deliveryorder.doc_date, dbo.nt_1_deliveryorder.purc_no, dbo.nt_1_deliveryorder.tenderdetailid, dbo.nt_1_deliveryorder.quantal, dbo.nt_1_deliveryorder.sale_rate, 
+                         dbo.nt_1_deliveryorder.Tender_Commission, dbo.nt_1_deliveryorder.tran_type, dbo.nt_1_deliveryorder.truck_no, dbo.nt_1_deliveryorder.SB_No, dbo.nt_1_deliveryorder.EWay_Bill_No, dbo.nt_1_deliveryorder.doid, 
+                         mill.Short_Name AS millName, transport.Short_Name AS transportName, saleBillTo.Short_Name AS saleBillName, shipTo.Short_Name AS shipToName, dbo.nt_1_deliveryorder.Delivery_Type, 
+                         shipTo.cityname AS shipToCityName, saleBillTo.cityname AS sbCityName, dbo.nt_1_deliveryorder.MM_Rate
+FROM            dbo.nt_1_deliveryorder INNER JOIN
+                         dbo.nt_1_accountmaster AS mill ON dbo.nt_1_deliveryorder.mc = mill.accoid LEFT OUTER JOIN
+                         dbo.qrymstaccountmaster AS saleBillTo ON dbo.nt_1_deliveryorder.sb = saleBillTo.accoid LEFT OUTER JOIN
+                         dbo.qrymstaccountmaster AS shipTo ON dbo.nt_1_deliveryorder.st = shipTo.accoid LEFT OUTER JOIN
+                         dbo.nt_1_accountmaster AS transport ON dbo.nt_1_deliveryorder.tc = transport.accoid
                  where dbo.nt_1_deliveryorder.company_code = :company_code and dbo.nt_1_deliveryorder.Year_Code = :year_code
                                  '''
             )
@@ -251,7 +251,8 @@ def insert_DeliveryOrder():
                             'PS_SGSTRATE','PS_IGSTRATE','TOTALPurchase_Amount','PSTCS_Amt','PSTDS_Amt','PSNetPayble','PS_SelfBal','PS_amount','lblgetpasscodename',
                             'lblvoucherByname','Gst_Rate','AutopurchaseBill','LV_CGSTAmount','LV_SGSTAmount','LV_IGSTAmount','LV_TotalAmount',
                             'LV_TCSRate','LV_NETPayble','LV_TCSAmt','LV_TDSRate','LV_TDSAmt','LV_Igstrate','LV_Cgstrate','LV_taxableamount',
-                            'LV_Sgstrate','LV_Commision_Amt','LV_tender_Commision_Amt','gstratename','Gstrate']
+                            'LV_Sgstrate','LV_Commision_Amt','LV_tender_Commision_Amt','gstratename','Gstrate','lblitemname',
+                            'newbroker','lblbrokername']
     
 
         for key in remove_sale_data:
@@ -261,6 +262,7 @@ def insert_DeliveryOrder():
 
         
         print('new_head',headData)
+        print("Traceback",traceback.format_exc())
         new_head = DeliveryOrderHead(**headData)
         
 
@@ -494,7 +496,7 @@ def insert_DeliveryOrder():
             
         }
        
-        response = requests.post("http://localhost:8080/api/sugarian/create-Record-gLedger", params=query_params, json=gledger_entries)
+        response = requests.post("http://localhost:5000/api/sugarian/create-Record-gLedger", params=query_params, json=gledger_entries)
         
 
         if response.status_code == 201:
@@ -546,7 +548,7 @@ def insert_DeliveryOrder():
                         }
                 # logger.info("Creating PurchaseBill entry: %s", create_PurchaseBill_entry)
             
-                response = requests.post("http://localhost:8080/api/sugarian/insert_SugarPurchase",  json=create_PurchaseBill_entry)
+                response = requests.post("http://localhost:5000/api/sugarian/insert_SugarPurchase",  json=create_PurchaseBill_entry)
 
                 if response.status_code == 201:
                     data =response.json()
@@ -611,8 +613,8 @@ def insert_DeliveryOrder():
                             }
                     
                 
-                    response = requests.post("http://localhost:8080/api/sugarian/insert-SaleBill",  json=create_SaleBill_entry)
-
+                    response = requests.post("http://localhost:5000/api/sugarian/insert-SaleBill",  json=create_SaleBill_entry)
+                    print('salebill', create_SaleBill_entry)
                     if response.status_code == 201:
                         data = response.json()
                         added_detailssb = data.get('addedDetails')
@@ -652,7 +654,7 @@ def insert_DeliveryOrder():
                         }
 
             print('create_CommisionBill_entry',create_CommisionBill_entry)
-            response = requests.post("http://localhost:8080/api/sugarian/create-RecordCommissionBill",params=query_params,json=create_CommisionBill_entry)
+            response = requests.post("http://localhost:5000/api/sugarian/create-RecordCommissionBill",params=query_params,json=create_CommisionBill_entry)
            
             if response.status_code == 201:
                 # Parse the JSON data from the response
@@ -743,7 +745,7 @@ def insert_DeliveryOrder():
                         
                         }
 
-                response = requests.put("http://localhost:8080/api/sugarian/Stock_Entry_tender_purchase",params=Stock_query_params,json=create_TenderStock_entry)
+                response = requests.put("http://localhost:5000/api/sugarian/Stock_Entry_tender_purchase",params=Stock_query_params,json=create_TenderStock_entry)
         
 
         if response.status_code == 200:
@@ -996,7 +998,7 @@ def update_DeliveryOrder():
             'TRAN_TYPE': headData['tran_type']
         }
     
-        response = requests.post("http://localhost:8080/api/sugarian/create-Record-gLedger", params=query_params, json=gledger_entries)
+        response = requests.post("http://localhost:5000/api/sugarian/create-Record-gLedger", params=query_params, json=gledger_entries)
 
         if response.status_code == 201:
             db.session.commit()
@@ -1054,7 +1056,7 @@ def update_DeliveryOrder():
             }
             print("headData['purchaseid']",headData['purchaseid'])
             print('purchase',update_PurchaseBill_entry)
-            response = requests.put("http://localhost:8080/api/sugarian/update-SugarPurchase", params=purch_param ,json=update_PurchaseBill_entry)
+            response = requests.put("http://localhost:5000/api/sugarian/update-SugarPurchase", params=purch_param ,json=update_PurchaseBill_entry)
            
             if response.status_code == 200:
                 data =response.json()
@@ -1121,7 +1123,7 @@ def update_DeliveryOrder():
                                 "saleid":headData['saleid']
                             }
                             print('Saleill',update_SaleBill_entry)
-                            response = requests.put("http://localhost:8080/api/sugarian/update-SaleBill",  params=sale_param,json=update_SaleBill_entry)
+                            response = requests.put("http://localhost:5000/api/sugarian/update-SaleBill",  params=sale_param,json=update_SaleBill_entry)
 
                     if response.status_code == 201:
                         data = response.json()
@@ -1165,7 +1167,7 @@ def update_DeliveryOrder():
                                         }
 
            
-            response = requests.put("http://localhost:8080/api/sugarian/update-CommissionBill",params=query_params,json=update_CommisionBill_entry)
+            response = requests.put("http://localhost:5000/api/sugarian/update-CommissionBill",params=query_params,json=update_CommisionBill_entry)
 
             if response.status_code == 201:
                 db.session.commit()
@@ -1232,7 +1234,7 @@ def update_DeliveryOrder():
                         
                         }
 
-            response = requests.put("http://localhost:8080/api/sugarian/Stock_Entry_tender_purchase",params=Stock_query_params,json=create_TenderStock_entry)
+            response = requests.put("http://localhost:5000/api/sugarian/Stock_Entry_tender_purchase",params=Stock_query_params,json=create_TenderStock_entry)
         
 
             if response.status_code == 200:
@@ -1300,7 +1302,7 @@ def delete_data_by_doid():
                     'Year_Code': Year_Code,
                     'TRAN_TYPE': "DO",
                 }
-                response = requests.delete("http://localhost:8080/api/sugarian/delete-Record-gLedger", params=query_params)
+                response = requests.delete("http://localhost:5000/api/sugarian/delete-Record-gLedger", params=query_params)
                 
                 if response.status_code != 200:
                     # If external request fails, raise an exception to trigger rollback
@@ -1316,7 +1318,7 @@ def delete_data_by_doid():
 
                 }
                 
-                response = requests.delete("http://localhost:8080/api/sugarian/delete_data_SugarPurchase", params=purchase_param)
+                response = requests.delete("http://localhost:5000/api/sugarian/delete_data_SugarPurchase", params=purchase_param)
                 
                 if response.status_code != 200:
                     # If external request fails, raise an exception to trigger rollback
@@ -1331,7 +1333,7 @@ def delete_data_by_doid():
 
                 }
                 
-                response = requests.delete("http://localhost:8080/api/sugarian/delete_data_by_saleid", params=sale_param)
+                response = requests.delete("http://localhost:5000/api/sugarian/delete_data_by_saleid", params=sale_param)
 
                 
                 if response.status_code != 200:
@@ -1445,6 +1447,34 @@ def get_lastDO_navigation():
         return jsonify(response), 200
 
     except Exception as e:
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+    
+@app.route(API_URL + "/getNextDocNo_DeliveryOrder", methods=["GET"])
+def getNextDocNo_DeliveryOrder():
+    try:
+        Company_Code = request.args.get('Company_Code')
+        Year_Code = request.args.get('Year_Code')
+
+        if not all([Company_Code, Year_Code]):
+            return jsonify({"error": "Missing required parameters"}), 400
+
+        # Fetch the maximum document number for the given Company_Code and Year_Code
+        max_doc_no = db.session.query(func.max(DeliveryOrderHead.doc_no)).filter_by(company_code=Company_Code, Year_Code=Year_Code).scalar()
+
+        if max_doc_no is None:
+            next_doc_no = 1  
+        else:
+            next_doc_no = max_doc_no + 1  
+
+
+
+        response = {
+            "next_doc_no": next_doc_no,
+        }
+        return jsonify(response), 200
+
+    except Exception as e:
+        print(e)
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
     
 #Get Previous record by database 
@@ -1704,4 +1734,5 @@ def getAmountcalculationData():
     except Exception as e:
         logger.error("Traceback: %s", traceback.format_exc())
         # Log the exception here if needed
-        return jsonify({"error": "Internal server error", "message": str(e)}), 500    
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500  
+

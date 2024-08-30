@@ -293,4 +293,6 @@ textarea {
   display: flex;
   flex-direction: row;
 }
-
+.form-group #Tender_Commission,#diff_rate,#Insurance,#TCS_Rate,#Sale_TCS_Rate,#SaleTDSRate,#PurchaseTDSRate,#amount,#Mill_AmtWO_TCS{
+  max-width: 100px;
+}

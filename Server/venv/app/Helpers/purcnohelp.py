@@ -136,4 +136,74 @@ def getTenderNo_Data():
 
     except Exception as e:
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
+    
+@app.route(API_URL + "/getTenderNo_DataByTenderdetailId", methods=["GET"])
+def getTenderNo_DataByTenderdetailId():
+    try:
+       
+        tenderdetailid = request.args.get('tenderdetailid')
+
+        if not all([tenderdetailid]):
+            return jsonify({"error": "Missing required parameters"}), 400
+
+        with db.session.begin_nested():
+            # Execute query2 first
+            query2 = db.session.execute(
+                text('''
+                    SELECT dbo.nt_1_companyparameters.SELF_AC, dbo.nt_1_accountmaster.accoid, dbo.nt_1_accountmaster.Ac_Name_E
+                    FROM dbo.nt_1_companyparameters
+                    INNER JOIN dbo.nt_1_accountmaster ON dbo.nt_1_companyparameters.Company_Code = dbo.nt_1_accountmaster.company_code 
+                      AND dbo.nt_1_companyparameters.SELF_AC = dbo.nt_1_accountmaster.Ac_Code
+                    
+                ''')
+                
+            )
+            SelfAc_data = [dict(row._mapping) for row in query2.fetchall()]
+            selfacname=SelfAc_data[0].get('Ac_Name_E', None)
+            selfac=SelfAc_data[0].get('SELF_AC', None)
+            selfacid=SelfAc_data[0].get('accoid', None)
+            
+            
+            # Now execute query1
+            query = db.session.execute(
+                text('''
+                    SELECT        dbo.qrytenderheaddetail.Buyer, dbo.qrytenderheaddetail.buyername, dbo.qrytenderheaddetail.Buyer_Party, dbo.qrytenderheaddetail.buyerpartyname, dbo.qrytenderheaddetail.Voucher_By, 
+                         dbo.qrytenderheaddetail.voucherbyname, dbo.qrytenderheaddetail.Grade, dbo.qrytenderheaddetail.Buyer_Quantal AS Quantal, dbo.qrytenderheaddetail.Packing, dbo.qrytenderheaddetail.Bags, 
+                         dbo.qrytenderheaddetail.Excise_Rate, dbo.qrytenderheaddetail.Mill_Rate, dbo.qrytenderheaddetail.Sale_Rate, dbo.qrytenderheaddetail.Purc_Rate, dbo.qrytenderheaddetail.Tender_DO, dbo.qrytenderheaddetail.tenderdoname, 
+                         dbo.qrytenderheaddetail.Broker, dbo.qrytenderheaddetail.brokername, dbo.qrytenderheaddetail.Commission_Rate AS CR, dbo.qrytenderheaddetail.Delivery_Type AS DT, dbo.qrytenderheaddetail.Payment_To, 
+                         dbo.qrytenderheaddetail.paymenttoname, dbo.qrytenderheaddetail.gstratecode, dbo.qrytenderheaddetail.gstratename, dbo.qrytenderheaddetail.itemcode, dbo.qrytenderheaddetail.itemname, 
+                         dbo.qrytenderheaddetail.tenderdetailid, dbo.qrytenderheaddetail.ShipToname, dbo.qrytenderheaddetail.shiptoid, dbo.qrytenderheaddetail.ShipTo, dbo.qrytenderheaddetail.season, dbo.qrytenderheaddetail.Party_Bill_Rate, 
+                         dbo.qrytenderheaddetail.AutoPurchaseBill, dbo.qrytenderheaddetail.buyerpartygststatecode, dbo.qrytenderheaddetail.buyerpartystatename, dbo.qrytenderheaddetail.buyerpartyid, dbo.qrytenderheaddetail.buyerid, 
+                         dbo.qrytenderheaddetail.shiptoid AS shiptoid, dbo.qrytenderheaddetail.pt, dbo.qrytenderheaddetail.ic, dbo.qrytenderheaddetail.td, dbo.qrytenderheaddetail.gstrate, dbo.qrytenderheaddetail.Tender_No, dbo.qrytenderheaddetail.ID, 
+                         dbo.qrytenderheaddetail.Mill_Code, dbo.qrytenderheaddetail.mc, dbo.qrytenderheaddetail.millname,
+						 dbo.eBuySugar_Pending_DO.truck_no,dbo.qrytenderheaddetail.shiptostatename,dbo.qrytenderheaddetail.shiptostatecode ,
+						 (case when Delivery_Type='DO' then Buyer else :selfac end) as Getpassno,
+                           (case when Delivery_Type='DO' then buyerid else :selfacid end) as Getpassnoid,
+                           (case when Delivery_Type='DO' then buyername else :selfacname end) as Getpassnoname  
+                           
+FROM            dbo.qrytenderheaddetail LEFT OUTER JOIN
+                         dbo.eBuySugar_Pending_DO ON dbo.qrytenderheaddetail.tenderdetailid = dbo.eBuySugar_Pending_DO.tenderdetailid
+                    WHERE  
+                       dbo.qrytenderheaddetail.tenderdetailid = :tenderdetailid
+                '''),
+                 {'tenderdetailid': tenderdetailid,
+                   'selfac': selfac,'selfacname':selfacname,'selfacid':selfacid}
+      
+                
+            )
+
+            result = query.fetchall()
+            last_details_data = [dict(row._mapping) for row in result]
+
+            response = {
+                "last_details_data": last_details_data,
+               
+            }
+
+            return jsonify(response), 200
+
+    except Exception as e:
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+
 

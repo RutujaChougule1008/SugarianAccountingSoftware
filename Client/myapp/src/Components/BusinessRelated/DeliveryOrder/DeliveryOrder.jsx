@@ -7,6 +7,7 @@ import GSTStateMasterHelp from "../../../Helper/GSTStateMasterHelp";
 import PurcnoHelp from "../../../Helper/PurcnoHelp";
 import CarporateHelp from "../../../Helper/CarporateHelp";
 import "./DeliveryOrder.css";
+import "../../../App.css"
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -82,6 +83,8 @@ var brokerTitle = "";
 var voucherstatename = "";
 var salebilltostatename = "";
 var getpassstatename = "";
+var newTenderDetailId = "";
+var truckNo = "";
 
 const DeliveryOrder = () => {
   const [updateButtonClicked, setUpdateButtonClicked] = useState(false);
@@ -173,6 +176,7 @@ const DeliveryOrder = () => {
   const [PDSUnit, setPDSUnit] = useState("");
   const [CarporateState, setCarporateState] = useState({});
   const [ChangeData, setChangeData] = useState(false);
+  const [pendingDOData, setPendingDOData] = useState("");
 
   const [Autopurchase, setAutopurchase] = useState("");
 
@@ -481,15 +485,7 @@ const DeliveryOrder = () => {
   };
 
   const handleSBGenerate = async () => {
-    setIsEditing(false);
-    setIsEditMode(false);
-    setAddOneButtonEnabled(true);
-    setEditButtonEnabled(true);
-    setDeleteButtonEnabled(true);
-    setBackButtonEnabled(true);
-    setSaveButtonEnabled(false);
-    setCancelButtonEnabled(false);
-    setCancelButtonClicked(true);
+    
     try {
       // Assuming `lastTenderData` and `newDcid` are defined elsewhere in your code
       const saleid = lastTenderData.saleid;
@@ -499,12 +495,7 @@ const DeliveryOrder = () => {
 
       console.log("saleid", saleid);
 
-      // Define `requestData` as needed
-      // const requestData = {
-      //     // Example data structure, adjust as necessary
-      //     saleid: saleid,
-      //     // Other data fields...
-      // };
+      
 
       const updateApiUrl = `${API_URL}/Generate_SaleBill?DoNo=${Dono}&CompanyCode=${Companycode}&Year_Code=${Yearcode}&saleid=${saleid}`;
 
@@ -844,6 +835,7 @@ const DeliveryOrder = () => {
         ic: details.last_details_data[0].ic,
         GstRateCode: details.last_details_data[0].gstratecode,
         Gst_Rate: details.last_details_data[0].gstrate,
+        newPurcno:details.last_details_data[0].Tender_No,
       };
 
       setCarporateState(newData);
@@ -982,7 +974,7 @@ const DeliveryOrder = () => {
     let PurchaseTDSRate=0.00
     console.log('amt----------',updatedFormData)
   
-    const url = `http://localhost:8080/api/sugarian/getAmountcalculationData?CompanyCode=${companyCode}&SalebilltoAc=${SaleBillTo}&Year_Code=${Year_Code}&purcno=${purcno}`;
+    const url = `http://localhost:5000/api/sugarian/getAmountcalculationData?CompanyCode=${companyCode}&SalebilltoAc=${SaleBillTo}&Year_Code=${Year_Code}&purcno=${purcno}`;
     const response = await axios.get(url);
     const details = response.data;
     PSBalAmt = PSRate * qt;
@@ -1828,11 +1820,12 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
   };
 
   useEffect(() => {
+    debugger;
     if (selectedRecord) {
       setUsers(
         lastTenderDetails.map((detail) => ({
           ddType: detail.ddType,
-          Bank_Code: detail.bankcode || bankcodenew,
+          Bank_Code: detail.bankcode || bankcodenew ,
           bankcodeacname: detail.bankcodeacname,
           Narration: detail.Narration,
           Amount: detail.Amount,
@@ -1959,7 +1952,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
 
   const fetchLastRecord = () => {
     fetch(
-      `${API_URL}/get-lastDO-navigation?company_code=${companyCode}&Year_Code=${Year_Code}`
+      `${API_URL}/getNextDocNo_DeliveryOrder?Company_Code=${companyCode}&Year_Code=${Year_Code}`
     )
       .then((response) => {
         console.log("response", response);
@@ -1969,10 +1962,10 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
         return response.json();
       })
       .then((data) => {
-        // Set the last company code as the default value for Company_Code
+        
         setFormData((prevState) => ({
           ...prevState,
-          doc_no: data.last_head_data.doc_no + 1,
+          doc_no: data.next_doc_no,
         }));
       })
       .catch((error) => {
@@ -2031,6 +2024,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
     newTransportGSTStateCode = "";
     newmill_code = "";
     newPurcno = "";
+    lblTenderid = "";
   };
   const validateForm = () => {
     try {
@@ -2184,49 +2178,49 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
         const data = response.data;
         console.log(data);
         newDcid = data.last_head_data.doid;
-        bankcodenew = data.last_details_data[0].Bank_Code;
+        bankcodenew = data.last_details_data[0].bankaccode;
         lblbankname = data.last_details_data[0].bankname;
-        newmill_code = data.last_head_data.mill_code;
-        lblmillname = data.last_head_data.millname;
-        newMillGSTStateCode = data.last_head_data.MillGSTStateCode;
-        lblmillstatename = data.last_head_data.millstatename;
+        newmill_code = data.last_details_data[0].millacode;
+        lblmillname = data.last_details_data[0].millname;
+        newMillGSTStateCode = data.last_details_data[0].millstatecode;
+        lblmillstatename = data.last_details_data[0].millstatename;
         newGETPASSCODE = data.last_head_data.GETPASSCODE;
-        lblgetpasscodename = data.last_head_data.getpassname;
-        lblgetpassstatename = data.last_head_data.getpassstatename;
-        newGetpassGstStateCode = data.last_head_data.GetpassGstStateCode;
-        newvoucher_by = data.last_head_data.voucher_by;
-        lblvoucherByname = data.last_head_data.voucherbyname;
-        lblvoucherBystatename = data.last_head_data.vaoucherbystatename;
-        newVoucherbyGstStateCode = data.last_head_data.VoucherbyGstStateCode;
-        lblgstratename = data.last_head_data.gstratename;
-        newGstRateCode = data.last_head_data.GstRateCode;
-        newSaleBillTo = data.last_head_data.SaleBillTo;
-        lblsalebilltoname = data.last_head_data.salebillname;
-        lblBilltostatename = data.last_head_data.salebilltostatename;
-        newSalebilltoGstStateCode = data.last_head_data.SalebilltoGstStateCode;
-        newtransport = data.last_head_data.transport;
-        lbltransportname = data.last_head_data.transportname;
-        lbltransportstatename = data.last_head_data.transportstatename;
-        newTransportGSTStateCode = data.last_head_data.TransportGSTStateCode;
-        lblitemname = data.last_head_data.itemname;
-        newitemcode = data.last_head_data.itemcode;
-        lblbrandname = data.last_head_data.brandname;
-        newbrandcode = data.last_head_data.brandcode;
-        lblMemoGSTRatename = data.last_head_data.memorategst;
-        newMemoGSTRate = data.last_head_data.MemoGSTRate;
-        newVasuli_Ac = data.last_head_data.Vasuli_Ac;
-        lblvasuliacname = data.last_head_data.vasuliacname;
-        lblDoname = data.last_head_data.DOName;
-        newDO = data.last_head_data.DO;
-        lbltdsacname = data.last_head_data.tdsacname;
-        newTDSAc = data.last_head_data.TDSAc;
-        lblbrokername = data.last_head_data.brokername;
-        newbroker = data.last_head_data.broker;
-        lblcashdiffacname = data.last_head_data.cashdiffacname;
-        newCashDiffAc = data.last_head_data.CashDiffAc;
-        newPurcno = data.last_head_data.purc_no;
+        lblgetpasscodename = data.last_details_data[0].getpassname;
+        lblgetpassstatename = data.last_details_data[0].getpassstatename;
+        newGetpassGstStateCode = data.last_details_data[0].getpassstatecode;
+        newvoucher_by = data.last_details_data[0].voucherbyaccode;
+        lblvoucherByname = data.last_details_data[0].voucherbyname;
+        lblvoucherBystatename = data.last_details_data[0].vaoucherbystatename;
+        newVoucherbyGstStateCode = data.last_head_data.voucherbystatecode;
+        lblgstratename = data.last_details_data[0].Gstrate;
+        newGstRateCode = data.last_details_data[0].gstdocno;
+        newSaleBillTo = data.last_details_data[0].salebillaccode;
+        lblsalebilltoname = data.last_details_data[0].salebillname;
+        lblBilltostatename = data.last_details_data[0].salebilltostatename;
+        newSalebilltoGstStateCode =
+          data.last_details_data[0].salebilltostatecode;
+        newtransport = data.last_details_data[0].transportaccode;
+        lbltransportname = data.last_details_data[0].transportname;
+        lbltransportstatename = data.last_details_data[0].transportstatename;
+        newTransportGSTStateCode =
+          data.last_details_data[0].transportstatecode;
+        lblitemname = data.last_details_data[0].itemname;
+        newitemcode = data.last_details_data[0].itemcode;
+        lblbrandname = data.last_details_data[0].brandname;
+        newbrandcode = data.last_details_data[0].brandcode;
+        lblMemoGSTRatename = data.last_details_data[0].memorategst;
+        newMemoGSTRate = data.last_details_data[0].MemoGSTRate;
+        newVasuli_Ac = data.last_details_data[0].Vasuli_Ac;
+        lblvasuliacname = data.last_details_data[0].vasuliacname;
+        lblDoname = data.last_details_data[0].DOName;
+        newDO = data.last_details_data[0].DOacCode;
+        lbltdsacname = data.last_details_data[0].tdsacname;
+        newTDSAc = data.last_details_data[0].TDSAc;
+        lblbrokername = data.last_details_data[0].brokername;
+        newbroker = data.last_details_data[0].broker;
+        lblcashdiffacname = data.last_details_data[0].cashdiffacname;
+        newCashDiffAc = data.last_details_data[0].CashDiffAc;
         lblTenderid = data.last_head_data.purc_order;
-        const newData = data.last_head_data.Gstrate;
 
         console.log("newdata--------", data.last_head_data);
 
@@ -2385,9 +2379,19 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
   useEffect(() => {
     if (selectedRecord) {
       handlerecordDoubleClicked();
+      handlerecordDoubleClickedPendingDO();
     } else {
       handleAddOne();
     }
+  }, [selectedRecord]);
+
+  useEffect(() => {
+    if (selectedRecord) {
+      
+      handlerecordDoubleClickedPendingDO();
+    
+    } 
+    
   }, [selectedRecord]);
 
   //change No functionality to get that particular record
@@ -2442,6 +2446,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
         newbroker = data.last_details_data[0].broker;
         lblcashdiffacname = data.last_details_data[0].cashdiffacname;
         newCashDiffAc = data.last_details_data[0].CashDiffAc;
+        lblTenderid = data.last_head_data.purc_order;
 
         setFormData({
           ...formData,
@@ -2507,6 +2512,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
         newbroker = data.last_details_data[0].broker;
         lblcashdiffacname = data.last_details_data[0].cashdiffacname;
         newCashDiffAc = data.last_details_data[0].CashDiffAc;
+        lblTenderid = data.last_head_data.purc_order;
 
         setFormData({
           ...formData,
@@ -2579,7 +2585,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
         newbroker = data.last_details_data[0].broker;
         lblcashdiffacname = data.last_details_data[0].cashdiffacname;
         newCashDiffAc = data.last_details_data[0].CashDiffAc;
-
+        lblTenderid = data.last_head_data.purc_order;
         setFormData({
           ...formData,
           ...data.last_head_data,
@@ -2650,7 +2656,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
         newbroker = data.last_details_data[0].broker;
         lblcashdiffacname = data.last_details_data[0].cashdiffacname;
         newCashDiffAc = data.last_details_data[0].CashDiffAc;
-
+        lblTenderid = data.last_head_data.purc_order;
         setFormData({
           ...formData,
           ...data.last_head_data,
@@ -2720,7 +2726,8 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
         newbroker = data.last_details_data[0].broker;
         lblcashdiffacname = data.last_details_data[0].cashdiffacname;
         newCashDiffAc = data.last_details_data[0].CashDiffAc;
-
+        lblTenderid = data.last_head_data.purc_order;
+        
         setFormData({
           ...formData,
           ...data.last_head_data,
@@ -2739,6 +2746,175 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
       console.error("Error during API call:", error);
     }
   };
+
+  const handlePendingDO = () =>{
+    navigate("/pending-do")
+  }
+
+  const handlerecordDoubleClickedPendingDO = async () => {
+       
+    try {
+      const response = await axios.get(
+        `${API_URL}/getByPendingDOId?tenderdetailid=${selectedRecord.tenderdetailid}`
+      );
+      const data = response.data;
+      setPendingDOData(data.last_head_data)
+      console.log("gstrate", Gst_Rate);
+
+     
+
+      
+        
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+
+   handleAddOne();
+  };
+
+  const handleKeyDownPendingDO = async (event) => {
+   debugger
+    if (event.key === "Tab") {
+      debugger;
+      const changeNoValue = event.target.value;
+      try {
+        const response = await axios.get(
+          `${API_URL}/getTenderNo_DataByTenderdetailId?tenderdetailid=${changeNoValue}`
+        );
+        const data = response.data;
+
+        console.log("data",data)
+        let assingqntl = 0;
+        let Carporate_Sale_No=formData.Carporate_Sale_No
+        let Dispatch_type =
+        data.last_details_data[0].DT === "D"
+            ? formData.desp_type === "DO"
+            : "DI";
+
+        console.log('Dispatch_type',Dispatch_type)    
+        if (Carporate_Sale_No === 0) {
+          assingqntl = data.last_details_data[0].Quantal;
+        } else {
+          assingqntl = CarporateState.quantal;
+        }
+        const purcRate =
+          parseFloat(data.last_details_data[0].Purc_Rate) || 0;
+        const exciseRate =
+          parseFloat(data.last_details_data[0].Excise_Rate) || 0;
+        const qtl = parseFloat(assingqntl) || 0;
+        const rate = qtl !== 0 ? purcRate + exciseRate : 0;
+        const millamount = qtl * rate;
+        bankcodenew = data.last_details_data[0].Payment_To;
+        lblbankname = data.last_details_data[0].paymenttoname;     
+        if (Dispatch_type === "DI") {
+          setFormDataDetail((prevData) => {
+            const newDetailData = {
+              ...prevData,
+              ddType: "T",
+              Narration: "Transfer Letter",
+              Amount: millamount,
+              detail_Id: 1,
+              Bank_Code: bankcodenew,
+              bc: data.last_details_data[0].pt,
+              rowaction: "add",
+            };
+            setUsers([newDetailData]);
+            // setLastTenderDetails([newDetailData])
+            
+          });
+          
+        }
+
+        newmill_code = data.last_details_data[0].Mill_Code;
+        lblmillname = data.last_details_data[0].millname;
+        newGETPASSCODE = data.last_details_data[0].Getpassno;
+        lblgetpasscodename = data.last_details_data[0].Getpassnoname;
+      
+        newvoucher_by = data.last_details_data[0].ShipTo;
+        lblvoucherByname = data.last_details_data[0].ShipToname;
+        lblvoucherBystatename = data.last_details_data[0].shiptostatename;
+        newVoucherbyGstStateCode = data.last_details_data[0].shiptostatecode;
+        //console.log('')
+        lblgstratename = data.last_details_data[0].gstratename;
+        newGstRateCode = data.last_details_data[0].gstratecode;
+        newSaleBillTo = data.last_details_data[0].Buyer_Party;
+        lblsalebilltoname = data.last_details_data[0].buyerpartyname;
+        lblBilltostatename = data.last_details_data[0].salebilltostatename;
+      
+        newtransport = data.last_details_data[0].transport;
+      
+        lblitemname = data.last_details_data[0].itemname;
+        newitemcode = data.last_details_data[0].itemcode;
+        lblDoname = data.last_details_data[0].tenderdoname;
+        newDO=data.last_details_data[0].Tender_DO;
+      
+        lblbrokername = data.last_details_data[0].brokername;
+        newbroker = data.last_details_data[0].Broker;
+        newSalebilltoGstStateCode=data.last_details_data[0].buyerpartygststatecode;
+        lblBilltostatename=data.last_details_data[0].buyerpartystatename;
+        
+        const newData = {
+          
+          sb: data.last_details_data[0].buyerpartyid,
+          gp: data.last_details_data[0].Getpassnoid,
+          ic: data.last_details_data[0].ic,
+          mc: data.last_details_data[0].mc,
+          bk: data.last_details_data[0].buyerid,
+          vb: data.last_details_data[0].shiptoid,
+          // CashDiffAcId: data.last_details_data[0].buyerid,
+          // docd: data.last_details_data[0].td,
+          desp_type:Dispatch_type,
+          SaleBillTo: data.last_details_data[0].Buyer_Party,
+          GETPASSCODE: data.last_details_data[0].Getpassno,
+          voucher_by: data.last_details_data[0].Buyer_Party,
+          DO: data.last_details_data[0].Tender_DO,
+          CashDiffAc: data.last_details_data[0].Buyer,
+          DO: data.last_details_data[0].Tender_DO,
+          itemcode: data.last_details_data[0].itemcode,
+          lblitemname: data.last_details_data[0].itemname,
+
+          GstRateCode: data.last_details_data[0].gstratecode,
+          newbroker: data.last_details_data[0].Broker,
+          lblbrokername:data.last_details_data[0].Broker,
+          Gst_Rate: data.last_details_data[0].gstrate,
+          mill_rate: data.last_details_data[0].Mill_Rate,
+          sale_rate: data.last_details_data[0].Sale_Rate,
+          grade:data.last_details_data[0].Grade,
+          PurchaseRate:data.last_details_data[0].Purc_Rate,
+          purc_no:data.last_details_data[0].Tender_No,
+          purc_order:data.last_details_data[0].ID,
+          packing:data.last_details_data[0].Packing,
+          bags:data.last_details_data[0].Bags,
+          excise_rate:data.last_details_data[0].Excise_Rate,
+          Tender_Commission:data.last_details_data[0].CR,
+          truck_no:data.last_details_data[0].truck_no,
+          tenderdetailid:data.last_details_data[0].tenderdetailid,
+          quantal:data.last_details_data[0].Quantal,
+          purc_order:data.last_details_data[0].ID,
+         // AutopurchaseBill: data.last_details_data[0].AutoPurchaseBill,
+         AutopurchaseBill:"Y",
+
+        };
+
+
+        console.log("newData",newData)
+
+        setFormData((prevState) => ({
+          ...prevState,
+          ...newData,
+        }));
+        // setLastTenderDetails(data.last_details_data || []);
+        setIsEditing(false);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    }
+  };
+
+  
+
+
+
 
   return (
     <>
@@ -2775,6 +2951,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
       <div>
         <form>
           <h2>Delivery Order</h2>
+          <button style={{float:"right"}} onClick={handlePendingDO}>Pending DO</button>
           <br />
           <div className="form-group ">
             <label htmlFor="changeNo">Change No:</label>
@@ -2887,7 +3064,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               Name="mill_code"
               onAcCodeClick={handlemill_code}
               CategoryName={lblmillname}
-              CategoryCode={newmill_code}
+              CategoryCode={newmill_code || pendingDOData.Mill_Code}
               tabIndex={5}
               disabledFeild={!isEditing && addOneButtonEnabled}
             />
@@ -2914,11 +3091,20 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
             />
           </div>
           <div className="form-group">
+          <label htmlFor="tenderDetailId">Tender Detail Id</label>
+            <input
+              type="text"
+              id="newTenderDetailId"
+              Name="newTenderDetailId"
+             value={pendingDOData.tenderdetailid}
+              onKeyDown={handleKeyDownPendingDO}
+              disabled={!isEditing && addOneButtonEnabled}
+            />
             <label htmlFor="purc_no">Purc no:</label>
             <PurcnoHelp
               Name="purc_no"
               onAcCodeClick={handlePurcno}
-              Tenderno={newPurcno}
+              Tenderno={newPurcno || formData.purc_no }
               Tenderid={lblTenderid}
               tabIndex={98}
               disabledFeild={!isEditing && addOneButtonEnabled}
@@ -2936,8 +3122,8 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               name="Delivery_Type"
               value={
                 ChangeData
-                  ? 
-                   tenderDetails.Delivery_Type : CarporateState.Delivery_Type
+                  ? CarporateState.Delivery_Type
+                  : tenderDetails.Delivery_Type
               }
               onChange={handleChange}
               disabled={!isEditing && addOneButtonEnabled}
@@ -2976,31 +3162,27 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
                   ? getpassTitle
                   : tenderDetails.Getpassnoname ||
                     getpassTitle ||
-                    lblgetpasscodename
+                    lblgetpasscodename 
               }
               CategoryCode={
                 ChangeData
-                  ? 
-                   tenderDetails.Getpassno ||
+                  ? CarporateState.newGETPASSCODE
+                  : tenderDetails.Getpassno ||
                     newGETPASSCODE ||
-                    formData.GETPASSCODE : CarporateState.newGETPASSCODE
+                    formData.GETPASSCODE
               }
               tabIndex={45}
               disabledFeild={!isEditing && addOneButtonEnabled}
             />
             <label htmlFor="GetpassGstStateCode">GetpassGstStateCode</label>
             <GSTStateMasterHelp
-              Name="GetpassGstStateCode"
-              onAcCodeClick={handleGetpassGstStateCode}
-              CategoryName={
-                lblgetpassstatename || tenderDetails.buyerpartystatename
-              }
-              GstStateCode={
-                tenderDetails.buyerpartygststatecode || newGetpassGstStateCode
-              }
-              tabIndex={99}
-              disabledFeild={!isEditing && addOneButtonEnabled}
-            />
+                                    Name = "GetpassGstStateCode"
+                                    onAcCodeClick={handleGetpassGstStateCode}
+                                    CategoryName={tenderDetails.buyerpartystatename||lblgetpassstatename }
+                                    GstStateCode={tenderDetails.buyerpartygststatecode||newGetpassGstStateCode}
+                                    tabIndex={99}
+                                    disabledFeild = {!isEditing && addOneButtonEnabled}
+                                />
             <label htmlFor="itemcode">Itemcode</label>
             <SystemHelpMaster
               onAcCodeClick={handleItemSelect}
@@ -3035,25 +3217,21 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               }
               CategoryCode={
                 ChangeData
-                  ? 
-                   tenderDetails.Buyer || newvoucher_by : CarporateState.voucher_by
+                  ? CarporateState.voucher_by
+                  : tenderDetails.Buyer || newvoucher_by
               }
               tabIndex={17}
               disabledFeild={!isEditing && addOneButtonEnabled}
             />
             <label htmlFor="VoucherbyGstStateCode">VoucherbyGstStateCode</label>
             <GSTStateMasterHelp
-              Name="VoucherbyGstStateCode"
-              onAcCodeClick={handleVoucherbyGstStateCode}
-              CategoryName={
-                tenderDetails.buyerpartystatename || lblvoucherBystatename
-              }
-              GstStateCode={
-                tenderDetails.buyerpartygststatecode || newVoucherbyGstStateCode
-              }
-              tabIndex={100}
-              disabledFeild={!isEditing && addOneButtonEnabled}
-            />
+                                        Name = "VoucherbyGstStateCode"
+                                        onAcCodeClick={handleVoucherbyGstStateCode}
+                                        CategoryName={lblvoucherBystatename || pendingDOData.shiptostatename}
+                                        GstStateCode={newVoucherbyGstStateCode || pendingDOData.shiptostatecode  }
+                                        tabIndex={100}
+                                        disabledFeild = {!isEditing && addOneButtonEnabled}
+                                    />
           </div>
           <div className="form-group">
             <label htmlFor="SaleBillTo">SaleBillTo</label>
@@ -3069,8 +3247,8 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               }
               CategoryCode={
                 ChangeData
-                  ? 
-                   tenderDetails.Buyer || newSaleBillTo  : CarporateState.SaleBillTo
+                  ? CarporateState.SaleBillTo
+                  : tenderDetails.Buyer || newSaleBillTo
               }
               tabIndex={94}
               disabledFeild={!isEditing && addOneButtonEnabled}
@@ -3079,18 +3257,13 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               SalebilltoGstStateCode
             </label>
             <GSTStateMasterHelp
-              Name="SalebilltoGstStateCode"
-              onAcCodeClick={handleSalebilltoGstStateCode}
-              CategoryName={
-                tenderDetails.buyerpartystatename || lblBilltostatename
-              }
-              GstStateCode={
-                tenderDetails.buyerpartygststatecode ||
-                newSalebilltoGstStateCode
-              }
-              tabIndex={101}
-              disabledFeild={!isEditing && addOneButtonEnabled}
-            />
+                                            Name = "SalebilltoGstStateCode"
+                                            onAcCodeClick={handleSalebilltoGstStateCode}
+                                            CategoryName={tenderDetails.buyerpartystatename||lblBilltostatename || pendingDOData.buyerpartystatename}
+                                            GstStateCode={tenderDetails.buyerpartygststatecode||newSalebilltoGstStateCode || pendingDOData.buyerpartygststatecode}
+                                            tabIndex={101}
+                                            disabledFeild = {!isEditing && addOneButtonEnabled}
+                                        />
           </div>
           <div className="form-group">
             <label htmlFor="grade">Grade:</label>
@@ -3109,17 +3282,18 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               Name="quantal"
               value={
                 ChangeData
-                  ? tenderDetails.Quantal || formData.quantal : CarporateState.quantal
+                  ? CarporateState.quantal
+                  : tenderDetails.Quantal || formData.quantal || pendingDOData.do_qntl
               }
               onChange={handleChange}
-              disabled={!isEditing && addOneButtonEnabled }
+              disabled={!isEditing && addOneButtonEnabled}
             />
             <label htmlFor="packing">Packing:</label>
             <input
               type="text"
               id="packing"
               Name="packing"
-              value={formData.packing}
+              value={formData.packing || pendingDOData.Packing}
               onChange={handleChange}
               disabled={!isEditing && addOneButtonEnabled}
             />
@@ -3128,7 +3302,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               type="text"
               id="bags"
               Name="bags"
-              value={tenderDetails.Bags || formData.bags}
+              value={tenderDetails.Bags || formData.bags || pendingDOData.Bags }
               onChange={handleChange}
               disabled={!isEditing && addOneButtonEnabled}
             />
@@ -3137,7 +3311,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               type="text"
               id="excise_rate"
               Name="excise_rate"
-              value={tenderDetails.Excise_Rate || formData.excise_rate}
+              value={tenderDetails.Excise_Rate || formData.excise_rate || pendingDOData.Excise_Rate}
               onChange={handleChange}
               disabled={!isEditing && addOneButtonEnabled}
             />
@@ -3150,13 +3324,14 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               onChange={handleChange}
               disabled={!isEditing && addOneButtonEnabled}
             />
-
+</div>
+<div className="form-group">
             <label htmlFor="mill_rate">Mill Rate:</label>
             <input
               type="text"
               id="mill_rate"
               Name="mill_rate"
-              value={tenderDetails.mill_rate || formData.mill_rate}
+              value={tenderDetails.mill_rate || formData.mill_rate }
               onChange={handleChange}
               disabled={!isEditing && addOneButtonEnabled}
             />
@@ -3167,8 +3342,8 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               Name="sale_rate"
               value={
                 ChangeData
-                  ? 
-                  tenderDetails.Sale_Rate || formData.sale_rate : CarporateState.sale_rate
+                  ? CarporateState.sale_rate
+                  : tenderDetails.Sale_Rate || formData.sale_rate || pendingDOData.Sale_Rate
               }
               onChange={handleChange}
               disabled={!isEditing && addOneButtonEnabled}
@@ -3178,7 +3353,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               type="text"
               id="PurchaseRate"
               Name="PurchaseRate"
-              value={formData.PurchaseRate}
+              value={formData.PurchaseRate || pendingDOData.Purc_Rate}
               onChange={handleChange}
               disabled={!isEditing && addOneButtonEnabled}
             />
@@ -3192,8 +3367,8 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               Name="Tender_Commission"
               value={
                 ChangeData
-                  ?
-                  tenderDetails.CR || formData.Tender_Commission :  CarporateState.Tender_Commission
+                  ? CarporateState.Tender_Commission
+                  : tenderDetails.CR || formData.Tender_Commission || pendingDOData.CR
               }
               onChange={handleChange}
               disabled={!isEditing && addOneButtonEnabled}
@@ -3279,7 +3454,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               type="text"
               id="truck_no"
               Name="truck_no"
-              value={formData.truck_no}
+              value={formData.truck_no || pendingDOData.truck_no}
               onChange={handleChange}
               disabled={!isEditing && addOneButtonEnabled}
             />
@@ -3502,8 +3677,8 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
             <AccountMasterHelp
               Name="DO"
               onAcCodeClick={handleDO}
-              CategoryName={tenderDetails.tenderdoname || lblDoname}
-              CategoryCode={tenderDetails.Tender_DO || newDO}
+              CategoryName={tenderDetails.tenderdoname || lblDoname || pendingDOData.tenderdoname}
+              CategoryCode={tenderDetails.Tender_DO || newDO || pendingDOData.Tender_DO}
               tabIndex={16}
               disabledFeild={!isEditing && addOneButtonEnabled}
             />
@@ -3574,12 +3749,12 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               CategoryName={
                 ChangeData
                   ? brokerTitle
-                  : tenderDetails.buyerpartyname || brokerTitle || lblbrokername
+                  : tenderDetails.buyerpartyname || brokerTitle || lblbrokername || pendingDOData.brokername
               }
               CategoryCode={
                 ChangeData
                   ? CarporateState.broker
-                  : tenderDetails.Buyer_Party || newbroker
+                  : tenderDetails.Buyer_Party || newbroker || pendingDOData.Broker
               }
               tabIndex={18}
               disabledFeild={!isEditing && addOneButtonEnabled}
@@ -3786,12 +3961,12 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
                         <AccountMasterHelp
                           onAcCodeClick={handleBankCode}
                           CategoryName={
-                            tenderDetails.paymenttoname || bankcodeacname
+                            tenderDetails.paymenttoname || bankcodeacname || pendingDOData.paymenttoname
                           }
                           CategoryCode={
                             tenderDetails.Payment_To ||
                             bankcode ||
-                            formDataDetail.Bank_Code
+                            formDataDetail.Bank_Code || pendingDOData.Payment_To
                           }
                           name="Bank_Code"
                           tabIndexHelp={2}
@@ -3980,5 +4155,6 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
       <br></br>
     </>
   );
+
 };
 export default DeliveryOrder;
