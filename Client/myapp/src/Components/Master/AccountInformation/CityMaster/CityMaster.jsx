@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useImperativeHandle, forwardRef} from 'react';
 import ActionButtonGroup from '../../../../Common/CommonButtons/ActionButtonGroup';
 import NavigationButtons from "../../../../Common/CommonButtons/NavigationButtons";
 import { useNavigate, useLocation, Form } from 'react-router-dom';
@@ -10,7 +10,9 @@ import GSTStateMasterHelp from "../../../../Helper/GSTStateMasterHelp"
 
 const API_URL = process.env.REACT_APP_API;
 
-const CityMaster = () => {
+var gstStateName;
+
+const CityMaster = ({isPopup = false}, ref) => {
     const [updateButtonClicked, setUpdateButtonClicked] = useState(false);
     const [saveButtonClicked, setSaveButtonClicked] = useState(false);
     const [addOneButtonEnabled, setAddOneButtonEnabled] = useState(false);
@@ -37,7 +39,7 @@ const CityMaster = () => {
         city_name_r: '',
         company_code: '',
         state: '',
-        Distance: '',
+        Distance: 0,
         GstStateCode: ''
     };
 
@@ -45,18 +47,27 @@ const CityMaster = () => {
     const [GstStateCode, setGstStateCode] = useState('');
     const [states, setStates] = useState([]);
 
+    useImperativeHandle(ref, () => ({
+        getFormData: () => formData
+    }));
+
     useEffect(() => {
         // Fetch data from the API endpoint when the component mounts
         axios.get('http://localhost:8080/api/sugarian/getall-gststatemaster')
             .then(response => {
-                // Assuming the API response contains an array of states
-                setStates(response.data);
-                setFormData(response.data)
+                const sortedStates = response.data.sort((a, b) => 
+                    a.State_Name.localeCompare(b.State_Name)
+                );
+                setStates(sortedStates); // Set sorted states
+                setFormData(prevData => ({ ...prevData, state: sortedStates[0]?.State_Code || '' })); // Set initial state in formData
+            
             })
             .catch(error => {
                 console.error('Error fetching states:', error);
             });
     }, []);
+
+    
 
 
     // Handle change for all inputs
@@ -268,7 +279,7 @@ const CityMaster = () => {
                 console.log("nextCompanyCreation", data);
                 // Assuming setFormData is a function to update the form data
                 setFormData({
-                    ...formData, ...data.nextCompanyCreation,
+                    ...formData, ...data.nextSelectedRecord,
                 });
             } else {
                 console.error("Failed to fetch next company creation data:", response.status, response.statusText);
@@ -302,7 +313,7 @@ const CityMaster = () => {
         try {
             const response = await axios.get(`${API_URL}/get-citybycitycode?company_code=${companyCode}&city_code=${selectedRecord.city_code}`);
             const data = response.data;
-            setFormData(data);
+            setFormData({...formData, ...data});
             setIsEditing(false);
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -362,6 +373,7 @@ const CityMaster = () => {
             <div class="modified-by-container">
                 <h2 class="modified-by-heading">Modified By: {formData.Modified_By}</h2>
             </div>
+            {!isPopup && (
             <div className="container">
                 <ToastContainer />
                 <ActionButtonGroup
@@ -393,6 +405,7 @@ const CityMaster = () => {
                     />
                 </div>
             </div>
+ )}
             <div className="form-container">
                 <form>
                     <h2>City Master</h2>
@@ -499,7 +512,7 @@ const CityMaster = () => {
 
                     <div className="form-group">
                         <label htmlFor="Distance">GST State Code:</label>
-                        <GSTStateMasterHelp onAcCodeClick={handleGstStateCode} GstStateCode={formData.GstStateCode} />
+                        <GSTStateMasterHelp onAcCodeClick={handleGstStateCode} GstStateName={gstStateName} GstStateCode={formData.GstStateCode} />
                     </div>
                 </form>
             </div>
@@ -508,4 +521,4 @@ const CityMaster = () => {
     );
 };
 
-export default CityMaster;
+export default forwardRef(CityMaster);

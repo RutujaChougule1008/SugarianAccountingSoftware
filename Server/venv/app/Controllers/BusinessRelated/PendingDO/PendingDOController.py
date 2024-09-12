@@ -3,6 +3,7 @@ from flask import Flask, jsonify, request
 from app import app, db
 from app.models.BusinessReleted.PendingDO.PendingDOModels import PendingDO
 import os
+from sqlalchemy import text
 
 
 API_URL= os.getenv('API_URL')
@@ -11,25 +12,41 @@ API_URL= os.getenv('API_URL')
 @app.route(API_URL + "/getdata-Pending_DO", methods=["GET"])
 def getdata_Pending_DO():
     try:
-        # Query the database using SQLAlchemy ORM
-        additional_data_rows = PendingDO.query.filter_by(doid=0).all()
+    
 
-        # Convert rows to dictionaries
-        all_data = [row.to_dict() for row in additional_data_rows]  # Ensure to_dict method is defined in your model
+        query = ('''SELECT        billTo.Ac_Name_E AS billToName, shipTo.Ac_Name_E AS shipToName, dbo.eBuySugar_Pending_DO.doid, dbo.eBuySugar_Pending_DO.user_id, dbo.eBuySugar_Pending_DO.do_qntl, 
+                         dbo.eBuySugar_Pending_DO.adjust_do_qntl, dbo.eBuySugar_Pending_DO.truck_no, dbo.eBuySugar_Pending_DO.bill_to_ac_code, dbo.eBuySugar_Pending_DO.tenderdetailid, dbo.eBuySugar_Pending_DO.orderid, 
+                         dbo.eBuySugar_Pending_DO.ship_to_ac_code, dbo.eBuySugar_Pending_DO.bill_to_gst_no, dbo.eBuySugar_Pending_DO.ship_to_gst_no, dbo.eBuySugar_Pending_DO.payment_detail, 
+                         dbo.eBuySugar_OrderList.Buy_Rate AS saleRate
+FROM            dbo.eBuySugar_Pending_DO LEFT OUTER JOIN
+                         dbo.eBuySugar_OrderList ON dbo.eBuySugar_Pending_DO.orderid = dbo.eBuySugar_OrderList.orderid LEFT OUTER JOIN
+                         dbo.nt_1_accountmaster AS shipTo ON dbo.eBuySugar_Pending_DO.ship_to_ac_code = shipTo.Ac_Code LEFT OUTER JOIN
+                         dbo.nt_1_accountmaster AS billTo ON dbo.eBuySugar_Pending_DO.bill_to_ac_code = billTo.Ac_Code
+                
+                                 '''
+            )
+        additional_data = db.session.execute(text(query))
 
-        # Prepare the response
+        # Extracting category name from additional_data
+        additional_data_rows = additional_data.fetchall()
+        
+        
+    
+
+        # Convert additional_data_rows to a list of dictionaries
+        all_data = [dict(row._mapping) for row in additional_data_rows]
+
+        
+
+        # Prepare response data 
         response = {
             "all_data": all_data
         }
-
-        # Return the JSON response with HTTP 200 status
+        # If record found, return it
         return jsonify(response), 200
 
     except Exception as e:
-        # Print the exception for debugging
         print(e)
-
-        # Return a JSON response with HTTP 500 status
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
     
 @app.route(API_URL + "/getByPendingDOId", methods=["GET"])

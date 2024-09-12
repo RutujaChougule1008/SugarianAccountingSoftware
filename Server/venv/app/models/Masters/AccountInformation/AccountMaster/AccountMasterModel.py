@@ -86,6 +86,7 @@ class AccountMaster(db.Model):
     VerifyAcNo3 = Column(String(50), nullable=True)
     TransporterId = Column(String(50), nullable=True)
     user_id = Column(Integer,nullable=True)
+    PurchaseTDSApplicable = Column(String(1), nullable=True)
 
     contacts = relationship('AccountContact', backref='accountmaster', lazy=True)
 
@@ -101,3 +102,15 @@ class AccountContact(db.Model):
     Person_Pan = Column(String(50), nullable=True)
     Other = Column(String(50), nullable=True)
     accoid = Column(Integer, ForeignKey('nt_1_accountmaster.accoid'),nullable=False)
+
+
+class AcGroups(db.Model):
+    __tablename__ = 'nt_1_acgroups'
+    
+    Company_Code = Column(Integer, nullable=True)
+    Ac_Code = Column(Integer, nullable=True)
+    Group_Code = Column(Integer, nullable=True)
+    accoid = Column(Integer, ForeignKey('nt_1_accountmaster.accoid'), nullable=False)
+    groupid = Column(Integer,primary_key=True)
+
+    account_master = relationship('AccountMaster', backref='acgroups', lazy=True)

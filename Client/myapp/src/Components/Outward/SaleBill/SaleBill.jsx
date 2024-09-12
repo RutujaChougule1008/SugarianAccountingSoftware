@@ -13,7 +13,7 @@ import "react-toastify/dist/ReactToastify.css";
 import "./SaleBill.css";
 import { HashLoader } from "react-spinners";
 import { z } from "zod";
-
+import SaleBillReport from './SaleBillReport'
 // Validation Part Using Zod Library
 const stringToNumber = z
   .string()
@@ -107,7 +107,7 @@ const SaleBill = () => {
 
   const initialFormData = {
     doc_no: "",
-    PURCNO: "",
+    PURCNO: 0,
     doc_date: new Date().toISOString().split("T")[0],
     Ac_Code: "",
     Unit_Code: "",
@@ -132,7 +132,7 @@ const SaleBill = () => {
     Created_By: "",
     Modified_By: "",
     Tran_Type: "",
-    DO_No: "",
+    DO_No: 0,
     Transport_Code: "",
     RateDiff: 0.0,
     ASN_No: "",
@@ -192,37 +192,59 @@ const SaleBill = () => {
   const [GstRate, setGstRate] = useState(0.0);
   const [matchStatus, setMatchStatus] = useState(null);
 
-  const handleChange = async (event) => {
+  const handleChange = (event) => {
     const { name, value } = event.target;
+  
+    // Function to format the truck number
+    const formatTruckNumber = (value) => {
+      const cleanedValue = value.replace(/\s+/g, '').toUpperCase();
+      return cleanedValue.length <= 10 ? cleanedValue : cleanedValue.substring(0, 10);
+    };
+  
+    // Check if the field being updated is 'LORRYNO'
+    const updatedValue = name === "LORRYNO" ? formatTruckNumber(value) : value;
+  
+    // Update the state with the formatted or unformatted value
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: updatedValue,
+    }));
+  };
+  
 
-    validateField(name, value);
+  const handleKeyDownCalculations = async (event) => {
+    if (event.key === "Tab") {
+      // event.preventDefault();
 
-    const matchStatus = await checkMatchStatus(
-      formData.Ac_Code,
-      companyCode,
-      Year_Code
-    );
+      const { name, value } = event.target;
 
-    let gstRate = GstRate;
+      // const matchStatus = await checkMatchStatus(
+      //   formData.Ac_Code,
+      //   companyCode,
+      //   Year_Code
+      // );
 
-    if (!gstRate || gstRate === 0) {
-      const cgstRate = parseFloat(formData.CGSTRate) || 0;
-      const sgstRate = parseFloat(formData.SGSTRate) || 0;
-      const igstRate = parseFloat(formData.IGSTRate) || 0;
+      let gstRate = GstRate;
 
-      gstRate = igstRate > 0 ? igstRate : cgstRate + sgstRate;
+      if (!gstRate || gstRate === 0) {
+        const cgstRate = parseFloat(formData.CGSTRate) || 0;
+        const sgstRate = parseFloat(formData.SGSTRate) || 0;
+        const igstRate = parseFloat(formData.IGSTRate) || 0;
+
+        gstRate = igstRate > 0 ? igstRate : cgstRate + sgstRate;
+      }
+
+      const updatedFormData = await calculateDependentValues(
+        name,
+        value,
+        formData,
+        matchStatus,
+        gstRate
+      );
+
+      setFormData(updatedFormData);
+      validateField(name, value);
     }
-
-    // Calculate dependent values and update form data
-    const updatedFormData = await calculateDependentValues(
-      name,
-      value,
-      formData,
-      matchStatus,
-      gstRate
-    );
-
-    setFormData(updatedFormData);
   };
 
   const handleOnChange = () => {
@@ -250,7 +272,6 @@ const SaleBill = () => {
       handleCancel();
       setIsHandleChange(false);
     }
-    setFocusTaskdate.current.focus();
   }, []);
 
   // Validation Part
@@ -287,7 +308,7 @@ const SaleBill = () => {
 
   const fetchLastRecord = () => {
     fetch(
-      `${API_URL}/get-lastSaleBill-navigation?Company_Code=${companyCode}&Year_Code=${Year_Code}`
+      `${API_URL}/get-next-doc-no?Company_Code=${companyCode}&Year_Code=${Year_Code}`
     )
       .then((response) => {
         if (!response.ok) {
@@ -296,11 +317,7 @@ const SaleBill = () => {
         return response.json();
       })
       .then((data) => {
-        const newDocNo =
-          data.last_head_data && data.last_head_data.doc_no
-            ? data.last_head_data.doc_no + 1
-            : 1;
-
+        const newDocNo = data.next_doc_no;
         setFormData((prevState) => ({
           ...prevState,
           doc_no: newDocNo,
@@ -387,7 +404,6 @@ const SaleBill = () => {
       headData,
       detailData,
     };
-    console.log(requestData);
 
     try {
       if (isEditMode) {
@@ -722,6 +738,7 @@ const SaleBill = () => {
     } else {
       handleAddOne();
     }
+    document.getElementById("Ac_Code").focus();
   }, [selectedRecord]);
 
   const handlerecordDoubleClicked = async () => {
@@ -800,13 +817,15 @@ const SaleBill = () => {
         millCode = data.last_head_data.mill_code;
         itemName = data.last_details_data[0].itemname;
         item_Code = data.last_details_data[0].System_Code;
-        brandName = data.last_details_data[0].brandName;
+        brandName = data.last_details_data[0].brandname;
         brandCode = data.last_details_data[0].brandCode;
         brokerCode = data.last_details_data[0].brokeraccode;
         brokerName = data.last_details_data[0].brokername;
         transportCode = data.last_details_data[0].transportaccode;
         transportName = data.last_details_data[0].transportname;
         millgstno = data.last_details_data[0].MillGSTNo;
+
+        console.log("brandName", brandName)
         setFormData({
           ...formData,
           ...data.last_head_data,
@@ -834,7 +853,6 @@ const SaleBill = () => {
       );
       return data.match_status;
     } catch (error) {
-      toast.error("Error checking GST State Code match.");
       console.error("Couldn't able to match GST State Code:", error);
       return error;
     }
@@ -961,7 +979,10 @@ const SaleBill = () => {
           Brand_Code: detail.Brand_Code,
           brand_name: detail.brand_name,
           ic: detail.ic,
-          id: users.length > 0 ? Math.max(...users.map((user) => user.id)) + 1 : 1,
+          id:
+            users.length > 0
+              ? Math.max(...users.map((user) => user.id)) + 1
+              : 1,
           saledetailid: detail.saledetailid,
           narration: detail.narration,
           Quantal: detail.Quantal,
@@ -1297,7 +1318,7 @@ const SaleBill = () => {
     openPopup("edit");
   };
 
-  const handleItemCode = (code, accoid,hsn,name) => {
+  const handleItemCode = (code, accoid, hsn, name) => {
     setItemCode(code);
     setItemName(name);
     setItemCodeAccoid(accoid);
@@ -1306,9 +1327,7 @@ const SaleBill = () => {
   const handleBrandCode = (code, name) => {
     setBrandCode(code);
     setBrandName(name);
-    console.log(name);
   };
-
 
   //Head Section help Functions to manage the Ac_Code and accoid
   const handleBillFrom = async (code, accoid, name, mobileNo) => {
@@ -1319,7 +1338,6 @@ const SaleBill = () => {
       Ac_Code: code,
       ac: accoid,
     };
-    console.log(mobileNo);
     try {
       const matchStatusResult = await checkMatchStatus(
         code,
@@ -1328,11 +1346,11 @@ const SaleBill = () => {
       );
       setMatchStatus(matchStatusResult);
 
-      if (matchStatusResult === "TRUE") {
-        toast.success("GST State Codes match!");
-      } else {
-        toast.warn("GST State Codes do not match.");
-      }
+      // if (matchStatusResult === "TRUE") {
+      //   toast.success("GST State Codes match!");
+      // } else {
+      //   toast.warn("GST State Codes do not match.");
+      // }
 
       let gstRate = GstRate;
 
@@ -1350,7 +1368,7 @@ const SaleBill = () => {
         GstRate,
         updatedFormData,
         matchStatusResult,
-        gstRate 
+        gstRate
       );
       setFormData(updatedFormData);
     } catch (error) {
@@ -1372,8 +1390,6 @@ const SaleBill = () => {
     setMill(code);
     setMillName(name);
     setMillGSTNo(gstno);
-    console.log(gstno);
-    console.log(gstno);
     setFormData({
       ...formData,
       mill_code: code,
@@ -1447,8 +1463,6 @@ const SaleBill = () => {
   return (
     <>
       <ToastContainer />
-  
-
       <form className="SaleBill-container" onSubmit={handleSubmit}>
         <h6 className="Heading">Sugar Bill For GST</h6>
 
@@ -1479,6 +1493,9 @@ const SaleBill = () => {
             isEditing={isEditing}
           />
         </div>
+
+        <SaleBillReport doc_no = {formData.doc_no}/>
+
         <div className="SaleBill-row">
           <label className="SaleBill-form-label">Change No:</label>
           <div className="SaleBill-col-Text">
@@ -1538,7 +1555,7 @@ const SaleBill = () => {
                 CategoryName={partyName}
                 CategoryCode={partyCode}
                 name="Ac_Code"
-                tabIndexHelp={2}
+                tabIndexHelp={1}
                 disabledFeild={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -1555,7 +1572,7 @@ const SaleBill = () => {
                 CategoryName={billToName}
                 CategoryCode={billToCode}
                 name="Bill_To"
-                tabIndexHelp={5}
+                tabIndexHelp={2}
                 disabledFeild={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -1572,7 +1589,7 @@ const SaleBill = () => {
                 CategoryName={unitName}
                 CategoryCode={unitCode}
                 name="Unit_Code"
-                tabIndexHelp={7}
+                tabIndexHelp={3}
                 disabledFeild={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -1589,7 +1606,7 @@ const SaleBill = () => {
                 CategoryName={millName}
                 CategoryCode={millCode}
                 name="mill_code"
-                tabIndexHelp={6}
+                tabIndexHelp={4}
                 disabledFeild={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -1605,6 +1622,7 @@ const SaleBill = () => {
                 value={formData.FROM_STATION}
                 onChange={handleChange}
                 disabled={!isEditing && addOneButtonEnabled}
+                tabIndex={5}
               />
             </div>
           </div>
@@ -1619,6 +1637,7 @@ const SaleBill = () => {
                 value={formData.TO_STATION}
                 onChange={handleChange}
                 disabled={!isEditing && addOneButtonEnabled}
+                tabIndex={6}
               />
             </div>
           </div>
@@ -1633,6 +1652,7 @@ const SaleBill = () => {
                 value={formData.LORRYNO}
                 onChange={handleChange}
                 disabled={!isEditing && addOneButtonEnabled}
+                tabIndex={7}
               />
             </div>
           </div>
@@ -1648,6 +1668,7 @@ const SaleBill = () => {
                 value={formData.wearhouse}
                 onChange={handleChange}
                 disabled={!isEditing && addOneButtonEnabled}
+                tabIndex={8}
               />
             </div>
           </div>
@@ -1661,7 +1682,7 @@ const SaleBill = () => {
                 CategoryName={brokerName}
                 CategoryCode={brokerCode}
                 name="BROKER"
-                tabIndexHelp={2}
+                tabIndexHelp={9}
                 disabledFeild={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -1676,7 +1697,7 @@ const SaleBill = () => {
                 GstRateName={gstName}
                 GstRateCode={gstRateCode}
                 name="GstRateCode"
-                tabIndexHelp={8}
+                tabIndexHelp={10}
                 disabledFeild={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -1689,6 +1710,7 @@ const SaleBill = () => {
             <div className="SaleBill-form-group-type">
               <select
                 id="Insured"
+                tabIndex="11"
                 name="Insured"
                 className="SaleBill-custom-select"
                 value={formData.Insured}
@@ -1742,7 +1764,7 @@ const SaleBill = () => {
                           CategoryCode={itemCode}
                           SystemType="I"
                           name="item_code"
-                          tabIndexHelp={3}
+                          tabIndexHelp={14}
                           className="account-master-help"
                         />
                       </div>
@@ -1754,7 +1776,7 @@ const SaleBill = () => {
                           brandName={brand_name}
                           brandCode={brand_code}
                           name="Brand_Code"
-                          tabIndexHelp={4}
+                          tabIndexHelp={15}
                           className="account-master-help"
                         />
                       </div>
@@ -1764,7 +1786,7 @@ const SaleBill = () => {
                         <div className="SaleBill-form-group">
                           <input
                             type="text"
-                            tabIndex="5"
+                            tabIndex="16"
                             className="SaleBill-form-control"
                             name="Quantal"
                             autoComplete="off"
@@ -1778,7 +1800,7 @@ const SaleBill = () => {
                         <div className="SaleBill-form-group">
                           <input
                             type="text"
-                            tabIndex="5"
+                            tabIndex="17"
                             className="SaleBill-form-control"
                             name="packing"
                             autoComplete="off"
@@ -1792,7 +1814,7 @@ const SaleBill = () => {
                         <div className="SaleBill-form-group">
                           <input
                             type="text"
-                            tabIndex="5"
+                            tabIndex="18"
                             className="SaleBill-form-control"
                             name="bags"
                             autoComplete="off"
@@ -1806,7 +1828,7 @@ const SaleBill = () => {
                         <div className="SaleBill-form-group">
                           <input
                             type="text"
-                            tabIndex="5"
+                            tabIndex="19"
                             className="SaleBill-form-control"
                             name="rate"
                             autoComplete="off"
@@ -1822,7 +1844,7 @@ const SaleBill = () => {
                         <div className="SaleBill-form-group">
                           <input
                             type="text"
-                            tabIndex="5"
+                            tabIndex="20"
                             className="SaleBill-form-control"
                             name="item_Amount"
                             autoComplete="off"
@@ -1836,7 +1858,7 @@ const SaleBill = () => {
                         <div className="SaleBill-form-group">
                           <textPath
                             type="text"
-                            tabIndex="5"
+                            tabIndex="21"
                             className="SaleBill-form-control"
                             name="narration"
                             autoComplete="off"
@@ -1851,6 +1873,7 @@ const SaleBill = () => {
                     {selectedUser.id ? (
                       <button
                         className="btn btn-primary"
+                        tabIndex="22"
                         onClick={updateUser}
                         onKeyDown={(event) => {
                           if (event.key === "Enter") {
@@ -1864,6 +1887,7 @@ const SaleBill = () => {
                       <button
                         className="btn btn-primary"
                         onClick={addUser}
+                        tabIndex="23"
                         onKeyDown={(event) => {
                           if (event.key === "Enter") {
                             addUser();
@@ -1876,6 +1900,7 @@ const SaleBill = () => {
                     <button
                       type="button"
                       className="btn btn-secondary"
+                      tabIndex="24"
                       onClick={closePopup}
                     >
                       Cancel
@@ -1897,7 +1922,7 @@ const SaleBill = () => {
               <button
                 className="btn btn-primary"
                 onClick={() => openPopup("add")}
-                tabIndex="16"
+                tabIndex="12"
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
                     openPopup("add");
@@ -1910,7 +1935,7 @@ const SaleBill = () => {
                 className="btn btn-danger"
                 disabled={!isEditing}
                 style={{ marginLeft: "10px" }}
-                tabIndex="17"
+                tabIndex=""
               >
                 Close
               </button>
@@ -2002,13 +2027,14 @@ const SaleBill = () => {
           <div className="SaleBill-col-Text">
             <div className="SaleBill-form-group">
               <input
-                tabIndex="9"
+                // tabIndex="9"
                 type="text"
                 className="SaleBill-form-control"
                 name="NETQNTL"
                 autoComplete="off"
                 value={formData.NETQNTL}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -2017,7 +2043,7 @@ const SaleBill = () => {
           <div className="SaleBill-col-Text">
             <div className="SaleBill-form-group">
               <input
-                tabIndex="9"
+                // tabIndex="9"
                 type="text"
                 className="SaleBill-form-control"
                 name="Due_Days"
@@ -2033,7 +2059,7 @@ const SaleBill = () => {
           <div className="SaleBill-col-Text">
             <div className="SaleBill-form-group">
               <input
-                tabIndex="9"
+                // tabIndex="9"
                 type="text"
                 className="SaleBill-form-control"
                 name="ASN_No"
@@ -2055,7 +2081,7 @@ const SaleBill = () => {
                 CategoryName={transportName}
                 CategoryCode={transportCode}
                 name="Transport_Code"
-                tabIndexHelp={2}
+                // tabIndexHelp={2}
                 disabledFeild={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -2071,7 +2097,7 @@ const SaleBill = () => {
                 autoComplete="off"
                 value={formData.EWay_Bill_No}
                 onChange={handleChange}
-                tabIndex="10"
+                // tabIndex="10"
                 disabled={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -2101,7 +2127,7 @@ const SaleBill = () => {
                 autoComplete="off"
                 value={formData.EWay_Bill_No}
                 onChange={handleChange}
-                tabIndex="10"
+                // tabIndex="10"
                 disabled={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -2110,7 +2136,7 @@ const SaleBill = () => {
           <div className="SaleBill-col">
             <div className="SaleBill-form-group">
               <input
-                tabIndex="4"
+                // tabIndex="4"
                 type="date"
                 className="SaleBill-form-control"
                 id="datePicker"
@@ -2132,7 +2158,7 @@ const SaleBill = () => {
                 autoComplete="off"
                 value={PartyMobNo || partyMobNo || 0}
                 onChange={handleChange}
-                tabIndex="11"
+                // tabIndex="11"
                 disabled={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -2147,7 +2173,7 @@ const SaleBill = () => {
                 autoComplete="off"
                 value={TransportMobNo || transportMob || 0}
                 onChange={handleChange}
-                tabIndex="11"
+                // tabIndex="11"
                 disabled={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -2162,7 +2188,7 @@ const SaleBill = () => {
                 autoComplete="off"
                 value={formData.newsbno}
                 onChange={handleChange}
-                tabIndex="11"
+                // tabIndex="11"
                 disabled={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -2176,7 +2202,7 @@ const SaleBill = () => {
                 name="GSTNo"
                 autoComplete="off"
                 value={isChecked ? millGSTNo || millgstno : gstNo}
-                tabIndex="11"
+                // tabIndex="11"
                 disabled={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -2191,7 +2217,7 @@ const SaleBill = () => {
                 autoComplete="off"
                 value={UnitMobNo || shipToMobNo || 0}
                 onChange={handleChange}
-                tabIndex="11"
+                // tabIndex="11"
                 disabled={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -2210,7 +2236,7 @@ const SaleBill = () => {
                 autoComplete="off"
                 value={formData.newsbno}
                 onChange={handleChange}
-                tabIndex="11"
+                // tabIndex="11"
                 disabled={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -2225,7 +2251,7 @@ const SaleBill = () => {
                 autoComplete="off"
                 value={formData.einvoiceno}
                 onChange={handleChange}
-                tabIndex="10"
+                // tabIndex="10"
                 disabled={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -2241,7 +2267,7 @@ const SaleBill = () => {
                 autoComplete="off"
                 value={formData.ackno}
                 onChange={handleChange}
-                tabIndex="11"
+                // tabIndex="11"
                 disabled={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -2256,7 +2282,7 @@ const SaleBill = () => {
               value={formData.SBNarration}
               onChange={handleChange}
               autoComplete="off"
-              tabIndex="12"
+              // tabIndex="12"
               disabled={!isEditing && addOneButtonEnabled}
             />
           </div>
@@ -2266,13 +2292,14 @@ const SaleBill = () => {
           <div className="SaleBill-col-Text">
             <div className="SaleBill-form-group">
               <input
-                tabIndex="13"
+                // tabIndex="13"
                 type="text"
                 className="SaleBill-form-control"
                 name="subTotal"
                 autoComplete="off"
                 value={formData.subTotal}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -2281,24 +2308,26 @@ const SaleBill = () => {
           <div className="SaleBill-col-Text">
             <div className="SaleBill-form-group">
               <input
-                tabIndex="14"
+                // tabIndex="14"
                 type="text"
                 className="SaleBill-form-control"
                 name="LESS_FRT_RATE"
                 autoComplete="off"
                 value={formData.LESS_FRT_RATE}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
 
               <input
-                tabIndex="15"
+                // tabIndex="15"
                 type="text"
                 className="SaleBill-form-control"
                 name="freight"
                 autoComplete="off"
                 value={formData.freight}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -2308,13 +2337,14 @@ const SaleBill = () => {
           <div className="SaleBill-col-Text">
             <div className="SaleBill-form-group">
               <input
-                tabIndex="13"
+                // tabIndex="13"
                 type="text"
                 className="SaleBill-form-control"
                 name="TaxableAmount"
                 autoComplete="off"
                 value={formData.TaxableAmount}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -2324,24 +2354,26 @@ const SaleBill = () => {
           <div className="SaleBill-col-Text">
             <div className="SaleBill-form-group">
               <input
-                tabIndex="14"
+                // tabIndex="14"
                 type="text"
                 className="SaleBill-form-control"
                 name="CGSTRate"
                 autoComplete="off"
                 value={formData.CGSTRate}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
 
               <input
-                tabIndex="15"
+                // tabIndex="15"
                 type="text"
                 className="SaleBill-form-control"
                 name="CGSTAmount"
                 autoComplete="off"
                 value={formData.CGSTAmount}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -2351,24 +2383,26 @@ const SaleBill = () => {
           <div className="SaleBill-col-Text">
             <div className="SaleBill-form-group">
               <input
-                tabIndex="16"
+                // tabIndex="16"
                 type="text"
                 className="SaleBill-form-control"
                 name="SGSTRate"
                 autoComplete="off"
                 value={formData.SGSTRate}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
 
               <input
-                tabIndex="17"
+                // tabIndex="17"
                 type="text"
                 className="SaleBill-form-control"
                 name="SGSTAmount"
                 autoComplete="off"
                 value={formData.SGSTAmount}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -2378,24 +2412,26 @@ const SaleBill = () => {
           <div className="SaleBill-col-Text">
             <div className="SaleBill-form-group">
               <input
-                tabIndex="18"
+                // tabIndex="18"
                 type="text"
                 className="SaleBill-form-control"
                 name="IGSTRate"
                 autoComplete="off"
                 value={formData.IGSTRate}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
 
               <input
-                tabIndex="19"
+                // tabIndex="19"
                 type="text"
                 className="SaleBill-form-control"
                 name="IGSTAmount"
                 autoComplete="off"
                 value={formData.IGSTAmount}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -2405,24 +2441,26 @@ const SaleBill = () => {
           <div className="SaleBill-col-Text">
             <div className="SaleBill-form-group">
               <input
-                tabIndex="18"
+                // tabIndex="18"
                 type="text"
                 className="SaleBill-form-control"
                 name="RateDiff"
                 autoComplete="off"
                 value={formData.RateDiff}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
 
               <input
-                tabIndex="19"
+                // tabIndex="19"
                 type="text"
                 className="SaleBill-form-control"
                 name="RateDiffAmount"
                 autoComplete="off"
                 value={calculateRateDiffAmount()}
-                onChange={handleChange}
+                // onChange={handleChange}
+                //  onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -2432,13 +2470,14 @@ const SaleBill = () => {
           <div className="SaleBill-col-Text">
             <div className="SaleBill-form-group">
               <input
-                tabIndex="20"
+                // tabIndex="20"
                 type="text"
                 className="SaleBill-form-control"
                 name="OTHER_AMT"
                 autoComplete="off"
                 value={formData.OTHER_AMT}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -2447,13 +2486,14 @@ const SaleBill = () => {
           <div className="SaleBill-col-Text">
             <div className="SaleBill-form-group">
               <input
-                tabIndex="18"
+                // tabIndex="18"
                 type="text"
                 className="SaleBill-form-control"
                 name="cash_advance"
                 autoComplete="off"
                 value={formData.cash_advance}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -2463,13 +2503,14 @@ const SaleBill = () => {
           <div className="SaleBill-col-Text">
             <div className="SaleBill-form-group">
               <input
-                tabIndex="18"
+                // tabIndex="18"
                 type="text"
                 className="SaleBill-form-control"
                 name="RoundOff"
                 autoComplete="off"
                 value={formData.RoundOff}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -2479,13 +2520,14 @@ const SaleBill = () => {
           <div className="SaleBill-col-Text">
             <div className="SaleBill-form-group">
               <input
-                tabIndex="21"
+                // tabIndex="21"
                 type="text"
                 className="SaleBill-form-control"
                 name="Bill_Amount"
                 autoComplete="off"
                 value={formData.Bill_Amount}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 style={{ color: "red", fontWeight: "bold" }}
                 disabled={!isEditing && addOneButtonEnabled}
               />
@@ -2496,23 +2538,25 @@ const SaleBill = () => {
           <div className="SaleBill-col-Text">
             <div className="SaleBill-form-group">
               <input
-                tabIndex="22"
+                // tabIndex="22"
                 type="text"
                 className="SaleBill-form-control"
                 name="TCS_Rate"
                 autoComplete="off"
                 value={formData.TCS_Rate}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
               <input
-                tabIndex="23"
+                // tabIndex="23"
                 type="text"
                 className="SaleBill-form-control"
                 name="TCS_Amt"
                 autoComplete="off"
                 value={formData.TCS_Amt}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -2522,7 +2566,7 @@ const SaleBill = () => {
           <div className="SaleBill-col-Text">
             <div className="SaleBill-form-group">
               <input
-                tabIndex="24"
+                // tabIndex="24"
                 type="text"
                 className="SaleBill-form-control"
                 name="TCS_Net_Payable"
@@ -2530,6 +2574,7 @@ const SaleBill = () => {
                 style={{ color: "red", fontWeight: "bold" }}
                 value={formData.TCS_Net_Payable}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -2541,17 +2586,18 @@ const SaleBill = () => {
           <div className="SaleBill-col-Text">
             <div className="SaleBill-form-group">
               <input
-                tabIndex="25"
+                // tabIndex="25"
                 type="text"
                 className="SaleBill-form-control"
                 name="TDS_Rate"
                 autoComplete="off"
                 value={formData.TDS_Rate}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
               <input
-                tabIndex="26"
+                // tabIndex="26"
                 type="text"
                 className="SaleBill-form-control"
                 name="TDS_Amt"
@@ -2559,6 +2605,7 @@ const SaleBill = () => {
                 value={formData.TDS_Amt !== null ? formData.TDS_Amt : ""}
                 // value={formData.TDS_Amt}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
             </div>

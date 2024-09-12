@@ -10,8 +10,8 @@ import os
 API_URL = os.getenv('API_URL')
 
 # Import schemas from the schemas module
-from app.models.Masters.AccountInformation.AccountMaster.AccountMasterModel import AccountMaster, AccountContact
-from app.models.Masters.AccountInformation.AccountMaster.AccountMasterSchema import AccountMasterSchema, AccountContactSchema
+from app.models.Masters.AccountInformation.AccountMaster.AccountMasterModel import AccountMaster, AccountContact, AcGroups
+from app.models.Masters.AccountInformation.AccountMaster.AccountMasterSchema import AccountMasterSchema, AccountContactSchema, AcGroupsSchema
 from app.models.eBuySugarian.Users.EBuy_UserModel import EBuyUsers
 from app.utils.CommonGLedgerFunctions import get_accoid
 
@@ -24,56 +24,93 @@ account_contact_schemas = AccountContactSchema(many=True)
 
 # Global SQL Query
 ACCOUNT_CONTACT_DETAILS_QUERY = '''
-    SELECT city.city_name_e AS cityname, dbo.nt_1_bsgroupmaster.group_Name_E AS groupcodename, State.State_Name
-FROM     dbo.nt_1_accountmaster LEFT OUTER JOIN
+   SELECT city.city_name_e AS cityname, dbo.nt_1_bsgroupmaster.group_Name_E AS groupcodename, State.State_Name
+FROM     dbo.nt_1_accountmaster INNER JOIN
                   dbo.gststatemaster AS State ON dbo.nt_1_accountmaster.GSTStateCode = State.State_Code LEFT OUTER JOIN
+                  dbo.nt_1_citymaster AS city ON dbo.nt_1_accountmaster.cityid = city.cityid LEFT OUTER JOIN
                   dbo.nt_1_accontacts ON dbo.nt_1_accountmaster.accoid = dbo.nt_1_accontacts.accoid LEFT OUTER JOIN
-                  dbo.nt_1_bsgroupmaster ON dbo.nt_1_accountmaster.bsid = dbo.nt_1_bsgroupmaster.bsid LEFT OUTER JOIN
-                  dbo.nt_1_citymaster AS city ON dbo.nt_1_accountmaster.cityid = city.cityid
+                  dbo.nt_1_bsgroupmaster ON dbo.nt_1_accountmaster.bsid = dbo.nt_1_bsgroupmaster.bsid
     WHERE dbo.nt_1_accountmaster.accoid = :accoid
 '''
 
 
 # Get data from both tables AccountMaster and AccountContact
-@app.route(API_URL + "/getdata-accountmaster", methods=["GET"])
+# @app.route(API_URL + "/getdata-accountmaster", methods=["GET"])
+# def getdata_accountmaster():
+#     try:
+#         company_code = request.args.get('Company_Code')
+#         if not company_code:
+#             return jsonify({"error": "Missing 'Company_Code' parameter"}), 400
+        
+#         records = AccountMaster.query.filter_by(company_code=company_code).all()
+
+#         if not records:
+#             return jsonify({"error": "No records found"}), 404
+
+#         all_records_data = []
+
+#         for record in records:
+#             account_master_data = {column.name: getattr(record, column.name) for column in record.__table__.columns}
+
+#             additional_data = db.session.execute(text(ACCOUNT_CONTACT_DETAILS_QUERY), {"accoid": record.accoid})
+#             additional_data_row = additional_data.fetchone()  # Fetch only the first row
+
+#             account_labels = dict(additional_data_row._mapping) if additional_data_row else {}
+
+#             # detail_records = AccountContact.query.filter_by(accoid=record.accoid).all()
+#             # detail_data = [{column.name: getattr(detail_record, column.name) for column in detail_record.__table__.columns} for detail_record in detail_records]
+
+#             record_response = {
+#                 "account_master_data": account_master_data,
+#                 # "account_detail_data": detail_data,
+#                 "account_labels": account_labels
+#             }
+
+#             all_records_data.append(record_response)
+
+#         response = {
+#             "all_data_account_master": all_records_data
+#         }
+#         return jsonify(response), 200
+
+#     except Exception as e:
+#         return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+
+@app.route(API_URL+"/getdata-accountmaster", methods=["GET"])
 def getdata_accountmaster():
     try:
         company_code = request.args.get('Company_Code')
         if not company_code:
             return jsonify({"error": "Missing 'Company_Code' parameter"}), 400
+
+        query = ('''SELECT dbo.nt_1_accountmaster.Ac_Code, dbo.nt_1_accountmaster.Ac_type, dbo.nt_1_accountmaster.Ac_Name_E, dbo.nt_1_accountmaster.Short_Name, dbo.nt_1_accountmaster.Commission, dbo.nt_1_accountmaster.Address_E, 
+                  dbo.nt_1_citymaster.city_name_e, dbo.nt_1_accountmaster.Gst_No, dbo.nt_1_accountmaster.AC_Pan, dbo.nt_1_accountmaster.FSSAI, dbo.nt_1_accountmaster.adhar_no, dbo.nt_1_accountmaster.Mobile_No, 
+                  dbo.nt_1_accountmaster.accoid
+FROM     dbo.nt_1_accountmaster LEFT OUTER JOIN
+                  dbo.nt_1_citymaster ON dbo.nt_1_accountmaster.cityid = dbo.nt_1_citymaster.cityid
+                 where dbo.nt_1_accountmaster.Company_Code = :company_code 
+                                 '''
+            )
+        additional_data = db.session.execute(text(query), {"company_code": company_code})
+
+        # Extracting category name from additional_data
+        additional_data_rows = additional_data.fetchall()
         
-        records = AccountMaster.query.filter_by(company_code=company_code).all()
 
-        if not records:
-            return jsonify({"error": "No records found"}), 404
+        # Convert additional_data_rows to a list of dictionaries
+        all_data = [dict(row._mapping) for row in additional_data_rows]
 
-        all_records_data = []
 
-        for record in records:
-            account_master_data = {column.name: getattr(record, column.name) for column in record.__table__.columns}
-
-            additional_data = db.session.execute(text(ACCOUNT_CONTACT_DETAILS_QUERY), {"accoid": record.accoid})
-            additional_data_row = additional_data.fetchone()  # Fetch only the first row
-
-            account_labels = dict(additional_data_row._mapping) if additional_data_row else {}
-
-            # detail_records = AccountContact.query.filter_by(accoid=record.accoid).all()
-            # detail_data = [{column.name: getattr(detail_record, column.name) for column in detail_record.__table__.columns} for detail_record in detail_records]
-
-            record_response = {
-                "account_master_data": account_master_data,
-                # "account_detail_data": detail_data,
-                "account_labels": account_labels
-            }
-
-            all_records_data.append(record_response)
-
+        # Prepare response data 
         response = {
-            "all_data_account_master": all_records_data
+            "all_data": all_data
         }
+        # If record found, return it
         return jsonify(response), 200
 
     except Exception as e:
+        print(e)
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
 
@@ -91,8 +128,12 @@ def getaccountmasterByid():
             return jsonify({"error": "No records found"}), 404
 
         accoid = account_master.accoid
+        ac_code = account_master.Ac_Code
         additional_data = db.session.execute(text(ACCOUNT_CONTACT_DETAILS_QUERY), {"accoid": accoid})
         additional_data_row = additional_data.fetchone()  # Fetch only the first row
+
+        group_codes_data = AcGroups.query.filter_by(Ac_Code=ac_code, Company_Code=company_code).all()
+        group_codes = [group.Group_Code for group in group_codes_data] if group_codes_data else []
 
         account_master_data = {column.name: getattr(account_master, column.name) for column in account_master.__table__.columns}
 
@@ -104,7 +145,8 @@ def getaccountmasterByid():
         response = {
             "account_master_data": account_master_data,
             "account_detail_data": detail_data,
-            "account_labels": account_labels
+            "account_labels": account_labels,
+             "group_codes": group_codes
         }
         return jsonify(response), 200
 
@@ -151,8 +193,10 @@ def get_lastaccountMasterdata():
             return jsonify({"error": "No records found"}), 404
 
         accoid = last_account_master.accoid
+        ac_code = last_account_master.Ac_Code
         additional_data = db.session.execute(text(ACCOUNT_CONTACT_DETAILS_QUERY), {"accoid": accoid})
         additional_data_row = additional_data.fetchone()  # Fetch only the first row
+
 
         account_master_data = {column.name: getattr(last_account_master, column.name) for column in last_account_master.__table__.columns}
 
@@ -162,10 +206,13 @@ def get_lastaccountMasterdata():
 
         detail_data = [{column.name: getattr(detail_record, column.name) for column in detail_record.__table__.columns} for detail_record in detail_records]
 
+        group_codes_data = AcGroups.query.filter_by(Ac_Code=ac_code, Company_Code=company_code).all()
+        group_codes = [group.Group_Code for group in group_codes_data] if group_codes_data else []
         response = {
             "account_master_data": account_master_data,
             "account_detail_data": detail_data,
-            "account_labels": account_labels
+            "account_labels": account_labels,
+            "group_codes": group_codes
         }
         return jsonify(response), 200
 
@@ -187,6 +234,7 @@ def get_firstaccountMaster_navigation():
             return jsonify({"error": "No records found"}), 404
 
         accoid = first_account_master.accoid
+        ac_code = first_account_master.Ac_Code
         additional_data = db.session.execute(text(ACCOUNT_CONTACT_DETAILS_QUERY), {"accoid": accoid})
         additional_data_row = additional_data.fetchone()  # Fetch only the first row
 
@@ -196,12 +244,16 @@ def get_firstaccountMaster_navigation():
 
         detail_records = AccountContact.query.filter_by(accoid=accoid).all()
 
+        group_codes_data = AcGroups.query.filter_by(Ac_Code=ac_code, Company_Code=company_code).all()
+        group_codes = [group.Group_Code for group in group_codes_data] if group_codes_data else []
+
         detail_data = [{column.name: getattr(detail_record, column.name) for column in detail_record.__table__.columns} for detail_record in detail_records]
 
         response = {
             "account_master_data": account_master_data,
             "account_detail_data": detail_data,
-            "account_labels": account_labels
+            "account_labels": account_labels,
+             "group_codes": group_codes
         }
         return jsonify(response), 200
 
@@ -225,6 +277,7 @@ def get_previousaccountMaster_navigation():
             return jsonify({"error": "No previous records found"}), 404
 
         accoid = previous_account_master.accoid
+        ac_code = previous_account_master.Ac_Code
         additional_data = db.session.execute(text(ACCOUNT_CONTACT_DETAILS_QUERY), {"accoid": accoid})
         additional_data_row = additional_data.fetchone()  # Fetch only the first row
 
@@ -234,12 +287,16 @@ def get_previousaccountMaster_navigation():
 
         detail_records = AccountContact.query.filter_by(accoid=accoid).all()
 
+        group_codes_data = AcGroups.query.filter_by(Ac_Code=ac_code, Company_Code=company_code).all()
+        group_codes = [group.Group_Code for group in group_codes_data] if group_codes_data else []
+
         detail_data = [{column.name: getattr(detail_record, column.name) for column in detail_record.__table__.columns} for detail_record in detail_records]
 
         response = {
             "account_master_data": account_master_data,
             "account_detail_data": detail_data,
-            "account_labels": account_labels
+            "account_labels": account_labels,
+             "group_codes": group_codes
         }
         return jsonify(response), 200
 
@@ -263,6 +320,7 @@ def get_nextaccountMaster_navigation():
             return jsonify({"error": "No next records found"}), 404
 
         accoid = next_account_master.accoid
+        ac_code = next_account_master.Ac_Code
         additional_data = db.session.execute(text(ACCOUNT_CONTACT_DETAILS_QUERY), {"accoid": accoid})
         additional_data_row = additional_data.fetchone()  # Fetch only the first row
 
@@ -272,12 +330,16 @@ def get_nextaccountMaster_navigation():
 
         detail_records = AccountContact.query.filter_by(accoid=accoid).all()
 
+        group_codes_data = AcGroups.query.filter_by(Ac_Code=ac_code, Company_Code=company_code).all()
+        group_codes = [group.Group_Code for group in group_codes_data] if group_codes_data else []
+
         detail_data = [{column.name: getattr(detail_record, column.name) for column in detail_record.__table__.columns} for detail_record in detail_records]
 
         response = {
             "account_master_data": account_master_data,
             "account_detail_data": detail_data,
-            "account_labels": account_labels
+            "account_labels": account_labels,
+             "group_codes": group_codes
         }
         return jsonify(response), 200
 
@@ -645,3 +707,54 @@ def getBy_GstNo():
     except Exception as e:
         print("Traceback:", traceback.format_exc())
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
+    
+@app.route(API_URL + '/create-multiple-acgroups', methods=['POST'])
+def create_multiple_acgroups():
+    try:
+        # Extract JSON data from the request
+        data = request.get_json()
+        acGroups_data = data.get('acGroups')
+
+        # Validate data
+        if not acGroups_data:
+            return jsonify({'error': 'Missing acGroups data'}), 400
+
+        responses = []
+
+        # Process each group entry
+        for group_data in acGroups_data:
+            ac_code = group_data.get('Ac_Code')
+            group_code = group_data.get('Group_Code')
+            company_code = group_data.get('Company_Code')
+
+            # Validate required parameters
+            if not all([ac_code, group_code, company_code]):
+                responses.append({'error': 'Missing required fields for one or more entries'})
+                continue
+
+            # Find the corresponding AccountMaster entry
+            account_master = AccountMaster.query.filter_by(Ac_Code=ac_code, company_code=company_code).first()
+            if not account_master:
+                responses.append({'error': f'No AccountMaster record found with Ac_Code {ac_code} and Company_Code {company_code}'})
+                continue
+            
+            # Create and add the new AcGroups record
+            new_acgroup = AcGroups(Group_Code=group_code, Company_Code=company_code, accoid=account_master.accoid, Ac_Code = ac_code)
+            db.session.add(new_acgroup)
+            responses.append({
+                'message': 'AcGroup created successfully',
+                'AcGroup': {
+                    'Group_Code': group_code,
+                    'Company_Code': company_code,
+                    'accoid': account_master.accoid
+                }
+            })
+
+        # Commit changes to the database
+        db.session.commit()
+
+        return jsonify(responses), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Internal server error', 'message': str(e)}), 500

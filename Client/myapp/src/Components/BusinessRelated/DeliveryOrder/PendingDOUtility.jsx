@@ -127,9 +127,9 @@ function DeliveryOredrUtility() {
     };
 
     const handleRowClick = (tenderdetailid) => {
-        const selectedRecord = filteredData.find(record => record.tenderdetailid === tenderdetailid);
-        console.log("selectedRecord", selectedRecord)
-        navigate("/delivery-order", { state: { selectedRecord } });
+        const selectedRecordPendingDo = filteredData.find(record => record.tenderdetailid === tenderdetailid);
+        console.log("selectedRecordPendingDo", selectedRecordPendingDo)
+        navigate("/delivery-order", { state: { selectedRecordPendingDo } });
     };
 
     const handleSearchClick = () => {
@@ -161,7 +161,7 @@ function DeliveryOredrUtility() {
                         onSearchClick={handleSearchClick}
                     />
                 </Grid>
-                <Grid item xs={12} sm={8} style={{ marginTop: "-80px", marginLeft: "-150px" }}>
+                <Grid item xs={12} sm={12} style={{ marginTop: "-80px", marginLeft: "-150px" }}>
                     <PerPageSelect value={perPage} onChange={handlePerPageChange} />
                 </Grid>
 
@@ -169,33 +169,25 @@ function DeliveryOredrUtility() {
 
 
                 <Grid item xs={12}>
-                    <Paper elevation={3}>
-                        <TableContainer>
+                    <Paper elevation={6}>
+                    
                             <Table>
                                 <TableHead>
                                     <TableRow>
                                         <TableCell>DO Id</TableCell>
                                         <TableCell>TenderdetailId</TableCell>
-                                        <TableCell>User Id</TableCell>
-                                        <TableCell>Order Id</TableCell>
                                         <TableCell>BillTo A/C</TableCell>
-                                        <TableCell>BillTo Address</TableCell>
+                                        <TableCell>BillTo Name</TableCell>
                                         <TableCell>BillTo GST No</TableCell>
-                                        <TableCell>BillTo PinCode</TableCell>
-                                        <TableCell>BillTo State</TableCell>
                                         <TableCell>ShipTo A/C</TableCell>
-                                        <TableCell>ShipTo Address</TableCell>
+                                        <TableCell>ShipTo Name</TableCell>
                                         <TableCell>ShipTo GST No</TableCell>
-                                        <TableCell>ShipTo PinCode</TableCell>
-                                        <TableCell>ShipTo State</TableCell>
+                                        <TableCell>DO Quintal</TableCell>
+                                        <TableCell>Sale Rate</TableCell>
                                         <TableCell>Truck No</TableCell>
                                         <TableCell>Payment Detail</TableCell>
-                                        
-                                        <TableCell>DO Quintal</TableCell>
-                                        <TableCell>New Party</TableCell>
-                                        <TableCell>Pending DO Id</TableCell>
-                                        
-
+                                        <TableCell>Order Id</TableCell>
+                                       
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -208,30 +200,23 @@ function DeliveryOredrUtility() {
                                         >
                                             <TableCell>{post.doid}</TableCell>
                                             <TableCell>{post.tenderdetailid}</TableCell>
-                                            <TableCell>{post.user_id}</TableCell>
-                                            <TableCell>{post.orderid}</TableCell>
                                             <TableCell>{post.bill_to_ac_code}</TableCell>
-                                            <TableCell>{post.bill_to_address}</TableCell>
+                                            <TableCell>{post.billToName}</TableCell>
                                             <TableCell>{post.bill_to_gst_no}</TableCell>
-                                            <TableCell>{post.bill_to_pincode}</TableCell>
-                                            <TableCell>{post.bill_to_state}</TableCell>
                                             <TableCell>{post.ship_to_ac_code}</TableCell>
-                                            <TableCell>{post.ship_to_address}</TableCell>
+                                            <TableCell>{post.shipToName}</TableCell>
                                             <TableCell>{post.ship_to_gst_no}</TableCell>
-                                            <TableCell>{post.ship_to_pincode}</TableCell>
-                                            <TableCell>{post.ship_to_state}</TableCell>
+                                            <TableCell>{post.do_qntl}</TableCell>
+                                            <TableCell>{post.saleRate}</TableCell>
                                             <TableCell>{post.truck_no}</TableCell>
                                             <TableCell>{post.payment_detail}</TableCell>
+                                            <TableCell>{post.orderid}</TableCell>
                                            
-                                            <TableCell>{post.do_qntl}</TableCell>
-                                            <TableCell>{post.new_party}</TableCell>
-                                            <TableCell>{post.pending_doid}</TableCell>
-                                    
                                         </TableRow>
                                     ))}
                                 </TableBody>
                             </Table>
-                        </TableContainer>
+                     
                     </Paper>
                 </Grid>
                 <Grid item xs={12}>

@@ -93,35 +93,28 @@ def get_CityByCityCode():
         print(e)
         return jsonify({'error': 'Internal server error'}), 500
 
-@app.route(API_URL + "/get-citybypinCode", methods=["GET"])
+@app.route(API_URL + "/get-citybyName", methods=["GET"])
 def CitybyPinCode():
     try:
         # Extract pinCode or city_name_e from query parameters
-        pinCode = request.args.get('pincode')
+       
         city_name_e = request.args.get('city_name_e')
 
-        if pinCode is None and city_name_e is None:
+        if city_name_e is None:
             return jsonify({'error': 'Missing pincode or city_name_e parameter'}), 400
 
-        if pinCode:
+        if city_name_e:
             # Handle the case when pinCode is provided
             try:
-                pinCode = int(pinCode)
-                # Fetch data based on pinCode
-                City = CityMaster.query.filter_by(pincode=pinCode).first()
+                City = CityMaster.query.filter_by(city_name_e=city_name_e).first()
             except ValueError:
                 return jsonify({'error': 'Invalid pincode parameter'}), 400
-
-        elif city_name_e:
-            # Handle the case when city_name_e is provided
-            # You would need to query based on city_name_e instead
-            City = CityMaster.query.filter_by(city_name_e=city_name_e).first()
             
         if City is None:
             return jsonify({'error': 'City not found'}), 404
 
         # Convert City to a dictionary
-        city_data = {'city_code': City.city_code}
+        city_data = {'city_code': City.city_code, 'city_name_e': City.city_name_e}
 
         return jsonify(city_data)
     except Exception as e:
@@ -284,7 +277,7 @@ def get_previous_record():
 @app.route(API_URL+"/get_next_record", methods=["GET"])
 def get_next_record():
     try:
-        Selected_Record = request.args.get('group_Code')
+        Selected_Record = request.args.get('city_code')
         if Selected_Record is None:
             return jsonify({'error': 'Selected_Record parameter is required'}), 400
 

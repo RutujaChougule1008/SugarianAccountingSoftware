@@ -1,5 +1,5 @@
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
-from app.models.Masters.AccountInformation.AccountMaster.AccountMasterModel import AccountMaster,AccountContact
+from app.models.Masters.AccountInformation.AccountMaster.AccountMasterModel import AccountMaster,AccountContact, AcGroups
 
 class AccountMasterSchema(SQLAlchemyAutoSchema):
     class Meta:
@@ -9,4 +9,9 @@ class AccountMasterSchema(SQLAlchemyAutoSchema):
 class AccountContactSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = AccountContact
+        include_relationships = True
+
+class AcGroupsSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = AcGroups
         include_relationships = True

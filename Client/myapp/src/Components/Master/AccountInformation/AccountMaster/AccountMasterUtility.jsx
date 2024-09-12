@@ -34,9 +34,9 @@ function AccountMasterUtility() {
             try {
                 const apiUrl = `${API_URL}/getdata-accountmaster?Company_Code=${companyCode}`;
                 const response = await axios.get(apiUrl);
-                if (response.data && response.data.all_data_account_master) {
-                    setFetchedData(response.data.all_data_account_master);
-                    setFilteredData(response.data.all_data_account_master); 
+                if (response.data && response.data.all_data) {
+                    setFetchedData(response.data.all_data);  // Set all_data directly
+                    setFilteredData(response.data.all_data);
                 }
             } catch (error) {
                 console.error("Error fetching data:", error);
@@ -49,10 +49,12 @@ function AccountMasterUtility() {
     useEffect(() => {
         const filtered = fetchedData.filter(post => {
             const searchTermLower = searchTerm.toLowerCase();
-            return Object.keys(post.account_master_data).some(key =>
-                String(post.account_master_data[key]).toLowerCase().includes(searchTermLower)
-            );
+            return Object.keys(post).some(key => {
+                const value = post[key];
+                return value !== null && value !== undefined && String(value).toLowerCase().includes(searchTermLower);
+            });
         });
+    
         setFilteredData(filtered);
         setCurrentPage(1);
     }, [searchTerm, fetchedData]);
@@ -70,6 +72,7 @@ function AccountMasterUtility() {
     const pageCount = Math.ceil(filteredData.length / perPage);
 
     const paginatedPosts = filteredData.slice((currentPage - 1) * perPage, currentPage * perPage);
+
     const handlePageChange = (pageNumber) => {
         setCurrentPage(pageNumber);
     };
@@ -79,12 +82,8 @@ function AccountMasterUtility() {
     };
 
     const handleRowClick = (Ac_Code) => {
-        const selectedRecord = filteredData.find(record => record.account_master_data.Ac_Code === Ac_Code);
+        const selectedRecord = filteredData.find(record => record.Ac_Code === Ac_Code);
         navigate("/account-master", { state: { selectedRecord } });
-    };
-
-    const handleSearchClick = () => {
-        // Handle search button click if needed
     };
 
     const handleBack = () => {
@@ -92,7 +91,7 @@ function AccountMasterUtility() {
     };
 
     return (
-        <div className="container" style={{ padding: '20px', overflow: 'hidden' }}>
+        <div style={{ padding: '20px', overflow: 'hidden' }}>
             <Typography variant="h4" gutterBottom style={{ textAlign: 'center', marginBottom: '20px' }}>
             Account Master
             </Typography>
@@ -114,13 +113,12 @@ function AccountMasterUtility() {
                     <SearchBar
                         value={searchTerm}
                         onChange={handleSearchTermChange}
-                        onSearchClick={handleSearchClick}
                     />
                 </Grid>
-                <Grid item xs={12}>
-                    <Paper elevation={3}>
-                        <TableContainer style={{ maxHeight: '400px' }}>
-                            <Table stickyHeader>
+        
+                   
+                        
+                            <Table>
                                 <TableHead>
                                     <TableRow>
                                         <TableCell>A/c Code</TableCell>
@@ -130,45 +128,42 @@ function AccountMasterUtility() {
                                         <TableCell>Commission</TableCell>
                                         <TableCell>Address</TableCell>
                                         <TableCell>City Name</TableCell>
-                                        <TableCell>State Code</TableCell>
                                         <TableCell>GST No</TableCell>
                                         <TableCell>PAN</TableCell>
                                         <TableCell>FSSAI</TableCell>
-                                        <TableCell>Adhar No	</TableCell>
+                                        <TableCell>Adhar No</TableCell>
                                         <TableCell>Mobile No</TableCell>
                                         <TableCell>A/c Id</TableCell>
-                                        
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
                                     {paginatedPosts.map((post) => (
                                         <TableRow
-                                            key={post.account_master_data.Ac_Code}
+                                            key={post.Ac_Code}
                                             className="row-item"
                                             style={{ cursor: "pointer" }}
-                                            onDoubleClick={() => handleRowClick(post.account_master_data.Ac_Code)}
+                                            onDoubleClick={() => handleRowClick(post.Ac_Code)}
                                         >
-                                            <TableCell>{post.account_master_data.Ac_Code}</TableCell>
-                                            <TableCell>{post.account_master_data.Ac_type}</TableCell>
-                                            <TableCell>{post.account_master_data.Ac_Name_E}</TableCell>
-                                            <TableCell>{post.account_master_data.Short_Name}</TableCell>
-                                            <TableCell>{post.account_master_data.Ac_rate}</TableCell>
-                                            <TableCell>{post.account_master_data.Address_E}</TableCell>
-                                            <TableCell>{post.account_labels.cityname}</TableCell>
-                                            <TableCell>{post.account_master_data.GSTStateCode}</TableCell>
-                                            <TableCell>{post.account_master_data.Gst_No}</TableCell>
-                                            <TableCell>{post.account_master_data.PanLink}</TableCell>
-                                            <TableCell>{post.account_master_data.FSSAI}</TableCell>
-                                            <TableCell>{post.account_master_data.adhar_no}</TableCell>
-                                            <TableCell>{post.account_master_data.Mobile_No}</TableCell>
-                                            <TableCell>{post.account_master_data.accoid}</TableCell>
+                                            <TableCell>{post.Ac_Code || ""}</TableCell>
+                                            <TableCell>{post.Ac_type || ""}</TableCell>
+                                            <TableCell>{post.Ac_Name_E || ""}</TableCell>
+                                            <TableCell>{post.Short_Name || ""}</TableCell>
+                                            <TableCell>{post.Commission || ""}</TableCell>
+                                            <TableCell>{post.Address_E || ""}</TableCell>
+                                            <TableCell>{post.city_name_e || ""}</TableCell>
+                                            <TableCell>{post.Gst_No || ""}</TableCell>
+                                            <TableCell>{post.AC_Pan || ""}</TableCell>
+                                            <TableCell>{post.FSSAI || ""}</TableCell>
+                                            <TableCell>{post.adhar_no || ""}</TableCell>
+                                            <TableCell>{post.Mobile_No || ""}</TableCell>
+                                            <TableCell>{post.accoid || ""}</TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>
                             </Table>
-                        </TableContainer>
-                    </Paper>
-                </Grid>
+                        
+                  
+             
                 <Grid item xs={12}>
                     <Pagination
                         pageCount={pageCount}

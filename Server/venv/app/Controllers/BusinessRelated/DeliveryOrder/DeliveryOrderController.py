@@ -1735,4 +1735,149 @@ def getAmountcalculationData():
         logger.error("Traceback: %s", traceback.format_exc())
         # Log the exception here if needed
         return jsonify({"error": "Internal server error", "message": str(e)}), 500  
+    
+
+#Our DO Report
+@app.route(API_URL+"/generating_ourDO_report", methods=["GET"])
+def generating_ourDO_report():
+    try:
+        company_code = request.args.get('Company_Code')
+        year_code = request.args.get('Year_Code')
+        doc_no = request.args.get('doc_no')
+
+        if not company_code or not year_code or not doc_no:
+            return jsonify({"error": "Missing 'Company_Code' or 'Year_Code' parameter"}), 400
+
+        query = ('''SELECT dbo.nt_1_deliveryorder.tran_type, dbo.nt_1_deliveryorder.doc_no, dbo.nt_1_deliveryorder.desp_type, dbo.nt_1_deliveryorder.doc_date, CONVERT(varchar(10), dbo.nt_1_deliveryorder.doc_date, 103) AS doc_dateConverted, 
+                  dbo.nt_1_deliveryorder.mill_code, dbo.nt_1_deliveryorder.grade, dbo.nt_1_deliveryorder.quantal, dbo.nt_1_deliveryorder.packing, dbo.nt_1_deliveryorder.bags, dbo.nt_1_deliveryorder.mill_rate, dbo.nt_1_deliveryorder.sale_rate, 
+                  dbo.nt_1_deliveryorder.Tender_Commission, dbo.nt_1_deliveryorder.diff_rate, dbo.nt_1_deliveryorder.diff_amount, dbo.nt_1_deliveryorder.amount, dbo.nt_1_deliveryorder.DO, dbo.nt_1_deliveryorder.voucher_by, 
+                  dbo.nt_1_deliveryorder.broker, dbo.nt_1_deliveryorder.company_code, dbo.nt_1_deliveryorder.Year_Code, dbo.nt_1_deliveryorder.Branch_Code, dbo.nt_1_deliveryorder.purc_no, dbo.nt_1_deliveryorder.purc, 
+                  dbo.nt_1_deliveryorder.purc_order, dbo.nt_1_deliveryorder.purc_type, dbo.nt_1_deliveryorder.truck_no, dbo.nt_1_deliveryorder.transport, dbo.nt_1_deliveryorder.less, dbo.nt_1_deliveryorder.less_amount, 
+                  dbo.nt_1_deliveryorder.final_amout, dbo.nt_1_deliveryorder.vasuli, dbo.nt_1_deliveryorder.narration1, dbo.nt_1_deliveryorder.narration2, dbo.nt_1_deliveryorder.narration3, dbo.nt_1_deliveryorder.narration4, 
+                  dbo.nt_1_deliveryorder.narration5, dbo.nt_1_deliveryorder.excise_rate, dbo.nt_1_deliveryorder.memo_no, dbo.nt_1_deliveryorder.freight, dbo.nt_1_deliveryorder.adv_freight1, dbo.nt_1_deliveryorder.driver_no, 
+                  dbo.nt_1_deliveryorder.driver_Name, dbo.nt_1_deliveryorder.voucher_no, dbo.nt_1_deliveryorder.voucher_type, dbo.nt_1_deliveryorder.GETPASSCODE, dbo.nt_1_deliveryorder.tender_Remark, dbo.nt_1_deliveryorder.vasuli_rate, 
+                  dbo.nt_1_deliveryorder.vasuli_amount, dbo.nt_1_deliveryorder.to_vasuli, dbo.nt_1_deliveryorder.naka_delivery, dbo.nt_1_deliveryorder.send_sms, dbo.nt_1_deliveryorder.Itag, dbo.nt_1_deliveryorder.Ac_Code, 
+                  dbo.nt_1_deliveryorder.FreightPerQtl, dbo.nt_1_deliveryorder.Freight_Amount, dbo.nt_1_deliveryorder.Freight_RateMM, dbo.nt_1_deliveryorder.Freight_AmountMM, dbo.nt_1_deliveryorder.Memo_Advance, 
+                  dbo.nt_1_deliveryorder.Paid_Rate1, dbo.nt_1_deliveryorder.Paid_Amount1, dbo.nt_1_deliveryorder.Paid_Narration1, dbo.nt_1_deliveryorder.Paid_Rate2, dbo.nt_1_deliveryorder.Paid_Amount2, dbo.nt_1_deliveryorder.Paid_Narration2, 
+                  dbo.nt_1_deliveryorder.Paid_Rate3, dbo.nt_1_deliveryorder.Paid_Amount3, dbo.nt_1_deliveryorder.Paid_Narration3, dbo.nt_1_deliveryorder.MobileNo, dbo.nt_1_deliveryorder.Created_By, dbo.nt_1_deliveryorder.Modified_By, 
+                  dbo.nt_1_deliveryorder.UTR_No, dbo.nt_1_deliveryorder.UTR_Year_Code, dbo.nt_1_deliveryorder.Carporate_Sale_No, dbo.nt_1_deliveryorder.Carporate_Sale_Year_Code, dbo.nt_1_deliveryorder.Delivery_Type, 
+                  dbo.nt_1_deliveryorder.WhoseFrieght, dbo.nt_1_deliveryorder.SB_No, dbo.nt_1_deliveryorder.Invoice_No, dbo.nt_1_deliveryorder.vasuli_rate1, dbo.nt_1_deliveryorder.vasuli_amount1, dbo.nt_1_deliveryorder.Party_Commission_Rate, 
+                  dbo.nt_1_deliveryorder.MM_CC, dbo.nt_1_deliveryorder.MM_Rate, dbo.nt_1_deliveryorder.Voucher_Brokrage, dbo.nt_1_deliveryorder.Voucher_Service_Charge, dbo.nt_1_deliveryorder.Voucher_RateDiffRate, 
+                  dbo.nt_1_deliveryorder.Voucher_RateDiffAmt, dbo.nt_1_deliveryorder.Voucher_BankCommRate, dbo.nt_1_deliveryorder.Voucher_BankCommAmt, dbo.nt_1_deliveryorder.Voucher_Interest, 
+                  dbo.nt_1_deliveryorder.Voucher_TransportAmt, dbo.nt_1_deliveryorder.Voucher_OtherExpenses, dbo.nt_1_deliveryorder.CheckPost, dbo.nt_1_deliveryorder.SaleBillTo, dbo.nt_1_deliveryorder.Pan_No, dbo.nt_1_deliveryorder.Vasuli_Ac, 
+                  dbo.nt_1_deliveryorder.LoadingSms, dbo.nt_1_deliveryorder.GstRateCode, dbo.nt_1_deliveryorder.GetpassGstStateCode, dbo.nt_1_deliveryorder.VoucherbyGstStateCode, dbo.nt_1_deliveryorder.SalebilltoGstStateCode, 
+                  dbo.nt_1_deliveryorder.GstAmtOnMR, dbo.nt_1_deliveryorder.GstAmtOnSR, dbo.nt_1_deliveryorder.GstExlSR, dbo.nt_1_deliveryorder.GstExlMR, dbo.nt_1_deliveryorder.MillGSTStateCode, 
+                  dbo.nt_1_deliveryorder.TransportGSTStateCode, dbo.nt_1_deliveryorder.EWay_Bill_No, dbo.nt_1_deliveryorder.Distance, dbo.nt_1_deliveryorder.EWayBillChk, dbo.nt_1_deliveryorder.MillInvoiceNo, 
+                  dbo.nt_1_deliveryorder.Purchase_Date, CONVERT(varchar(10), dbo.nt_1_deliveryorder.Purchase_Date, 103) AS Purchase_DateConverted, dbo.nt_1_deliveryorder.doid, dbo.nt_1_deliveryorder.mc, dbo.nt_1_deliveryorder.gp, 
+                  dbo.nt_1_deliveryorder.st, dbo.nt_1_deliveryorder.sb, dbo.nt_1_deliveryorder.tc, dbo.nt_1_deliveryorder.itemcode, dbo.nt_1_deliveryorder.cs, dbo.nt_1_deliveryorder.ic, dbo.nt_1_deliveryorder.tenderdetailid, dbo.nt_1_deliveryorder.bk, 
+                  dbo.nt_1_deliveryorder.docd, qrymstmillcode.Ac_Name_E AS millname, qrymstmillcode.Address_E AS milladress, qrymstmillcode.Gst_No AS millgstno, qrymstmillcode.Email_Id AS millemailid, qrymstmillcode.CompanyPan AS millpanno, 
+                  qrymstmillcode.cityname AS millcityname, qrymstmillcode.citypincode AS millcitypincode, qrymstmillcode.citystate AS millcitystate, qrymstmillcode.citygststatecode AS millgststatecodemster, qrymstgetpass.Ac_Name_E AS getpassname, 
+                  qrymstgetpass.Address_E AS getpassaddress, qrymstgetpass.Gst_No AS getpassgstno, qrymstgetpass.Email_Id AS getpassemailid, qrymstgetpass.CompanyPan AS getpasspanno, qrymstgetpass.cityname AS getpasscityname, 
+                  qrymstgetpass.citypincode AS getpasscitypincode, qrymstgetpass.citystate AS getpasscitystate, qrymstgetpass.citygststatecode AS getpasscitygststatecode, qrymstshipto.Ac_Name_E AS shiptoname, 
+                  qrymstshipto.Address_E AS shiptoaddress, qrymstshipto.Gst_No AS shiptogstno, qrymstshipto.Email_Id AS shiptoemail, qrymstshipto.CompanyPan AS shiptopanno, qrymstshipto.cityname AS shiptocityname, 
+                  qrymstshipto.citypincode AS shiptocitypincode, qrymstshipto.citystate AS shiptocitystate, qrymstshipto.citygststatecode AS shiptogststatecode, qrymstsalebill.Ac_Name_E AS salebillname, qrymstsalebill.Address_E AS salebilladdress, 
+                  qrymstsalebill.Gst_No AS salebillgstno, qrymstsalebill.Email_Id AS salebillemail, qrymstsalebill.CompanyPan AS salebillpanno, qrymstsalebill.cityname AS salebillcityname, qrymstsalebill.citypincode AS salebillcitypincode, 
+                  qrymstsalebill.citystate AS salebillcitystate, qrymstsalebill.citygststatecode AS salebillcitygststatecode, qrymsttransportcode.Ac_Name_E AS transportname, qrymsttransportcode.Address_E AS transportaddress, 
+                  qrymsttransportcode.CompanyPan AS transportpanno, qrymstbrokercode.Ac_Name_E AS brokername, qrymstdo.Ac_Name_E AS doname, qrymstbrokercode.Address_E AS doaddress, qrymsttransportcode.Gst_No AS transportgstno, 
+                  qrymsttransportcode.Email_Id AS transportemail, qrymstdo.Gst_No AS dogstno, qrymstdo.Email_Id AS doemail, qrymstdo.CompanyPan AS dopanno, qrymstdo.cityname AS docityname, qrymstdo.citypincode AS docitypincode, 
+                  qrymstdo.citystate AS docitystate, qrymstdo.citygststatecode AS docitygststatecode, dbo.qrymstitem.System_Name_E AS itemname, dbo.qrymstitem.HSN, qrymstmillcode.Short_Name AS millshortname, 
+                  qrygetpassstatemaster.State_Name AS getpassstatename, qryshiptostatemaster.State_Name AS shiptostatename, gstmstmill.State_Name AS gstmillstatename, gstmstsellbill.State_Name AS gststatesellbillname, 
+                  gstmsttransport.State_Name AS gststatetransportname, dbo.nt_1_gstratemaster.GST_Name, dbo.nt_1_deliveryorder.vb, dbo.nt_1_deliveryorder.va, qrymstvoucherby.Ac_Name_E AS voucherbyname, 
+                  qrymstvasuliacc.Ac_Name_E AS vasuliacname, qrymstshipto.Mobile_No AS shiptomobno, qrymstshipto.FSSAI AS shiptofssai, qrymstshipto.ECC_No AS shiptoeccno, qrymsttransportcode.Mobile_No AS transportmobno, 
+                  qrymstgetpass.Mobile_No AS getpassmobno, qrymstgetpass.Cst_no AS getpasscstno, qrymstgetpass.FSSAI AS getpassfssai, qrymstvoucherby.Address_E AS vouvherbyaddress, qrymstvoucherby.cityname AS voucherbycityname, 
+                  qrymstvoucherby.citystate AS voucherbycitystate, qrymstvoucherby.Cst_no AS voucherbycstno, qrymstvoucherby.Gst_No AS voucherbygstno, qrymstvoucherby.CompanyPan AS voucherbypan, 
+                  qrymstvoucherby.Mobile_No AS voucherbymobno, qrymstmillcode.Mobile_No AS millmobno, qrymstsalebill.Mobile_No AS salebillmobno, qrymstbrokercode.Mobile_No AS brokermobno, dbo.nt_1_deliveryorder.carporate_ac, 
+                  dbo.nt_1_deliveryorder.ca, qrycarporateac.Ac_Name_E AS carporateacname, qrycarporateac.Gst_No AS carporateacgstno, qrycarporateac.citygststatecode AS carporateacstatecode, 
+                  qrymstvoucherby.citygststatecode AS voucherbystatecode, qrymsttransportcode.citygststatecode AS transportstatecode, dbo.nt_1_deliveryorder.mill_inv_date, CONVERT(varchar(10), dbo.nt_1_deliveryorder.mill_inv_date, 103) 
+                  AS mill_inv_dateConverted, dbo.nt_1_deliveryorder.mill_rcv, qrymstsalebill.Short_Name AS billtoshortname, qrymstshipto.Short_Name AS shiptoshortname, qrymsttransportcode.Short_Name AS transportshortname, 
+                  qrymstdo.Short_Name AS doshortname, qrymstvoucherby.Short_Name AS voucherbyshortname, qrymstgetpass.Short_Name AS getpassshortname, dbo.nt_1_deliveryorder.MillEwayBill, dbo.nt_1_deliveryorder.TCS_Rate, 
+                  dbo.nt_1_deliveryorder.Sale_TCS_Rate, dbo.nt_1_deliveryorder.Mill_AmtWO_TCS, dbo.nt_1_deliveryorder.newsbno, CONVERT(varchar(10), dbo.nt_1_deliveryorder.newsbdate, 103) AS newsbdate, dbo.nt_1_deliveryorder.einvoiceno, 
+                  dbo.nt_1_deliveryorder.ackno, dbo.nt_1_deliveryorder.brandcode, dbo.Brand_Master.Marka, dbo.nt_1_deliveryorder.Cash_diff, dbo.nt_1_deliveryorder.CashDiffAc, dbo.nt_1_deliveryorder.TDSAc, dbo.nt_1_deliveryorder.CashDiffAcId, 
+                  dbo.nt_1_deliveryorder.TDSAcId, dbo.nt_1_deliveryorder.TDSRate, dbo.nt_1_deliveryorder.TDSAmt, qryTDS.Ac_Name_E AS TDSName, qrycashdiif.Ac_Name_E AS CAshdiffName, dbo.nt_1_deliveryorder.TDSCut, 
+                  dbo.nt_1_deliveryorder.tenderid, dbo.nt_1_tender.Payment_To, dbo.nt_1_deliveryorder.MemoGSTRate, qrymstshipto.Pincode, dbo.nt_1_deliveryorder.RCMCGSTAmt, dbo.nt_1_deliveryorder.RCMSGSTAmt, 
+                  dbo.nt_1_deliveryorder.RCMIGSTAmt, dbo.nt_1_deliveryorder.saleid, qrymstgetpass.Pincode AS getpasspin, dbo.nt_1_tender.season, dbo.nt_1_accountmaster.Short_Name AS paymentshortname, dbo.nt_1_deliveryorder.RCMNumber, 
+                  CONVERT(varchar(10), dbo.nt_1_deliveryorder.EwayBillValidDate, 103) AS EwayBillValidDate, dbo.nt_1_deliveryorder.SaleTDSRate, dbo.nt_1_deliveryorder.PurchaseTDSRate, dbo.nt_1_deliveryorder.PurchaseRate, 
+                  dbo.nt_1_deliveryorder.SBNarration, ' ' AS WordinAmount, dbo.nt_1_tender.Tender_Date, ' ' AS utrnarration, qrymstdo.Address_E AS DoAdd, qrymstgetpass.Tan_no AS getpasstan_no, qrymstshipto.Tan_no AS shiptotan_no, 
+                  qrymstdo.FSSAI AS dofssaino, qrycashdiif.cityname AS cashdiifcity, qrycashdiif.Mobile_No AS cashdiifmobno, dbo.nt_1_deliveryorder.MailSend, dbo.nt_1_deliveryorder.ISEInvoice, dbo.nt_1_deliveryorder.IsPayment, 
+                  CONVERT(varchar(10), dbo.nt_1_deliveryorder.Do_DATE, 103) AS Do_Date_Conv, dbo.nt_1_sugarsale.saleid AS saleidtable, dbo.qrymstaccountmaster.Ac_Name_E AS saleBillToName, 
+                  dbo.qrymstaccountmaster.Pincode AS saleBillToPinCode, dbo.qrymstaccountmaster.Gst_No AS saleBillToGSTNo, dbo.qrymstaccountmaster.FSSAI AS saleBillToFSSAI, dbo.qrymstaccountmaster.GSTStateCode, 
+                  dbo.qrymstaccountmaster.cityname AS saleBillToCityName, dbo.qrymstaccountmaster.CompanyPan AS saleBillToPan, dbo.qrymstaccountmaster.State_Name AS saleBillToStateName, 
+                  dbo.qrymstaccountmaster.Address_E AS saleBillToAddress, dbo.qrydodetail.Narration, dbo.qrydodetail.Amount AS UTRAmount, dbo.qrydodetail.UTRDate, dbo.qrydodetail.totUTRAmt
+FROM     dbo.nt_1_deliveryorder INNER JOIN
+                  dbo.qrymstaccountmaster ON dbo.nt_1_deliveryorder.sb = dbo.qrymstaccountmaster.accoid LEFT OUTER JOIN
+                  dbo.qrydodetail ON dbo.nt_1_deliveryorder.doid = dbo.qrydodetail.doid LEFT OUTER JOIN
+                  dbo.nt_1_sugarsale ON dbo.nt_1_deliveryorder.Year_Code = dbo.nt_1_sugarsale.Year_Code AND dbo.nt_1_deliveryorder.company_code = dbo.nt_1_sugarsale.Company_Code AND 
+                  dbo.nt_1_deliveryorder.doc_no = dbo.nt_1_sugarsale.DO_No LEFT OUTER JOIN
+                  dbo.nt_1_accountmaster RIGHT OUTER JOIN
+                  dbo.nt_1_tender ON dbo.nt_1_accountmaster.accoid = dbo.nt_1_tender.pt ON dbo.nt_1_deliveryorder.purc_no = dbo.nt_1_tender.Tender_No AND 
+                  dbo.nt_1_deliveryorder.company_code = dbo.nt_1_tender.Company_Code LEFT OUTER JOIN
+                  dbo.qrymstaccountmaster AS qryTDS ON dbo.nt_1_deliveryorder.TDSAcId = qryTDS.accoid LEFT OUTER JOIN
+                  dbo.qrymstaccountmaster AS qrycashdiif ON dbo.nt_1_deliveryorder.CashDiffAcId = qrycashdiif.accoid LEFT OUTER JOIN
+                  dbo.Brand_Master ON dbo.nt_1_deliveryorder.company_code = dbo.Brand_Master.Company_Code AND dbo.nt_1_deliveryorder.brandcode = dbo.Brand_Master.Code LEFT OUTER JOIN
+                  dbo.qrymstaccountmaster AS qrymsttransportcode ON dbo.nt_1_deliveryorder.tc = qrymsttransportcode.accoid LEFT OUTER JOIN
+                  dbo.qrymstaccountmaster AS qrycarporateac ON dbo.nt_1_deliveryorder.ca = qrycarporateac.accoid LEFT OUTER JOIN
+                  dbo.qrymstaccountmaster AS qrymstvasuliacc ON dbo.nt_1_deliveryorder.va = qrymstvasuliacc.accoid LEFT OUTER JOIN
+                  dbo.qrymstaccountmaster AS qrymstvoucherby ON dbo.nt_1_deliveryorder.vb = qrymstvoucherby.accoid LEFT OUTER JOIN
+                  dbo.nt_1_gstratemaster ON dbo.nt_1_deliveryorder.GstRateCode = dbo.nt_1_gstratemaster.Doc_no AND dbo.nt_1_deliveryorder.company_code = dbo.nt_1_gstratemaster.Company_Code LEFT OUTER JOIN
+                  dbo.qrymstitem ON dbo.nt_1_deliveryorder.ic = dbo.qrymstitem.systemid LEFT OUTER JOIN
+                  dbo.qrymstaccountmaster AS qrymstdo ON dbo.nt_1_deliveryorder.docd = qrymstdo.accoid LEFT OUTER JOIN
+                  dbo.qrymstaccountmaster AS qrymstbrokercode ON qrymstbrokercode.accoid = dbo.nt_1_deliveryorder.bk LEFT OUTER JOIN
+                  dbo.qrymstaccountmaster AS qrymstsalebill ON dbo.nt_1_deliveryorder.sb = qrymstsalebill.accoid LEFT OUTER JOIN
+                  dbo.qrymstaccountmaster AS qrymstshipto LEFT OUTER JOIN
+                  dbo.gststatemaster AS qryshiptostatemaster ON qryshiptostatemaster.State_Code = qrymstshipto.GSTStateCode ON dbo.nt_1_deliveryorder.st = qrymstshipto.accoid LEFT OUTER JOIN
+                  dbo.qrymstaccountmaster AS qrymstgetpass LEFT OUTER JOIN
+                  dbo.gststatemaster AS qrygetpassstatemaster ON qrygetpassstatemaster.State_Code = qrymstgetpass.GSTStateCode ON dbo.nt_1_deliveryorder.gp = qrymstgetpass.accoid LEFT OUTER JOIN
+                  dbo.qrymstaccountmaster AS qrymstmillcode LEFT OUTER JOIN
+                  dbo.gststatemaster AS gstmstmill ON qrymstmillcode.GSTStateCode = gstmstmill.State_Code ON qrymstmillcode.accoid = dbo.nt_1_deliveryorder.mc LEFT OUTER JOIN
+                  dbo.gststatemaster AS gstmstsellbill ON qrymstsalebill.GSTStateCode = gstmstsellbill.State_Code LEFT OUTER JOIN
+                  dbo.gststatemaster AS gstmsttransport ON qrymsttransportcode.GSTStateCode = gstmsttransport.State_Code
+                 where dbo.nt_1_deliveryorder.Company_Code = :company_code and dbo.nt_1_deliveryorder.Year_Code = :year_code and dbo.nt_1_deliveryorder.doc_no = :doc_no
+                                 '''
+            )
+        additional_data = db.session.execute(text(query), {"company_code": company_code, "year_code": year_code, "doc_no": doc_no})
+
+        # Extracting category name from additional_data
+        additional_data_rows = additional_data.fetchall()
+        
+
+        # Convert additional_data_rows to a list of dictionaries
+        all_data = [dict(row._mapping) for row in additional_data_rows]
+
+        for data in all_data:
+            if 'doc_date' in data and data['doc_date'] is not None:
+                data['doc_date'] = data['doc_date'].strftime('%Y-%m-%d')
+            else:
+                data['doc_date'] = None
+
+            if 'Purchase_Date' in data and data['Purchase_Date'] is not None:
+                data['Purchase_Date'] = data['Purchase_Date'].strftime('%Y-%m-%d')
+            else:
+                data['Purchase_Date'] = None
+
+            if 'mill_inv_date' in data and data['mill_inv_date'] is not None:
+                data['mill_inv_date'] = data['mill_inv_date'].strftime('%Y-%m-%d')
+            else:
+                data['mill_inv_date'] = None
+
+            if 'Tender_Date' in data and data['Tender_Date'] is not None:
+                data['Tender_Date'] = data['Tender_Date'].strftime('%Y-%m-%d')
+            else:
+                data['Tender_Date'] = None
+
+            if 'UTRDate' in data and data['UTRDate'] is not None:
+                data['UTRDate'] = data['UTRDate'].strftime('%Y-%m-%d')
+            else:
+                data['UTRDate'] = None
+
+
+        # Prepare response data 
+        response = {
+            "all_data": all_data
+        }
+        # If record found, return it
+        return jsonify(response), 200
+
+    except Exception as e:
+        print(e)
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
 

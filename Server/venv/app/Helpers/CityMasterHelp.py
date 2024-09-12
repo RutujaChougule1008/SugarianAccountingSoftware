@@ -22,7 +22,7 @@ def group_city_master():
         # Start a database transaction
         with db.session.begin_nested():
             query = db.session.execute(text('''
-               select city_code,city_name_e,city_name_r,state,cityid from nt_1_citymaster WHERE Company_Code=:company_code order by city_name_e
+               select city_code,city_name_e,city_name_r,state,cityid, pincode from nt_1_citymaster WHERE Company_Code=:company_code order by city_name_e
             '''),{'company_code': Company_Code})
 
             result = query.fetchall()
@@ -34,7 +34,8 @@ def group_city_master():
                 'city_name_e': row.city_name_e,
                 'city_name_r': row.city_name_r,
                 'state': row.state,
-                'cityid': row.cityid
+                'cityid': row.cityid,
+                'pincode': row.pincode
             })
 
         return jsonify(response)

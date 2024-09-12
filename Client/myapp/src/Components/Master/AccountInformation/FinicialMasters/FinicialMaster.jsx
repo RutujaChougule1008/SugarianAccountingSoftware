@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import ActionButtonGroup from '../../../../Common/CommonButtons/ActionButtonGroup';
 import NavigationButtons from "../../../../Common/CommonButtons/NavigationButtons";
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -9,7 +9,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 const API_URL = process.env.REACT_APP_API;
 
-const FinicialMaster = () => {
+const FinicialMaster = ({isPopup = false}, ref) => {
     const [updateButtonClicked, setUpdateButtonClicked] = useState(false);
     const [saveButtonClicked, setSaveButtonClicked] = useState(false);
     const [addOneButtonEnabled, setAddOneButtonEnabled] = useState(false);
@@ -39,6 +39,10 @@ const FinicialMaster = () => {
     };
 
     const [formData, setFormData] = useState(initialFormData);
+
+    useImperativeHandle(ref, () => ({
+        getFormData: () => formData
+    }));
 
     // Handle change for all inputs
     const handleChange = (event) => {
@@ -328,6 +332,7 @@ const FinicialMaster = () => {
             <div class="modified-by-container">
                 <h2 class="modified-by-heading">Modified By: {formData.Modified_By}</h2>
             </div>
+            {!isPopup && (
             <div className="container">
                 <ToastContainer />
                 <ActionButtonGroup
@@ -359,6 +364,7 @@ const FinicialMaster = () => {
                     />
                 </div>
             </div>
+            )}
             <div className="form-container">
 
                 <form>
@@ -440,4 +446,4 @@ const FinicialMaster = () => {
     );
 };
 
-export default FinicialMaster;
+export default forwardRef(FinicialMaster);

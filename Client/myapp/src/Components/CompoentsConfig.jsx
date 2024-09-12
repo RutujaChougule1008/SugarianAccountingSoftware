@@ -48,6 +48,7 @@ import SugarSaleReturnPurchase from './Inword/SugarSaleReturnPurchase/SugarSaleR
 import SugarSaleReturnPurchaseUtility from './Inword/SugarSaleReturnPurchase/SugarSaleReturnPurchaseUtility';
 import TenderPurchase from './BusinessRelated/TenderPurchase/TenderPurchase';
 import SugarSaleReturnSale from './Outward/SugarSaleReturnSale/SugarSaleReturnSale';
+import PendingDO from './BusinessRelated/DeliveryOrder/PendingDOUtility'
 
 const routes = [
   {
@@ -253,6 +254,12 @@ const routes = [
   path: '/delivery-order-utility',
   element: DeliveryOredrUtility
 },
+
+//Pending DO
+{
+  path: '/pending-do',
+  element: PendingDO
+},
 {
   path: '/sugar-sale-return-purchase',
   element: SugarSaleReturnPurchase
@@ -267,6 +274,8 @@ const routes = [
   path: '/sugar-sale-return-sale',
   element: SugarSaleReturnSale
 },
+
+
 
 
 

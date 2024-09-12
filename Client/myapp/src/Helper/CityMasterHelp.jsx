@@ -89,7 +89,7 @@ const CityMasterHelp = ({ onAcCodeClick, name, CityName,CityCode,disabledFeild,t
                 setEnteredAcName(matchingItem.city_name_e);
 
                 if (onAcCodeClick) {
-                    onAcCodeClick(matchingItem.city_code, matchingItem.cityid,matchingItem.city_name_e, value);
+                    onAcCodeClick(matchingItem.city_code, matchingItem.cityid,matchingItem.city_name_e,matchingItem.pincode, value);
                 }
             } else {
                 setEnteredAcName("");
@@ -108,7 +108,7 @@ const CityMasterHelp = ({ onAcCodeClick, name, CityName,CityCode,disabledFeild,t
             setEnteredAcName(item.city_name_e);
 
             if (onAcCodeClick) {
-                onAcCodeClick(item.city_code,item.cityid, enteredAcName, enteredAcCode);
+                onAcCodeClick(item.city_code,item.cityid,enteredAcName,item.pincode, enteredAcCode);
             }
         }
 

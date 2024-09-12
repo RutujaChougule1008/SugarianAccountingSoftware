@@ -226,11 +226,11 @@ const SugarSaleReturnPurchase = () => {
   const handleChange = async (event) => {
     const { name, value } = event.target;
 
-    const matchStatus = await checkMatchStatus(
-      formData.Ac_Code,
-      companyCode,
-      Year_Code
-    );
+    // const matchStatus = await checkMatchStatus(
+    //   formData.Ac_Code,
+    //   companyCode,
+    //   Year_Code
+    // );
 
     let gstRate = GstRate;
 
@@ -400,6 +400,8 @@ const SugarSaleReturnPurchase = () => {
     billToName = "";
     billToCode = "";
     setLastTenderDetails([]);
+    purchaseNo = "";
+    setPurchno("");
   };
 
   const handleEdit = () => {
@@ -503,6 +505,7 @@ const SugarSaleReturnPurchase = () => {
         setTimeout(() => {
           window.location.reload();
         }, 1000);
+        handleCancel();
       } else {
         const response = await axios.post(
           `${API_URL}/create-sugarpurchasereturn`,
@@ -520,6 +523,7 @@ const SugarSaleReturnPurchase = () => {
         setTimeout(() => {
           window.location.reload();
         }, 1000);
+        handleCancel();
       }
     } catch (error) {
       console.error(
@@ -682,6 +686,7 @@ const SugarSaleReturnPurchase = () => {
         item_Code = detail_data.item_code;
         brokerCode = last_head_data.BROKER;
         brokerName = last_labels_data[0].brokername;
+        purchaseNo = last_head_data.PURCNO;
 
         // Create a mapping for itemname based on item_code
         const itemNameMap = last_labels_data.reduce((map, label) => {
@@ -746,6 +751,7 @@ const SugarSaleReturnPurchase = () => {
         item_Code = detail_data.item_code;
         brokerCode = last_head_data.BROKER;
         brokerName = last_labels_data[0].brokername;
+        purchaseNo = last_head_data.PURCNO;
 
         // Create a mapping for itemname based on item_code
         const itemNameMap = last_labels_data.reduce((map, label) => {
@@ -811,6 +817,7 @@ const SugarSaleReturnPurchase = () => {
         item_Code = detail_data.item_code;
         brokerCode = last_head_data.BROKER;
         brokerName = last_labels_data[0].brokername;
+        purchaseNo = last_head_data.PURCNO;
 
         // Create a mapping for itemname based on item_code
         const itemNameMap = last_labels_data.reduce((map, label) => {
@@ -897,6 +904,7 @@ const SugarSaleReturnPurchase = () => {
         item_Code = detail_data.item_code;
         brokerCode = last_head_data.BROKER;
         brokerName = last_labels_data[0].brokername;
+        purchaseNo = last_head_data.PURCNO;
 
         // Create a mapping for itemname based on item_code
         const itemNameMap = last_labels_data.reduce((map, label) => {
@@ -962,6 +970,7 @@ const SugarSaleReturnPurchase = () => {
         item_Code = detail_data.item_code;
         brokerCode = last_head_data.BROKER;
         brokerName = last_labels_data[0].brokername;
+        purchaseNo = last_head_data.PURCNO;
 
         // Create a mapping for itemname based on item_code
         const itemNameMap = last_labels_data.reduce((map, label) => {
@@ -1786,7 +1795,7 @@ const SugarSaleReturnPurchase = () => {
             <div className="SugarSaleReturnPurchase-form-group">
               <PuchNoFromReturnPurchaseHelp
                 onAcCodeClick={handlePurchaseNo}
-                purchaseNo={purchaseNo}
+                purchaseNo={purchaseNo || purchNo}
                 name="PURCNO"
                 OnSaleBillHead={saleBillHeadData}
                 OnSaleBillDetail={saleBillDetailData}

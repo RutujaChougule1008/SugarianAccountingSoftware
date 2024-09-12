@@ -24,13 +24,15 @@ const PuchNoFromReturnPurchaseHelp = ({ onAcCodeClick, name, purchaseNo,OnSaleBi
 
     // Fetch data based on acType
     const fetchAndOpenPopup = async () => {
+        
         try {
             const response = await axios.get(`http://localhost:8080/api/sugarian/PurcNoFromReturnPurchase?Company_Code=${CompanyCode}&Year_Code=${Year_Code}`);
             const data = response.data;
             const filteredData = data.filter(item => 
-                item.PartyName.toLowerCase().includes(searchTerm.toLowerCase())||
-                item.MillName.toLowerCase().includes(searchTerm.toLowerCase())
+                (item.PartyName ? item.PartyName.toLowerCase().includes(searchTerm.toLowerCase()) : false) ||
+                (item.MillName ? item.MillName.toLowerCase().includes(searchTerm.toLowerCase()) : false)
             );
+            
             setPopupContent(filteredData);
             setShowModal(true);
         } catch (error) {

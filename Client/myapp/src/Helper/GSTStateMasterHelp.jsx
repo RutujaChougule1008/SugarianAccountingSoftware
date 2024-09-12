@@ -7,7 +7,7 @@ import "../App.css";
 
 var lActiveInputFeild = "";
 
-const GSTStateMasterHelp = ({ onAcCodeClick, name, newMillCode, GstStateName,GstStateCode, disabledFeild,tabIndexHelp }) => {
+const GSTStateMasterHelp = ({ onAcCodeClick, name,GstStateName,GstStateCode, disabledFeild,tabIndexHelp }) => {
 
     const [showModal, setShowModal] = useState(false);
     const [popupContent, setPopupContent] = useState([]);
