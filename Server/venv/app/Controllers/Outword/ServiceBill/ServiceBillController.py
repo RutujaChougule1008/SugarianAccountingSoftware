@@ -10,7 +10,8 @@ import os
 API_URL = os.getenv('API_URL')
 
 SERVICE_BILL_DETAILS_QUERY = '''
-SELECT customer.Ac_Name_E AS partyname, tdsac.Ac_Name_E AS millname, item.System_Name_E AS itemname 
+SELECT customer.Ac_Name_E AS partyname, tdsac.Ac_Name_E AS millname, item.System_Name_E AS itemname,  dbo.nt_1_gstratemaster.GST_Name, item.System_Code as Item_Code
+ 
 FROM dbo.nt_1_rentbillhead 
 LEFT OUTER JOIN dbo.nt_1_gstratemaster ON dbo.nt_1_rentbillhead.gstid = dbo.nt_1_gstratemaster.gstid 
 LEFT OUTER JOIN dbo.nt_1_accountmaster AS tdsac ON dbo.nt_1_rentbillhead.ta = tdsac.accoid 
@@ -676,3 +677,34 @@ def get_nextservicebill_navigation():
 
     except Exception as e:
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
+    
+
+@app.route(API_URL + "/get-next-bill-no", methods=["GET"])
+def get_next_bill_no():
+    try:
+        # Get the company_code and year_code from the request parameters
+        company_code = request.args.get('Company_Code')
+        year_code = request.args.get('Year_Code')
+
+        # Validate required parameters
+        if not company_code or not year_code:
+            return jsonify({"error": "Missing 'Company_Code' or 'Year_Code' parameter"}), 400
+
+        # Query the database for the maximum doc_no in the specified company and year
+        max_doc_no = db.session.query(func.max(ServiceBillHead.Doc_No)).filter_by(Company_Code=company_code, Year_Code=year_code).scalar()
+
+        # If no records found, set doc_no to 1
+        next_doc_no = max_doc_no + 1 if max_doc_no else 1
+
+        # Prepare the response data
+        response = {
+            "next_doc_no": next_doc_no
+        }
+
+        # Return the next doc_no
+        return jsonify(response), 200
+
+    except Exception as e:
+        print(e)
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+

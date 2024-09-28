@@ -163,7 +163,6 @@ def getTenderNo_DataByTenderdetailId():
             selfac=SelfAc_data[0].get('SELF_AC', None)
             selfacid=SelfAc_data[0].get('accoid', None)
             
-            
             # Now execute query1
             query = db.session.execute(
                 text('''
@@ -175,14 +174,17 @@ def getTenderNo_DataByTenderdetailId():
                          dbo.qrytenderheaddetail.tenderdetailid, dbo.qrytenderheaddetail.ShipToname, dbo.qrytenderheaddetail.shiptoid, dbo.qrytenderheaddetail.ShipTo, dbo.qrytenderheaddetail.season, dbo.qrytenderheaddetail.Party_Bill_Rate, 
                          dbo.qrytenderheaddetail.AutoPurchaseBill, dbo.qrytenderheaddetail.buyerpartygststatecode, dbo.qrytenderheaddetail.buyerpartystatename, dbo.qrytenderheaddetail.buyerpartyid, dbo.qrytenderheaddetail.buyerid, 
                          dbo.qrytenderheaddetail.shiptoid AS shiptoid, dbo.qrytenderheaddetail.pt, dbo.qrytenderheaddetail.ic, dbo.qrytenderheaddetail.td, dbo.qrytenderheaddetail.gstrate, dbo.qrytenderheaddetail.Tender_No, dbo.qrytenderheaddetail.ID, 
-                         dbo.qrytenderheaddetail.Mill_Code, dbo.qrytenderheaddetail.mc, dbo.qrytenderheaddetail.millname,
-						 dbo.eBuySugar_Pending_DO.truck_no,dbo.qrytenderheaddetail.shiptostatename,dbo.qrytenderheaddetail.shiptostatecode ,
-						 (case when Delivery_Type='DO' then Buyer else :selfac end) as Getpassno,
+                         dbo.qrytenderheaddetail.Mill_Code, dbo.qrytenderheaddetail.mc, dbo.qrytenderheaddetail.millname, dbo.eBuySugar_Pending_DO.truck_no, dbo.qrytenderheaddetail.shiptostatename, dbo.qrytenderheaddetail.shiptostatecode, 
+                         dbo.eBuySugar_Pending_DO.bill_to_accoid, dbo.eBuySugar_Pending_DO.ship_to_accoid, billto.Ac_Name_E AS Bill_TO_Name, shipto.Ac_Name_E AS Ship_To_name,
+                        (case when Delivery_Type='DO' then Buyer else :selfac end) as Getpassno,
                            (case when Delivery_Type='DO' then buyerid else :selfacid end) as Getpassnoid,
-                           (case when Delivery_Type='DO' then buyername else :selfacname end) as Getpassnoname  
-                           
-FROM            dbo.qrytenderheaddetail LEFT OUTER JOIN
-                         dbo.eBuySugar_Pending_DO ON dbo.qrytenderheaddetail.tenderdetailid = dbo.eBuySugar_Pending_DO.tenderdetailid
+                           (case when Delivery_Type='DO' then buyername else :selfacname end) as Getpassnoname , dbo.eBuySugar_Pending_DO.bill_to_ac_code, 
+                         dbo.eBuySugar_Pending_DO.ship_to_ac_code
+  
+                        FROM            dbo.nt_1_accountmaster AS shipto RIGHT OUTER JOIN
+                         dbo.eBuySugar_Pending_DO ON shipto.accoid = dbo.eBuySugar_Pending_DO.ship_to_accoid LEFT OUTER JOIN
+                         dbo.nt_1_accountmaster AS billto ON dbo.eBuySugar_Pending_DO.bill_to_accoid = billto.accoid RIGHT OUTER JOIN
+                         dbo.qrytenderheaddetail ON dbo.eBuySugar_Pending_DO.tenderdetailid = dbo.qrytenderheaddetail.tenderdetailid
                     WHERE  
                        dbo.qrytenderheaddetail.tenderdetailid = :tenderdetailid
                 '''),

@@ -49,6 +49,9 @@ import SugarSaleReturnPurchaseUtility from './Inword/SugarSaleReturnPurchase/Sug
 import TenderPurchase from './BusinessRelated/TenderPurchase/TenderPurchase';
 import SugarSaleReturnSale from './Outward/SugarSaleReturnSale/SugarSaleReturnSale';
 import PendingDO from './BusinessRelated/DeliveryOrder/PendingDOUtility'
+import ServiceBill from './Outward/ServiceBill/ServiceBill'
+import ServiceBillUtility from './Outward/ServiceBill/ServiceBillUtility'
+import UserCreationWithPermission from './Utilities/UserCreationWithPermission/UserCreationWithPermission.jsx';
 
 const routes = [
   {
@@ -188,6 +191,12 @@ const routes = [
   element: CommissionBillUtility
 },
 
+//ServiceBill
+{
+  path: '/service-bill',
+  element: ServiceBill 
+},
+
 //OtherGSTInput
 {
   path: '/other-gst-input',
@@ -275,6 +284,24 @@ const routes = [
   element: SugarSaleReturnSale
 },
 
+//ServiceBill Utility
+{
+  path:'/ServiceBill-utility',
+  element: ServiceBillUtility
+},
+
+//ServiceBill
+{
+  path:'/service-bill',
+  element: ServiceBill
+},
+
+//
+{
+  path:'/user-creation',
+  element: UserCreationWithPermission
+}
+,
 
 
 

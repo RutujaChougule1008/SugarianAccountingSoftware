@@ -70,7 +70,7 @@ const AccountMasterHelp = ({ onAcCodeClick, name, CategoryName, CategoryCode, ta
             
 
             if (onAcCodeClick) {
-                onAcCodeClick(matchingItem.Ac_Code, matchingItem.accoid, matchingItem.Ac_Name_E, matchingItem.Mobile_No, matchingItem.Gst_No,matchingItem.TDSApplicable);
+                onAcCodeClick(matchingItem.Ac_Code, matchingItem.accoid, matchingItem.Ac_Name_E, matchingItem.Mobile_No, matchingItem.Gst_No,matchingItem.TDSApplicable, matchingItem.GSTStateCode);
             }
         } else {
             setEnteredAcName("");
@@ -86,7 +86,7 @@ const AccountMasterHelp = ({ onAcCodeClick, name, CategoryName, CategoryCode, ta
         setCity(item.cityname);
         
         if (onAcCodeClick) {
-            onAcCodeClick(item.Ac_Code, item.accoid, item.Ac_Name_E, item.Mobile_No, item.Gst_No,item.TDSApplicable);
+            onAcCodeClick(item.Ac_Code, item.accoid, item.Ac_Name_E, item.Mobile_No, item.Gst_No,item.TDSApplicable,item.GSTStateCode);
         }
         setShowModal(false);
     };
@@ -126,7 +126,6 @@ const AccountMasterHelp = ({ onAcCodeClick, name, CategoryName, CategoryCode, ta
         };
     }, [name, fetchAndOpenPopup]);
 
-    console.log("CategoryName:", CategoryName); 
 
     useEffect(() => {
         const handleKeyNavigation = (event) => {

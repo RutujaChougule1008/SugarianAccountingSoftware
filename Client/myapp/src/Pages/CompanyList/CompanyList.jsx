@@ -102,6 +102,10 @@ const CompanyList = () => {
       sessionStorage.setItem('SELF_AC', selfAcResponse.data.SELF_AC);
       sessionStorage.setItem('Self_acid', selfAcResponse.data.Self_acid);
 
+      const permissionResponse = await axios.get(`http://localhost:8080/api/sugarian/get_user_permissions?uid=${response.data.user_id}`);
+      const permissions = permissionResponse.data.permissions;  
+      sessionStorage.setItem('permissions', JSON.stringify(permissions)); 
+
       setIsLoggedIn(true);
       toast.success("Logged in successfully!");
       setTimeout(() => {

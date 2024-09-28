@@ -75,6 +75,8 @@ def create_Record_Gledger():
             TRAN_TYPE=tran_type
         ).all()
 
+        print("existing_records", existing_records)
+
         # Delete all existing records
         for record in existing_records:
             db.session.delete(record)

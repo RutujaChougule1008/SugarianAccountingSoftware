@@ -33,6 +33,19 @@ FROM     dbo.nt_1_accountmaster INNER JOIN
     WHERE dbo.nt_1_accountmaster.accoid = :accoid
 '''
 
+def delete_acgroups_by_accoid(accoid):
+    print("Accoid", accoid)
+    try:
+        db.session.execute(
+            text("DELETE FROM nt_1_acgroups WHERE accoid = :accoid"),
+            {'accoid': accoid}
+        )
+        db.session.commit()
+        return True
+    except:
+        db.session.rollback()
+        return False
+
 
 # Get data from both tables AccountMaster and AccountContact
 # @app.route(API_URL + "/getdata-accountmaster", methods=["GET"])
@@ -711,15 +724,21 @@ def getBy_GstNo():
 @app.route(API_URL + '/create-multiple-acgroups', methods=['POST'])
 def create_multiple_acgroups():
     try:
-        # Extract JSON data from the request
         data = request.get_json()
         acGroups_data = data.get('acGroups')
-
-        # Validate data
+        print("My Data",data)
+        accoid = data.get("accoid")
+        print("accoid",accoid)
+        if accoid:
+            delete_acgroups_by_accoid(accoid)
+        # Check if there is anything to process
         if not acGroups_data:
-            return jsonify({'error': 'Missing acGroups data'}), 400
+            return jsonify({'message': 'No group data provided'}), 204  
 
         responses = []
+
+        # Delete existing groups if any (assuming `accoid` is provided and correct)
+        
 
         # Process each group entry
         for group_data in acGroups_data:
@@ -737,7 +756,7 @@ def create_multiple_acgroups():
             if not account_master:
                 responses.append({'error': f'No AccountMaster record found with Ac_Code {ac_code} and Company_Code {company_code}'})
                 continue
-            
+
             # Create and add the new AcGroups record
             new_acgroup = AcGroups(Group_Code=group_code, Company_Code=company_code, accoid=account_master.accoid, Ac_Code = ac_code)
             db.session.add(new_acgroup)
@@ -752,9 +771,9 @@ def create_multiple_acgroups():
 
         # Commit changes to the database
         db.session.commit()
-
         return jsonify(responses), 201
 
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': 'Internal server error', 'message': str(e)}), 500
+

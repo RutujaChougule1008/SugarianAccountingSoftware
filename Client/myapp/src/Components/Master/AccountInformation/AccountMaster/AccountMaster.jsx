@@ -917,23 +917,20 @@ const AccountMaster = () => {
   //   }
   // };
   const handleSaveOrUpdate = async () => {
-    debugger
+    debugger;
     if (!validateForm()) {
       return;
     }
-  
+
     setIsEditing(true);
     setIsLoading(true);
-  
-    const master_data = {
-      ...formData,
-    };
-  
+
+    const master_data = { ...formData };
+
     if (isEditMode) {
       delete master_data.accoid;
     }
-  
-    // Prepare contact data
+
     const contact_data = users.map((user) => ({
       rowaction: user.rowaction,
       Person_Name: user.Person_Name,
@@ -944,31 +941,22 @@ const AccountMaster = () => {
       Other: user.Other,
       id: user.id,
     }));
-  
-    // Prepare group data
-    const acGroupsData = selectedGroups.map((groupCode) => ({
-      Group_Code: groupCode,       // Group code from the selected group
-      Company_Code: master_data.company_code,    // Company code from the formData
-      Ac_Code: master_data.Ac_Code,
-      accoid: master_data.accoid            // Account code from the formData
-    }));
 
-    
-    
+    const acGroupsData = selectedGroups.map((groupCode) => ({
+      Group_Code: groupCode,
+      Company_Code: companyCode,
+      Ac_Code: master_data.Ac_Code,
+      accoid: master_data.accoid || newAccoid
+    })).filter(group => group.Group_Code);
+
     const requestData = {
       master_data,
       contact_data,
     };
-  
-    if (master_data.Opening_Balance > 0) {
-      master_data.Opening_Balance = 0;
-    }
-  
-    console.log(requestData);
-  
+
     try {
       let response;
-  
+
       if (isEditMode) {
         const updateApiUrl = `${API_URL}/update-accountmaster?accoid=${newAccoid}`;
         response = await axios.put(updateApiUrl, requestData);
@@ -977,18 +965,19 @@ const AccountMaster = () => {
         response = await axios.post(`${API_URL}/insert-accountmaster`, requestData);
         toast.success("Data saved successfully!");
       }
-  
-      // If account master is saved successfully, insert the selected groups
-      if (response.status === 201) {
-        try {
-          const groupApiResponse = await axios.post(`${API_URL}/create-multiple-acgroups`, {
-            acGroups: acGroupsData,
-          });
-        } catch (groupError) {
-          console.error("Error saving groups:", groupError);
-        }
+
+      if (response.status === 200 || response.status === 201) {
+        const groupUpdateData = {
+          acGroups: acGroupsData,
+          Ac_Code: formData.Ac_Code,
+          Company_Code: companyCode,
+          accoid: newAccoid 
+        };
+        await axios.post(`${API_URL}/create-multiple-acgroups`, groupUpdateData);
+        toast.success("Groups updated successfully!");
       }
-  
+
+
       setIsEditMode(false);
       setAddOneButtonEnabled(true);
       setEditButtonEnabled(true);
@@ -996,21 +985,15 @@ const AccountMaster = () => {
       setBackButtonEnabled(true);
       setSaveButtonEnabled(false);
       setCancelButtonEnabled(false);
-      setIsEditing(true);
-  
-      // setTimeout(() => {
-      //   window.location.reload();
-      // }, 1000);
+      setIsEditing(false);
+      setIsLoading(false);
     } catch (error) {
       console.error("Error during API call:", error);
-      toast.error("Error occurred while saving data");
-    } finally {
-      setIsEditing(false);
+      toast.error(`Error occurred while saving data: ${error.message}`);
       setIsLoading(false);
     }
   };
 
-  
   
   
 

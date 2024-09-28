@@ -24,6 +24,8 @@ class PendingDO(db.Model):
     orderid = db.Column(db.Integer, nullable=False)
     new_party = db.Column(db.String(1), nullable=False)
     tenderdetailid = db.Column(db.Integer, nullable=False)
+    bill_to_accoid = db.Column(db.Integer, nullable=False)
+    ship_to_accoid = db.Column(db.Integer, nullable=False)
 
     def to_dict(self):
         return {column.name: getattr(self, column.name) for column in self.__table__.columns}

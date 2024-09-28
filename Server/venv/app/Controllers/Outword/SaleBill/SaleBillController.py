@@ -924,7 +924,7 @@ def Generate_SaleBill():
 
         with db.session.begin_nested():
             # Update Doc No to saleBill
-            sale_bill_update = db.session.execute(
+            db.session.execute(
                 text('''UPDATE nt_1_sugarsale 
                         SET doc_no = :doc_no
                         WHERE Year_Code = :Year_Code 

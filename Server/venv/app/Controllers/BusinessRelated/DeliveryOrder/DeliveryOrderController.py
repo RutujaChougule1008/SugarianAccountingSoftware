@@ -11,7 +11,8 @@ import requests
 import logging
 from app.utils.CommonGLedgerFunctions import fetch_company_parameters,get_accoid,getSaleAc,get_acShort_Name
 from app.models.BusinessReleted.TenderPurchase.TenderPurchaseModels import TenderHead,TenderDetails
-
+import asyncio
+import aiohttp
 
 API_URL= os.getenv('API_URL')
 
@@ -19,6 +20,15 @@ from app.models.BusinessReleted.DeliveryOrder.DeliveryOrderSchema import Deliver
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+async def async_post(url, params=None, json=None):
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, params=params, json=json) as response:
+            return await response.json(), response.status
+
+async def async_put(url, payload): 
+    async with aiohttp.ClientSession() as session:
+        async with session.put(url, json=payload) as response:
+            return await response.json(), response.status
 
 TASK_DETAILS_QUERY = '''
 SELECT        dbo.nt_1_deliveryorder.mill_code, dbo.nt_1_deliveryorder.transport, dbo.nt_1_deliveryorder.GETPASSCODE, dbo.nt_1_deliveryorder.SaleBillTo, dbo.nt_1_deliveryorder.mc, dbo.nt_1_deliveryorder.gp, 
@@ -39,31 +49,31 @@ SELECT        dbo.nt_1_deliveryorder.mill_code, dbo.nt_1_deliveryorder.transport
                          voucherby.Ac_Name_E AS voucherbyname, dbo.nt_1_deliveryorder.vb, dbo.nt_1_deliveryorder.voucher_by, voucherby.accoid AS voucherbyacic, dbo.nt_1_deliveryorder.docd, DO.accoid AS DOaccodeid, 
                          DO.Ac_Code AS DOacCode, DO.Ac_Name_E AS DOName, dbo.nt_1_deliveryorder.DO, dbo.nt_1_deliveryorder.MemoGSTRate, memogstrate.Doc_no AS memogstdocno, memogstrate.Rate AS memorategst, 
                          gstrate.GST_Name AS gstratename, dbo.nt_1_tender.AutoPurchaseBill
-FROM            dbo.nt_1_accountmaster AS cashdiffac RIGHT OUTER JOIN
-                         dbo.nt_1_accountmaster AS bank RIGHT OUTER JOIN
-                         dbo.nt_1_dodetails ON bank.accoid = dbo.nt_1_dodetails.bc RIGHT OUTER JOIN
-                         dbo.nt_1_tender RIGHT OUTER JOIN
-                         dbo.nt_1_deliveryorder ON dbo.nt_1_tender.Company_Code = dbo.nt_1_deliveryorder.company_code AND dbo.nt_1_tender.Tender_No = dbo.nt_1_deliveryorder.purc_no LEFT OUTER JOIN
+FROM            dbo.Brand_Master RIGHT OUTER JOIN
+                         dbo.nt_1_accountmaster AS vasuliac RIGHT OUTER JOIN
+                         dbo.nt_1_accountmaster AS salebillto RIGHT OUTER JOIN
+                         dbo.nt_1_deliveryorder ON salebillto.accoid = dbo.nt_1_deliveryorder.sb LEFT OUTER JOIN
+                         dbo.nt_1_accountmaster AS transport ON dbo.nt_1_deliveryorder.tc = transport.accoid LEFT OUTER JOIN
+                         dbo.nt_1_tender ON dbo.nt_1_deliveryorder.company_code = dbo.nt_1_tender.Company_Code AND dbo.nt_1_deliveryorder.purc_no = dbo.nt_1_tender.Tender_No LEFT OUTER JOIN
                          dbo.nt_1_gstratemaster AS gstrate ON dbo.nt_1_deliveryorder.company_code = gstrate.Company_Code AND dbo.nt_1_deliveryorder.GstRateCode = gstrate.Doc_no LEFT OUTER JOIN
                          dbo.nt_1_gstratemaster AS memogstrate ON dbo.nt_1_deliveryorder.company_code = memogstrate.Company_Code AND dbo.nt_1_deliveryorder.MemoGSTRate = memogstrate.Doc_no LEFT OUTER JOIN
                          dbo.nt_1_accountmaster AS DO ON dbo.nt_1_deliveryorder.docd = DO.accoid LEFT OUTER JOIN
-                         dbo.nt_1_accountmaster AS transport ON dbo.nt_1_deliveryorder.tc = transport.accoid LEFT OUTER JOIN
                          dbo.nt_1_accountmaster AS voucherby ON dbo.nt_1_deliveryorder.vb = voucherby.accoid LEFT OUTER JOIN
                          dbo.gststatemaster AS getpassstatename ON dbo.nt_1_deliveryorder.GetpassGstStateCode = getpassstatename.State_Code LEFT OUTER JOIN
                          dbo.gststatemaster AS transportstatecode ON dbo.nt_1_deliveryorder.TransportGSTStateCode = transportstatecode.State_Code LEFT OUTER JOIN
                          dbo.gststatemaster AS salebillstatecode ON dbo.nt_1_deliveryorder.SalebilltoGstStateCode = salebillstatecode.State_Code LEFT OUTER JOIN
                          dbo.gststatemaster AS voucherbystatecode ON dbo.nt_1_deliveryorder.VoucherbyGstStateCode = voucherbystatecode.State_Code LEFT OUTER JOIN
-                         dbo.gststatemaster AS millstatecode ON dbo.nt_1_deliveryorder.MillGSTStateCode = millstatecode.State_Code LEFT OUTER JOIN
-                         dbo.nt_1_accountmaster AS vasuliac ON dbo.nt_1_deliveryorder.va = vasuliac.accoid ON dbo.nt_1_dodetails.doid = dbo.nt_1_deliveryorder.doid LEFT OUTER JOIN
-                         dbo.Brand_Master ON dbo.nt_1_deliveryorder.brandcode = dbo.Brand_Master.Code ON cashdiffac.accoid = dbo.nt_1_deliveryorder.CashDiffAcId LEFT OUTER JOIN
+                         dbo.gststatemaster AS millstatecode ON dbo.nt_1_deliveryorder.MillGSTStateCode = millstatecode.State_Code ON vasuliac.accoid = dbo.nt_1_deliveryorder.va LEFT OUTER JOIN
+                         dbo.nt_1_accountmaster AS bank RIGHT OUTER JOIN
+                         dbo.nt_1_dodetails ON bank.accoid = dbo.nt_1_dodetails.bc ON dbo.nt_1_deliveryorder.doid = dbo.nt_1_dodetails.doid ON dbo.Brand_Master.Code = dbo.nt_1_deliveryorder.brandcode LEFT OUTER JOIN
+                         dbo.nt_1_accountmaster AS cashdiffac ON dbo.nt_1_deliveryorder.CashDiffAcId = cashdiffac.accoid LEFT OUTER JOIN
                          dbo.nt_1_accountmaster AS broker ON dbo.nt_1_deliveryorder.bk = broker.accoid LEFT OUTER JOIN
-                         dbo.nt_1_accountmaster AS tdsac ON dbo.nt_1_deliveryorder.TDSAcId = tdsac.accoid RIGHT OUTER JOIN
-                         dbo.nt_1_systemmaster ON dbo.nt_1_deliveryorder.ic = dbo.nt_1_systemmaster.systemid LEFT OUTER JOIN
-                         dbo.nt_1_accountmaster AS mill ON dbo.nt_1_deliveryorder.mc = mill.accoid RIGHT OUTER JOIN
-                         dbo.nt_1_accountmaster AS salebillto ON dbo.nt_1_deliveryorder.sb = salebillto.accoid LEFT OUTER JOIN
+                         dbo.nt_1_accountmaster AS tdsac ON dbo.nt_1_deliveryorder.TDSAcId = tdsac.accoid LEFT OUTER JOIN
+                         dbo.nt_1_accountmaster AS mill ON dbo.nt_1_deliveryorder.mc = mill.accoid LEFT OUTER JOIN
                          dbo.nt_1_accountmaster AS shipto ON dbo.nt_1_deliveryorder.st = shipto.accoid LEFT OUTER JOIN
-                         dbo.nt_1_accountmaster AS getpass ON dbo.nt_1_deliveryorder.gp = getpass.accoid
-        WHERE        (dbo.nt_1_systemmaster.System_Type = 'I') and dbo.nt_1_deliveryorder.doid=:doid
+                         dbo.nt_1_accountmaster AS getpass ON dbo.nt_1_deliveryorder.gp = getpass.accoid LEFT OUTER JOIN
+                         dbo.nt_1_systemmaster ON dbo.nt_1_deliveryorder.ic = dbo.nt_1_systemmaster.systemid 
+                         WHERE        (dbo.nt_1_systemmaster.System_Type = 'I') and dbo.nt_1_deliveryorder.doid=:doid
 '''
 
 def format_dates(task):
@@ -189,8 +199,9 @@ def getDOByid():
 
 
 #Insert Record and Gldger Effects of DebitcreditNote and DebitcreditNoteDetail
+
 @app.route(API_URL + "/insert-DeliveryOrder", methods=["POST"])
-def insert_DeliveryOrder():
+async def insert_DeliveryOrder():
     def get_max_doc_no():
         return db.session.query(func.max(DeliveryOrderHead.doc_no)).scalar() or 0
  
@@ -484,10 +495,6 @@ def insert_DeliveryOrder():
                         add_gledger_entry(gledger_entries, headData, RCMIGST, "C", headData['transport'], accoid,"",headData['transport'],ordercode)
                         
 
-         
-
-
-
         query_params = {
             'Company_Code': headData['company_code'],
             'DOC_NO': new_doc_no,
@@ -496,10 +503,10 @@ def insert_DeliveryOrder():
             
         }
        
-        response = requests.post("http://localhost:5000/api/sugarian/create-Record-gLedger", params=query_params, json=gledger_entries)
+        response, status_code = await async_post("http://localhost:8080/api/sugarian/create-Record-gLedger", params=query_params, json=gledger_entries)
         
 
-        if response.status_code == 201:
+        if status_code == 201:
             db.session.commit()
         else:
             db.session.rollback()
@@ -511,6 +518,7 @@ def insert_DeliveryOrder():
         
         desp_type=headData['desp_type']
         Autopurchase=new_sale_data['AutopurchaseBill']
+        print('Autopurchase',Autopurchase),
         purchaseno=0
         detaildataappend=[]
         detailLedger_entry=[]
@@ -548,10 +556,10 @@ def insert_DeliveryOrder():
                         }
                 # logger.info("Creating PurchaseBill entry: %s", create_PurchaseBill_entry)
             
-                response = requests.post("http://localhost:5000/api/sugarian/insert_SugarPurchase",  json=create_PurchaseBill_entry)
+                response, status_code = await async_post("http://localhost:8080/api/sugarian/insert_SugarPurchase",  json=create_PurchaseBill_entry)
 
-                if response.status_code == 201:
-                    data =response.json()
+                if status_code == 201:
+                    data =response
                     added_details = data.get('addedDetails')
                     doc_nos = next((detail.get('doc_no') for detail in added_details if 'doc_no' in detail), None)
                     purchaseid=next((detail.get('purchase') for detail in added_details if 'purchase' in detail), None)
@@ -613,10 +621,10 @@ def insert_DeliveryOrder():
                             }
                     
                 
-                    response = requests.post("http://localhost:5000/api/sugarian/insert-SaleBill",  json=create_SaleBill_entry)
+                    response, status_code = await async_post("http://localhost:8080/api/sugarian/insert-SaleBill",  json=create_SaleBill_entry)
                     print('salebill', create_SaleBill_entry)
-                    if response.status_code == 201:
-                        data = response.json()
+                    if status_code == 201:
+                        data = response
                         added_detailssb = data.get('addedDetails')
                         doc_nos = next((detail.get('doc_no') for detail in added_detailssb if 'doc_no' in detail), None)
                         saleid=next((detail.get('Saleid') for detail in added_detailssb if 'Saleid' in detail), None)
@@ -654,7 +662,7 @@ def insert_DeliveryOrder():
                         }
 
             print('create_CommisionBill_entry',create_CommisionBill_entry)
-            response = requests.post("http://localhost:5000/api/sugarian/create-RecordCommissionBill",params=query_params,json=create_CommisionBill_entry)
+            response = requests.post("http://localhost:8080/api/sugarian/create-RecordCommissionBill",params=query_params,json=create_CommisionBill_entry)
            
             if response.status_code == 201:
                 # Parse the JSON data from the response
@@ -707,7 +715,7 @@ def insert_DeliveryOrder():
 
         result = [dict(row._mapping) for row in detail_record]
 
-        
+        print("result", result)
 
         buyer_quantal = result[0].get('Buyer_Quantal')
         selfquantalid=result[0].get('tenderdetailid')
@@ -745,11 +753,11 @@ def insert_DeliveryOrder():
                         
                         }
 
-                response = requests.put("http://localhost:5000/api/sugarian/Stock_Entry_tender_purchase",params=Stock_query_params,json=create_TenderStock_entry)
+                response = requests.put("http://localhost:8080/api/sugarian/Stock_Entry_tender_purchase",params=Stock_query_params,json=create_TenderStock_entry)
         
 
-        if response.status_code == 200:
-            data=response.json()
+        if status_code == 200:
+            data=response
             
             added_detailssb = data.get('addedDetails')
             
@@ -761,7 +769,7 @@ def insert_DeliveryOrder():
                 
         else:
             db.session.rollback()
-            return jsonify({"error": "Failed to create Tender record", "details": response.json()}), response.status_code
+            return jsonify({"error": "Failed to create Tender record", "details": response}), status_code
                 
 
 
@@ -834,7 +842,8 @@ def update_DeliveryOrder():
                             'PS_SGSTRATE','PS_IGSTRATE','TOTALPurchase_Amount','PSTCS_Amt','PSTDS_Amt','PSNetPayble','PS_SelfBal','PS_amount','lblgetpasscodename',
                             'lblvoucherByname','Gst_Rate','AutopurchaseBill','LV_CGSTAmount','LV_SGSTAmount','LV_IGSTAmount','LV_TotalAmount',
                             'LV_TCSRate','LV_NETPayble','LV_TCSAmt','LV_TDSRate','LV_TDSAmt','LV_Igstrate','LV_Cgstrate','LV_taxableamount',
-                            'LV_Sgstrate','LV_Commision_Amt','LV_tender_Commision_Amt','gstratename','Gstrate']
+                            'LV_Sgstrate','LV_Commision_Amt','LV_tender_Commision_Amt','gstratename','Gstrate','lblitemname',
+                            'newbroker','lblbrokername']
     
         
         for key in remove_sale_data:
@@ -998,7 +1007,7 @@ def update_DeliveryOrder():
             'TRAN_TYPE': headData['tran_type']
         }
     
-        response = requests.post("http://localhost:5000/api/sugarian/create-Record-gLedger", params=query_params, json=gledger_entries)
+        response = requests.post("http://localhost:8080/api/sugarian/create-Record-gLedger", params=query_params, json=gledger_entries)
 
         if response.status_code == 201:
             db.session.commit()
@@ -1056,7 +1065,7 @@ def update_DeliveryOrder():
             }
             print("headData['purchaseid']",headData['purchaseid'])
             print('purchase',update_PurchaseBill_entry)
-            response = requests.put("http://localhost:5000/api/sugarian/update-SugarPurchase", params=purch_param ,json=update_PurchaseBill_entry)
+            response = requests.put("http://localhost:8080/api/sugarian/update-SugarPurchase", params=purch_param ,json=update_PurchaseBill_entry)
            
             if response.status_code == 200:
                 data =response.json()
@@ -1123,7 +1132,7 @@ def update_DeliveryOrder():
                                 "saleid":headData['saleid']
                             }
                             print('Saleill',update_SaleBill_entry)
-                            response = requests.put("http://localhost:5000/api/sugarian/update-SaleBill",  params=sale_param,json=update_SaleBill_entry)
+                            response = requests.put("http://localhost:8080/api/sugarian/update-SaleBill",  params=sale_param,json=update_SaleBill_entry)
 
                     if response.status_code == 201:
                         data = response.json()
@@ -1167,7 +1176,7 @@ def update_DeliveryOrder():
                                         }
 
            
-            response = requests.put("http://localhost:5000/api/sugarian/update-CommissionBill",params=query_params,json=update_CommisionBill_entry)
+            response = requests.put("http://localhost:8080/api/sugarian/update-CommissionBill",params=query_params,json=update_CommisionBill_entry)
 
             if response.status_code == 201:
                 db.session.commit()
@@ -1234,7 +1243,7 @@ def update_DeliveryOrder():
                         
                         }
 
-            response = requests.put("http://localhost:5000/api/sugarian/Stock_Entry_tender_purchase",params=Stock_query_params,json=create_TenderStock_entry)
+            response = requests.put("http://localhost:8080/api/sugarian/Stock_Entry_tender_purchase",params=Stock_query_params,json=create_TenderStock_entry)
         
 
             if response.status_code == 200:
@@ -1302,7 +1311,7 @@ def delete_data_by_doid():
                     'Year_Code': Year_Code,
                     'TRAN_TYPE': "DO",
                 }
-                response = requests.delete("http://localhost:5000/api/sugarian/delete-Record-gLedger", params=query_params)
+                response = requests.delete("http://localhost:8080/api/sugarian/delete-Record-gLedger", params=query_params)
                 
                 if response.status_code != 200:
                     # If external request fails, raise an exception to trigger rollback
@@ -1318,7 +1327,7 @@ def delete_data_by_doid():
 
                 }
                 
-                response = requests.delete("http://localhost:5000/api/sugarian/delete_data_SugarPurchase", params=purchase_param)
+                response = requests.delete("http://localhost:8080/api/sugarian/delete_data_SugarPurchase", params=purchase_param)
                 
                 if response.status_code != 200:
                     # If external request fails, raise an exception to trigger rollback
@@ -1333,7 +1342,7 @@ def delete_data_by_doid():
 
                 }
                 
-                response = requests.delete("http://localhost:5000/api/sugarian/delete_data_by_saleid", params=sale_param)
+                response = requests.delete("http://localhost:8080/api/sugarian/delete_data_by_saleid", params=sale_param)
 
                 
                 if response.status_code != 200:
@@ -1436,7 +1445,7 @@ def get_lastDO_navigation():
 
         # Convert additional_data_rows to a list of dictionaries
         last_details_data = [dict(row._mapping) for row in additional_data_rows]
-
+        print('last_details_data',last_details_data)
         # Prepare response data
         response = {
             "last_head_data": last_head_data,
@@ -1735,6 +1744,8 @@ def getAmountcalculationData():
         logger.error("Traceback: %s", traceback.format_exc())
         # Log the exception here if needed
         return jsonify({"error": "Internal server error", "message": str(e)}), 500  
+
+ 
     
 
 #Our DO Report

@@ -363,7 +363,7 @@ const Navbar = () => {
               <a href="/sugar-sale-return-sale">Sugar Sale Return Sale</a>
             </div>
             <div className="submenu-item">
-              <a href="/service-bill">Service Bill</a>
+              <a href="/ServiceBill-utility">Service Bill</a>
             </div>
             <div className="submenu-item">
               <a href="/cold-storage-outward">Cold Storage Outward</a>

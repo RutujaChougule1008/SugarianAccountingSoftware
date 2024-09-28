@@ -616,7 +616,7 @@ const SugarSaleReturnSale = () => {
         unitName = last_labels_data[0].unitname;
         unitCode = last_head_data.Unit_Code;
         billToName = last_labels_data[0].billtoname;
-        billToCode = last_head_data.bill_to;
+        billToCode = last_head_data.Bill_To;
         gstRateCode = last_head_data.GstRateCode;
         gstName = last_labels_data[0].GSTName;
         millName = last_labels_data[0].millname;
@@ -683,7 +683,7 @@ const SugarSaleReturnSale = () => {
         unitName = last_labels_data[0].unitname;
         unitCode = last_head_data.Unit_Code;
         billToName = last_labels_data[0].billtoname;
-        billToCode = last_head_data.bill_to;
+        billToCode = last_head_data.Bill_To;
         gstRateCode = last_head_data.GstRateCode;
         gstName = last_labels_data[0].GSTName;
         millName = last_labels_data[0].millname;
@@ -747,7 +747,7 @@ const SugarSaleReturnSale = () => {
         unitName = last_labels_data[0].unitname;
         unitCode = last_head_data.Unit_Code;
         billToName = last_labels_data[0].billtoname;
-        billToCode = last_head_data.bill_to;
+        billToCode = last_head_data.Bill_To;
         gstRateCode = last_head_data.GstRateCode;
         gstName = last_labels_data[0].GSTName;
         millName = last_labels_data[0].millname;
@@ -812,7 +812,7 @@ const SugarSaleReturnSale = () => {
         unitName = last_labels_data[0].unitname;
         unitCode = last_head_data.Unit_Code;
         billToName = last_labels_data[0].billtoname;
-        billToCode = last_head_data.bill_to;
+        billToCode = last_head_data.Bill_To;
         gstRateCode = last_head_data.GstRateCode;
         gstName = last_labels_data[0].GSTName;
         millName = last_labels_data[0].millname;
@@ -898,7 +898,7 @@ const SugarSaleReturnSale = () => {
         unitName = last_labels_data[0].unitname;
         unitCode = last_head_data.Unit_Code;
         billToName = last_labels_data[0].billtoname;
-        billToCode = last_head_data.bill_to;
+        billToCode = last_head_data.Bill_To;
         gstRateCode = last_head_data.GstRateCode;
         gstName = last_labels_data[0].GSTName;
         millName = last_labels_data[0].millname;
@@ -963,7 +963,7 @@ const SugarSaleReturnSale = () => {
         unitName = last_labels_data[0].unitname;
         unitCode = last_head_data.Unit_Code;
         billToName = last_labels_data[0].billtoname;
-        billToCode = last_head_data.bill_to;
+        billToCode = last_head_data.Bill_To;
         gstRateCode = last_head_data.GstRateCode;
         gstName = last_labels_data[0].GSTName;
         millName = last_labels_data[0].millname;
@@ -1139,72 +1139,55 @@ const SugarSaleReturnSale = () => {
   const saleBillHeadData = (data) => {
     console.log(data);
 
-    partyCode = data.Ac_Code;
+     partyCode = data.Ac_Code || '';
+     unitCode = data.Unit_Code || '';
+     billToCode = data.Bill_To || '';
+     gstRateCode = data.GstRateCode || '';
+     millCode = data.mill_code || '';
+     brokerCode = data.BROKER || '';
 
-    unitCode = data.Unit_Code;
-
-    billToCode = data.bill_to;
-    gstRateCode = data.GstRateCode;
-
-    millCode = data.mill_code;
-
-    brokerCode = data.BROKER;
-
+    // Update form data with new values
     setFormData((prevData) => {
+      // Avoid overwriting entire data, spread necessary fields and exclude unwanted ones
       const { doc_no, doc_date, ...remainingData } = data;
-      return {
-        bc: data.bk,
-        ...prevData,
 
+      return {
+        ...prevData,
         ...remainingData,
+        bc: data.bk || prevData.bc,
       };
     });
+
+    // Store the received sale bill head data for further use
     setLastTenderData(data || {});
-    setLastTenderDetails(data.last_details_data || []);
-  };
+    setLastTenderDetails(data.details_data || []);  // Only update if details_data is available
+};
 
-  const saleBillDetailData = (details) => {
-    console.log("Sale Bill Details Received:", details);
+const saleBillDetailData = (details) => {
+  console.log("Sale Bill Details Received:", details);
 
-    partyName = details.partyname;
+   partyName = details.partyname;
+   unitName = details.unitname ;
+   billToName = details.billtoname;
+   gstName = details.GSTName ;
+   millName = details.millname ;
+   itemName = details.itemname ;
+   brokerName = details.brokername ;
 
-    unitName = details.unitname;
+  // Extract existing detail_ids from users
+  const existingDetailIds = users.map(user => user.detail_id).filter(id => id != null);
 
-    billToName = details.billtoname;
+  // Determine if the current detail is an existing entry
+  const isExisting = users.some(user => user.detail_id === details.detail_id);
 
-    gstName = details.GSTName;
-    millName = details.millname;
+  // Assign a new detail_id if it's a new entry
+  const newDetailId = existingDetailIds.length > 0 ? Math.max(...existingDetailIds) + 1 : 1;
 
-    itemName = details.itemname;
-
-    brokerName = details.brokername;
-
-    // Extract existing detail_ids
-    const existingDetailIds = users
-      .map((user) => user.detail_id)
-      .filter((id) => id != null);
-
-    // Determine if the detail is new or existing based on `detail_id`
-    const isExisting = users.some(
-      (user) => user.detail_id === details.detail_id
-    );
-
-    // Log whether the item is considered existing or not
-    console.log("Is Existing:", isExisting);
-
-    // Determine the new detail_id only if the item is new
-    const newDetailId =
-      existingDetailIds.length > 0 ? Math.max(...existingDetailIds) + 1 : 1;
-
-    // Create new or updated detail data
-    const newDetailData = {
+  // Prepare the new detail data to be added or updated
+  const newDetailData = {
       item_code: details.item_code || 0,
       itemname: details.itemname || "Unknown Item",
-      id:
-        details.id ||
-        (users.length > 0
-          ? Math.max(...users.map((user) => user.id || 0)) + 1
-          : 1),
+      id: details.id || (users.length > 0 ? Math.max(...users.map(user => user.id || 0)) + 1 : 1),
       ic: details.ic || 0,
       narration: details.narration || "",
       Quantal: parseFloat(details.Quantal) || 0,
@@ -1212,27 +1195,24 @@ const SugarSaleReturnSale = () => {
       packing: details.packing || 0,
       rate: parseFloat(details.rate) || 0,
       item_Amount: parseFloat(details.item_Amount) || 0,
-      detail_id: isExisting ? details.detail_id : newDetailId, // Use existing detail_id if updating, else newDetailId
-      rowaction: isExisting ? "update" : "add", // Determine action
+      detail_id: isExisting ? details.detail_id : newDetailId,
+      rowaction: isExisting ? "update" : "add",
       srdtid: isExisting ? details.srdtid : undefined,
-    };
+  };
 
-    // Log new detail data before state update
-    console.log("New Detail Data Before State Update:", newDetailData);
+  console.log("New Detail Data Before State Update:", newDetailData);
 
-    // Update or add to `users` state
-    const updatedUsers = isExisting
-      ? users.map((user) =>
-          user.detail_id === details.detail_id ? newDetailData : user
-        )
+  // Update the `users` state
+  const updatedUsers = isExisting
+      ? users.map(user => user.detail_id === details.detail_id ? newDetailData : user)
       : [...users, newDetailData];
 
-    console.log("Updated Users State Before setUsers:", updatedUsers);
+  console.log("Updated Users State Before setUsers:", updatedUsers);
 
-    // Update state with new users list
-    setUsers(updatedUsers);
-    setLastTenderDetails(updatedUsers || []);
-  };
+  // Update the state with the updated users list
+  setUsers(updatedUsers);
+  setLastTenderDetails(updatedUsers || []);  // Also update `lastTenderDetails` with the new list
+};
 
   useEffect(() => {
     if (selectedRecord) {

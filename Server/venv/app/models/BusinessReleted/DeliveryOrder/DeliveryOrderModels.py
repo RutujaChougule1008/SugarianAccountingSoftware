@@ -196,6 +196,7 @@ class DeliveryOrderHead(db.Model):
     LockedUser = db.Column(db.String(50),nullable=True)
     gstid = db.Column(db.Integer,nullable=True)
     purchaseid = db.Column(db.Integer,nullable=True)
+    orderid = db.Column(db.Integer,nullable=True)
     
 
     details = db.relationship('DeliveryOrderDetail', backref='Doid', lazy=True)

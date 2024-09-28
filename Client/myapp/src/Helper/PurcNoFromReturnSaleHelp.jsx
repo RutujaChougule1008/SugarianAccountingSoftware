@@ -5,7 +5,6 @@ import DataTablePagination from "../Common/HelpCommon/DataTablePagination";
 import axios from "axios";
 import "../App.css";
 
-var lActiveInputFeild = "";
 const CompanyCode = sessionStorage.getItem("Company_Code");
 const API_URL = process.env.REACT_APP_API;
 const Year_Code = sessionStorage.getItem("Year_Code");
@@ -19,25 +18,20 @@ const PurcNoFromReturnSaleHelp = ({
     disabledFeild,
     tabIndexHelp,
     Type,
-    sugarSaleReturnSale 
+    sugarSaleReturnSale
 }) => {
     const [showModal, setShowModal] = useState(false);
     const [popupContent, setPopupContent] = useState([]);
     const [enteredAcCode, setEnteredAcCode] = useState("");
-    const [type, setType] = useState("");
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10;
+    const [itemsPerPage] = useState(10);
     const [selectedRowIndex, setSelectedRowIndex] = useState(-1);
-    const [apiDataFetched, setApiDataFetched] = useState(false);
     const [selectedItems, setSelectedItems] = useState([]);
     const [totalQuintal, setTotalQuintal] = useState(0);
     const [totalBillAmount, setTotalBillAmount] = useState(0);
-    const [selectedItemCodes, setSelectedItemCodes] = useState([]);
-    const [selectedItemNames, setSelectedItemNames] = useState([]);
+    const [loading, setLoading] = useState(false); 
 
-
-    // Fetch data based on acType
     const fetchAndOpenPopup = async () => {
         try {
             const response = await axios.get(`http://localhost:8080/api/sugarian/PurcNoFromReturnSale?Company_Code=${CompanyCode}`);
@@ -45,9 +39,7 @@ const PurcNoFromReturnSaleHelp = ({
             const filteredData = data.filter(item => {
                 const partyName = item.PartyName ? item.PartyName.toLowerCase() : "";
                 const millName = item.MillName ? item.MillName.toLowerCase() : "";
-
-                return partyName.includes(searchTerm.toLowerCase()) ||
-                    millName.includes(searchTerm.toLowerCase());
+                return partyName.includes(searchTerm.toLowerCase()) || millName.includes(searchTerm.toLowerCase());
             });
             setPopupContent(filteredData);
             setShowModal(true);
@@ -57,59 +49,30 @@ const PurcNoFromReturnSaleHelp = ({
     };
 
     useEffect(() => {
-        console.log("Received purchaseNo:", purchaseNo);
-        console.log("Received type:", Type);
         setEnteredAcCode(purchaseNo);
-        setType(Type);
-    }, [purchaseNo, Type]);
+    }, [purchaseNo]);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                await fetchAndOpenPopup();
-                setShowModal(false);
-                setApiDataFetched(true);
-            } catch (error) {
-                console.error("Error fetching data:", error);
-            }
-        };
-
-        if (!apiDataFetched) {
-            fetchData();
-        }
-
-    }, [apiDataFetched]);
-
-    // Handle Mill Code button click
     const handleMillCodeButtonClick = () => {
-        lActiveInputFeild = name;
         fetchAndOpenPopup();
         if (onAcCodeClick) {
             onAcCodeClick({ enteredAcCode });
         }
     };
 
-    //popup functionality show and hide
     const handleCloseModal = () => {
         setShowModal(false);
     };
 
-    //handle onChange event for Mill Code,Broker Code and Bp Account
     const handleAcCodeChange = async (event) => {
         const { value } = event.target;
         setEnteredAcCode(value);
-
         try {
             const response = await axios.get(`http://localhost:8080/api/sugarian/PurcNoFromReturnSale?Company_Code=${CompanyCode}`);
             const data = response.data;
             setPopupContent(data);
-            setApiDataFetched(true);
-
             const matchingItem = data.find((item) => item.doc_no === parseInt(value, 10));
-
             if (matchingItem) {
                 setEnteredAcCode(matchingItem.doc_no);
-                // setType(matchingItem.Tran_Type);
             }
         } catch (error) {
             console.error("Error fetching data:", error);
@@ -118,72 +81,81 @@ const PurcNoFromReturnSaleHelp = ({
 
     const handleCheckboxChange = (item, index, checked) => {
         const updatedItem = { ...item, isSelected: checked };
-    
-        const updatedContent = [
-            ...popupContent.slice(0, index),
-            updatedItem,
-            ...popupContent.slice(index + 1),
-        ];
+        const updatedContent = [...popupContent.slice(0, index), updatedItem, ...popupContent.slice(index + 1)];
         setPopupContent(updatedContent);
-    
+
         if (checked) {
             setSelectedItems((prevSelected) => [...prevSelected, updatedItem]);
             setTotalQuintal((prevTotal) => prevTotal + parseFloat(updatedItem.Quantal));
             setTotalBillAmount((prevTotal) => prevTotal + parseFloat(updatedItem.Bill_Amount));
-            // setSelectedItemCodes((prevCodes) => [...prevCodes, updatedItem.doc_no]);
-            // setSelectedItemNames((prevNames) => [...prevNames, updatedItem.MillName]);
         } else {
             setSelectedItems((prevSelected) => prevSelected.filter((i) => i.doc_no !== updatedItem.doc_no));
             setTotalQuintal((prevTotal) => prevTotal - parseFloat(updatedItem.Quantal));
             setTotalBillAmount((prevTotal) => prevTotal - parseFloat(updatedItem.Bill_Amount));
-            // setSelectedItemCodes((prevCodes) => prevCodes.filter((code) => code !== updatedItem.doc_no));
-            // setSelectedItemNames((prevNames) => prevNames.filter((name) => name !== updatedItem.MillName));
         }
     };
-    
 
     const fetchSaleBillData = async (purchaNo) => {
+        setLoading(true); 
         try {
             const response = await axios.get(`${API_URL}/get-sugarpurchasereturn-by-id?doc_no=${purchaNo}&Company_Code=${CompanyCode}&Year_Code=${Year_Code}`);
             const saleBillHead = response.data.last_head_data;
-            const saleBillDetail = response.data.last_details_data[0];
-            OnSaleBillHead(saleBillHead);
-            OnSaleBillDetail(saleBillDetail);
-        } catch (error) {
-            console.error("Error fetching SaleBill data:", error);
-        }
-    };
+        const saleBillDetail = response.data.details_data; 
+        const saleBillLabels = response.data.last_labels_data; 
 
+    
+
+        // Ensure saleBillDetail and saleBillLabels exist and are arrays
+        if (Array.isArray(saleBillDetail) && saleBillDetail.length > 0 && Array.isArray(saleBillLabels)) {
+            // Call OnSaleBillHead with the head data
+           
+
+            // Map over saleBillDetail and merge corresponding saleBillLabels
+            saleBillDetail.forEach((detail, index) => {
+                // Merge detail with the corresponding label by index
+                const label = saleBillLabels[index] || {};
+                const combinedDetail = {
+                    ...detail,
+                    ...label,  // Add label data (e.g., partyname, brokername)
+                };
+
+                // Log combined data for debugging
+                console.log("Combined Detail:", combinedDetail);
+
+                // Call your saleBillDetailData function with the combined detail
+                OnSaleBillDetail(combinedDetail);
+                setShowModal(true);  
+            });
+        } else {
+            console.warn("No sale bill details or labels available.");
+            OnSaleBillDetail([]);
+        }
+        OnSaleBillHead(saleBillHead);
+
+    } catch (error) {
+        console.error("Error fetching SaleBill data:", error);
+    }
+};
     const handleSelectClick = () => {
         if (sugarSaleReturnSale) {
             sugarSaleReturnSale(totalBillAmount, totalQuintal, selectedItems);
         }
-        // Close modal after selection
         setShowModal(false);
     };
 
-    //After open popup onDoubleClick event that record display on the fields
     const handleRecordDoubleClick = (item) => {
-        if (lActiveInputFeild === name) {
-            setEnteredAcCode(item.PURCNO);
-            // setType(item.Tran_Type);
-
-            fetchSaleBillData(item.doc_no);
-
-            if (onAcCodeClick) {
-                onAcCodeClick(item.doc_no);
-            }
+        setEnteredAcCode(item.PURCNO);
+        fetchSaleBillData(item.doc_no);
+        if (onAcCodeClick) {
+            onAcCodeClick(item.doc_no);
         }
-
         setShowModal(false);
     };
 
-    //handle pagination number
     const handlePageChange = (newPage) => {
         setCurrentPage(newPage);
     };
 
-    //handle search functionality
     const handleSearch = (searchValue) => {
         setSearchTerm(searchValue);
     };
@@ -199,21 +171,17 @@ const PurcNoFromReturnSaleHelp = ({
     useEffect(() => {
         const handleKeyDown = (event) => {
             if (event.key === "F1") {
-                if (event.target.id === name) {
-                    lActiveInputFeild = name;
-                    setSearchTerm(event.target.value);
-                    fetchAndOpenPopup();
-                    event.preventDefault();
-                }
+                setSearchTerm(event.target.value);
+                fetchAndOpenPopup();
+                event.preventDefault();
             }
         };
 
         window.addEventListener("keydown", handleKeyDown);
-
         return () => {
             window.removeEventListener("keydown", handleKeyDown);
         };
-    }, [name, fetchAndOpenPopup]);
+    }, []);
 
     useEffect(() => {
         const handleKeyNavigation = (event) => {
@@ -224,32 +192,28 @@ const PurcNoFromReturnSaleHelp = ({
                 } else if (event.key === "ArrowDown") {
                     event.preventDefault();
                     setSelectedRowIndex((prev) => Math.min(prev + 1, itemsToDisplay.length - 1));
-                } else if (event.key === "Enter") {
-                    event.preventDefault();
-                    if (selectedRowIndex >= 0) {
-                        handleRecordDoubleClick(itemsToDisplay[selectedRowIndex]);
-                    }
+                } else if (event.key === "Enter" && selectedRowIndex >= 0) {
+                    handleRecordDoubleClick(itemsToDisplay[selectedRowIndex]);
                 }
             }
         };
 
         window.addEventListener("keydown", handleKeyNavigation);
-
         return () => {
             window.removeEventListener("keydown", handleKeyNavigation);
         };
-    }, [showModal, selectedRowIndex, itemsToDisplay, handleRecordDoubleClick]);
+    }, [showModal, selectedRowIndex, itemsToDisplay]);
 
     return (
-        <div className="d-flex flex-row ">
-            <div className="d-flex ">
+        <div className="d-flex flex-row">
+            <div className="d-flex">
                 <div className="d-flex">
                     <input
                         type="text"
                         className="form-control ms-2"
                         id={name}
                         autoComplete="off"
-                        value={enteredAcCode !== '' ? enteredAcCode : purchaseNo}
+                        value={enteredAcCode || purchaseNo}
                         onChange={handleAcCodeChange}
                         style={{ width: "150px", height: "35px" }}
                         disabled={disabledFeild}
@@ -266,92 +230,81 @@ const PurcNoFromReturnSaleHelp = ({
                         ...
                     </Button>
                     <label id="name" className="form-labels ms-2">
-                        {type !== '' ? type : Type}
+                        {Type}
                     </label>
                 </div>
             </div>
-            <Modal
-                show={showModal}
-                onHide={handleCloseModal}
-                dialogClassName="modal-dialog"
-            >
+            <Modal show={showModal} onHide={handleCloseModal} dialogClassName="modal-dialog">
                 <Modal.Header closeButton>
                     <Modal.Title>Popup</Modal.Title>
                 </Modal.Header>
                 <DataTableSearch data={popupContent} onSearch={handleSearch} />
                 <Modal.Body>
-                    {Array.isArray(popupContent) ? (
-                        <div className="table-responsive">
-                            <table className="custom-table">
-                                <thead>
-                                    <tr>
-                                        <th>
+                    <div className="table-responsive">
+                        <table className="custom-table">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <input
+                                            type="checkbox"
+                                            onChange={(e) => {
+                                                const checked = e.target.checked;
+                                                const updatedContent = itemsToDisplay.map(item => ({
+                                                    ...item,
+                                                    isSelected: checked,
+                                                }));
+                                                setPopupContent(updatedContent);
+                                            }}
+                                        />
+                                    </th>
+                                    <th>Doc_no</th>
+                                    <th>Date</th>
+                                    <th>Tran Type</th>
+                                    <th>Mill Name</th>
+                                    <th>Quintal</th>
+                                    <th>Party Name</th>
+                                    <th>Bill Amount</th>
+                                    <th>Year Code</th>
+                                    <th>Purchase Id</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {itemsToDisplay.map((item, index) => (
+                                    <tr
+                                        key={index}
+                                        className={selectedRowIndex === index ? "selected-row" : ""}
+                                        onDoubleClick={() => handleRecordDoubleClick(item)}
+                                    >
+                                        <td>
                                             <input
                                                 type="checkbox"
-                                                onChange={(e) => {
-                                                    const checked = e.target.checked;
-                                                    const updatedContent = itemsToDisplay.map(item => ({
-                                                        ...item,
-                                                        isSelected: checked,
-                                                    }));
-                                                    setPopupContent(updatedContent);
-                                                }}
+                                                checked={item.isSelected || false}
+                                                onChange={(e) => handleCheckboxChange(item, index, e.target.checked)}
                                             />
-                                        </th>
-                                        <th>Doc_no</th>
-                                        <th>Date</th>
-                                        <th>Tran Type</th>
-                                        <th>Mill Name</th>
-                                        <th>Quintal</th>
-                                        <th>Party Name</th>
-                                        <th>Bill Amount</th>
-                                        <th>Year Code</th>
-                                        <th>Purchase Id</th>
+                                        </td>
+                                        <td>{item.doc_no}</td>
+                                        <td>{item.doc_date}</td>
+                                        <td>{item.Tran_Type}</td>
+                                        <td>{item.MillName}</td>
+                                        <td>{item.Quantal}</td>
+                                        <td>{item.PartyName}</td>
+                                        <td>{item.Bill_Amount}</td>
+                                        <td>{item.Year_Code}</td>
+                                        <td>{item.prid}</td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    {itemsToDisplay.map((item, index) => (
-                                        <tr
-                                            key={index}
-                                            className={
-                                                selectedRowIndex === index ? "selected-row" : ""
-                                            }
-                                            onDoubleClick={() => handleRecordDoubleClick(item)}
-                                        >
-                                            <td>
-                <input
-                    type="checkbox"
-                    checked={item.isSelected || false}
-                    onChange={(e) => handleCheckboxChange(item, index, e.target.checked)}
-                />
-            </td>
-                                            <td>{item.doc_no}</td>
-                                            <td>{item.doc_date}</td>
-                                            <td>{item.Tran_Type}</td>
-                                            <td>{item.MillName}</td>
-                                            <td>{item.Quantal}</td>
-                                            <td>{item.PartyName}</td>
-                                            <td>{item.Bill_Amount}</td>
-                                            <td>{item.Year_Code}</td>
-                                            <td>{item.prid}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    ) : (
-                        "Loading..."
-                    )}
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </Modal.Body>
-
                 <Modal.Footer>
-                <div>
-        <p>Total Quintal: {totalQuintal}</p>
-        <p>Total Bill Amount: {totalBillAmount}</p>
-    </div>
-    <Button variant="primary" onClick={handleSelectClick}>
-                    Select
-                </Button>
+                    <div>
+                        <p>Total Quintal: {totalQuintal}</p>
+                        <p>Total Bill Amount: {totalBillAmount}</p>
+                    </div>
+                    <Button variant="primary" onClick={handleSelectClick}>
+                        Select
+                    </Button>
                     <DataTablePagination
                         totalItems={filteredData.length}
                         itemsPerPage={itemsPerPage}
