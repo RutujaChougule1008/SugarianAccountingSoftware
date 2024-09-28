@@ -7,6 +7,7 @@ import "../App.css";
 
 const CompanyCode = sessionStorage.getItem("Company_Code");
 const YearCode = sessionStorage.getItem("Year_Code");
+const API_URL = process.env.REACT_APP_API;
 
 var lActiveInputFeild = "";
 
@@ -23,7 +24,7 @@ const PurcnoHelp = ({ onAcCodeClick, name, Tenderid, Tenderno, tabIndexHelp, dis
 
     const fetchData = useCallback(async () => {
         try {
-            const response = await axios.get(`http://localhost:8080/api/sugarian/purchno?CompanyCode=${CompanyCode}&MillCode=${Millcode}`);
+            const response = await axios.get(`${API_URL}/purchno?CompanyCode=${CompanyCode}&MillCode=${Millcode}`);
             const data = response.data;
             
             setPopupContent(data);
@@ -133,7 +134,6 @@ const PurcnoHelp = ({ onAcCodeClick, name, Tenderid, Tenderno, tabIndexHelp, dis
             if (event.key === "F1") {
                 if (event.target.id === name) {
                     lActiveInputFeild = name;
-                    setSearchTerm(event.target.value);
                     fetchAndOpenPopup();
                     event.preventDefault();
                 }

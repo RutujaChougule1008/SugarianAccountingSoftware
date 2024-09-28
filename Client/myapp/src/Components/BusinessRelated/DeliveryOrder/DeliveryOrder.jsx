@@ -1004,7 +1004,7 @@ const DeliveryOrder = () => {
     let PurchaseTDSRate=0.00
     console.log('amt----------',updatedFormData)
   
-    const url = `http://localhost:5000/api/sugarian/getAmountcalculationData?CompanyCode=${companyCode}&SalebilltoAc=${SaleBillTo}&Year_Code=${Year_Code}&purcno=${purcno}`;
+    const url = `http://localhost:8080/api/sugarian/getAmountcalculationData?CompanyCode=${companyCode}&SalebilltoAc=${SaleBillTo}&Year_Code=${Year_Code}&purcno=${purcno}`;
     const response = await axios.get(url);
     const details = response.data;
     PSBalAmt = PSRate * qt;
@@ -2839,11 +2839,9 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
           const rate = qtl !== 0 ? purcRate + exciseRate : 0;
           const millamount = qtl * rate;
           bankcodenew = data.last_details_data[0].Payment_To;
-          lblbankname = data.last_details_data[0].paymenttoname;     
+          lblbankname = data.last_details_data[0].paymenttoname; 
           if (Dispatch_type === "DI") {
-            setFormDataDetail((prevData) => {
               const newDetailData = {
-                ...prevData,
                 ddType: "T",
                 Narration: "Transfer Letter",
                 Amount: millamount,
@@ -2851,11 +2849,12 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
                 Bank_Code: bankcodenew,
                 bc: data.last_details_data[0].pt,
                 rowaction: "add",
+                bankcodeacname:lblbankname
               };
               setUsers([newDetailData]);
               // setLastTenderDetails([newDetailData])
               
-            });
+         
             
           }
   
@@ -4173,7 +4172,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
                 <td>{user.id}</td>
                 <td>{user.ddType}</td>
                 <td>{user.Bank_Code || tenderDetails.Payment_To}</td>
-                <td>{user.bankcodeacname || tenderDetails.paymenttoname}</td>
+                <td>{user.bankcodeacname || tenderDetails.paymenttoname || pendingDOData.paymenttoname}</td>
                 <td>{user.Narration}</td>
                 <td>{user.Amount}</td>
                 <td>{user.UTR_NO}</td>
