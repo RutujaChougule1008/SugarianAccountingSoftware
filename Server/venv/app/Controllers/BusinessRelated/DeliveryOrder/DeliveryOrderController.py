@@ -503,7 +503,7 @@ async def insert_DeliveryOrder():
             
         }
        
-        response, status_code = await async_post("http://localhost:5000/api/sugarian/create-Record-gLedger", params=query_params, json=gledger_entries)
+        response, status_code = await async_post("http://localhost:8080/api/sugarian/create-Record-gLedger", params=query_params, json=gledger_entries)
         
 
         if status_code == 201:
@@ -556,7 +556,7 @@ async def insert_DeliveryOrder():
                         }
                 # logger.info("Creating PurchaseBill entry: %s", create_PurchaseBill_entry)
             
-                response, status_code = await async_post("http://localhost:5000/api/sugarian/insert_SugarPurchase",  json=create_PurchaseBill_entry)
+                response, status_code = await async_post("http://localhost:8080/api/sugarian/insert_SugarPurchase",  json=create_PurchaseBill_entry)
 
                 if status_code == 201:
                     data =response
@@ -621,7 +621,7 @@ async def insert_DeliveryOrder():
                             }
                     
                 
-                    response, status_code = await async_post("http://localhost:5000/api/sugarian/insert-SaleBill",  json=create_SaleBill_entry)
+                    response, status_code = await async_post("http://localhost:8080/api/sugarian/insert-SaleBill",  json=create_SaleBill_entry)
                     print('salebill', create_SaleBill_entry)
                     if status_code == 201:
                         data = response
@@ -662,7 +662,7 @@ async def insert_DeliveryOrder():
                         }
 
             print('create_CommisionBill_entry',create_CommisionBill_entry)
-            response, status_code = await async_post("http://localhost:5000/api/sugarian/create-RecordCommissionBill",params=query_params,json=create_CommisionBill_entry)
+            response, status_code = await async_post("http://localhost:8080/api/sugarian/create-RecordCommissionBill",params=query_params,json=create_CommisionBill_entry)
            
             if status_code == 201:
                 # Parse the JSON data from the response
@@ -753,7 +753,7 @@ async def insert_DeliveryOrder():
                         
                         }
 
-                response = requests.put("http://localhost:5000/api/sugarian/Stock_Entry_tender_purchase",params=Stock_query_params,json=create_TenderStock_entry)
+                response = requests.put("http://localhost:8080/api/sugarian/Stock_Entry_tender_purchase",params=Stock_query_params,json=create_TenderStock_entry)
         
 
         if status_code == 200:
@@ -1006,10 +1006,10 @@ async def update_DeliveryOrder():
             'Year_Code': headData['Year_Code'],
             'TRAN_TYPE': headData['tran_type']
         }
-        #  response, status_code = await async_post("http://localhost:5000/api/sugarian/create-Record-gLedger", params=query_params, json=gledger_entries)
+        #  response, status_code = await async_post("http://localhost:8080/api/sugarian/create-Record-gLedger", params=query_params, json=gledger_entries)
         
     
-        response, status_code  = await async_put("http://localhost:5000/api/sugarian/create-Record-gLedger", params=query_params, json=gledger_entries)
+        response, status_code  = await async_post("http://localhost:8080/api/sugarian/create-Record-gLedger", params=query_params, json=gledger_entries)
 
         if status_code == 201:
             db.session.commit()
@@ -1067,7 +1067,7 @@ async def update_DeliveryOrder():
             }
             print("headData['purchaseid']",headData['purchaseid'])
             print('purchase',update_PurchaseBill_entry)
-            response, status_code  = await async_put("http://localhost:5000/api/sugarian/update-SugarPurchase", params=purch_param ,json=update_PurchaseBill_entry)
+            response, status_code  = await async_put("http://localhost:8080/api/sugarian/update-SugarPurchase", params=purch_param ,json=update_PurchaseBill_entry)
            
             if status_code == 200:
                 data =response
@@ -1134,7 +1134,7 @@ async def update_DeliveryOrder():
                                 "saleid":headData['saleid']
                             }
                             print('Saleill',update_SaleBill_entry)
-                            response, status_code = await async_put("http://localhost:5000/api/sugarian/update-SaleBill",  params=sale_param,json=update_SaleBill_entry)
+                            response, status_code = await async_put("http://localhost:8080/api/sugarian/update-SaleBill",  params=sale_param,json=update_SaleBill_entry)
 
                     if status_code == 201:
                         data = response
@@ -1178,7 +1178,7 @@ async def update_DeliveryOrder():
                                         }
 
            
-            response, status_code = await async_put("http://localhost:5000/api/sugarian/update-CommissionBill",params=query_params,json=update_CommisionBill_entry)
+            response, status_code = await async_put("http://localhost:8080/api/sugarian/update-CommissionBill",params=query_params,json=update_CommisionBill_entry)
 
             if status_code == 201:
                 db.session.commit()
@@ -1245,7 +1245,7 @@ async def update_DeliveryOrder():
                         
                         }
 
-            response, status_code = await async_put("http://localhost:5000/api/sugarian/Stock_Entry_tender_purchase",params=Stock_query_params,json=create_TenderStock_entry)
+            response, status_code = await async_put("http://localhost:8080/api/sugarian/Stock_Entry_tender_purchase",params=Stock_query_params,json=create_TenderStock_entry)
         
 
             if status_code == 200:
@@ -1313,7 +1313,7 @@ def delete_data_by_doid():
                     'Year_Code': Year_Code,
                     'TRAN_TYPE': "DO",
                 }
-                response = requests.delete("http://localhost:5000/api/sugarian/delete-Record-gLedger", params=query_params)
+                response = requests.delete("http://localhost:8080/api/sugarian/delete-Record-gLedger", params=query_params)
                 
                 if response.status_code != 200:
                     # If external request fails, raise an exception to trigger rollback
@@ -1329,7 +1329,7 @@ def delete_data_by_doid():
 
                 }
                 
-                response = requests.delete("http://localhost:5000/api/sugarian/delete_data_SugarPurchase", params=purchase_param)
+                response = requests.delete("http://localhost:8080/api/sugarian/delete_data_SugarPurchase", params=purchase_param)
                 
                 if response.status_code != 200:
                     # If external request fails, raise an exception to trigger rollback
@@ -1344,7 +1344,7 @@ def delete_data_by_doid():
 
                 }
                 
-                response = requests.delete("http://localhost:5000/api/sugarian/delete_data_by_saleid", params=sale_param)
+                response = requests.delete("http://localhost:8080/api/sugarian/delete_data_by_saleid", params=sale_param)
 
                 
                 if response.status_code != 200:
