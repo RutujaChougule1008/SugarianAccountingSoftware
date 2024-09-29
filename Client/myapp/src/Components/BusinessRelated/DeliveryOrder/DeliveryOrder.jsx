@@ -1003,9 +1003,12 @@ const DeliveryOrder = () => {
     let SaleTDSRate=0.00
     let PurchaseTDSRate=0.00
     console.log('amt----------',updatedFormData)
-  
-    const url = `http://localhost:8080/api/sugarian/getAmountcalculationData?CompanyCode=${companyCode}&SalebilltoAc=${SaleBillTo}&Year_Code=${Year_Code}&purcno=${purcno}`;
-    const response = await axios.get(url);
+
+    const updateApiUrl = `${API_URL}/getAmountcalculationData?CompanyCode=${companyCode}&SalebilltoAc=${SaleBillTo}&Year_Code=${Year_Code}&purcno=${purcno}`;
+    const response = await axios.get(updateApiUrl);
+
+   // const url = `http://localhost:8080/api/sugarian/getAmountcalculationData?CompanyCode=${companyCode}&SalebilltoAc=${SaleBillTo}&Year_Code=${Year_Code}&purcno=${purcno}`;
+   // const response = await axios.get(url);
     const details = response.data;
     PSBalAmt = PSRate * qt;
     PSAmountf=details['PSAmt']
@@ -1317,7 +1320,8 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
     let Getpasscode = updatedFormData.GETPASSCODE;
     let SELFAC = CompanyparametrselfAc;
     let autopurchasebill = Autopurchase;
-    let PaymentGst = tenderDetails.Payment_To;
+    let PaymentGst = tenderDetails.Payment_To || bankcodenew;
+    console.log("PaymentGst", bankcodenew)
     let Purchase_Rate = parseFloat(updatedFormData.PurchaseRate);
     let qntl = parseFloat(updatedFormData.quantal);
     let PS_amount = 0;
@@ -1698,113 +1702,147 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
     return updatedFormData;
   };
 
-  const calculateDependentValues = async (name, input, formData) => {
-    let updatedFormData = { ...formData, [name]: input };
-    const updatedFormDataDetail = { ...formDataDetail, [name]: input };
-    let MMRate = parseFloat(updatedFormData.MM_Rate) || 0.0;
-    let millamount = parseFloat(updatedFormData.amount) || 0.0;
-    const PurcTcsRate = parseFloat(updatedFormData.TCS_Rate) || 0.0;
-    const PurcTdsRate = parseFloat(updatedFormData.PurchaseTDSRate) || 0.0;
-    const qntl = parseFloat(updatedFormData.quantal) || 0.0;
-    const millamounttcs = millamount * PurcTcsRate * 100;
-    const millamounttds = millamount * PurcTdsRate * 100;
-    const purc_Rate = parseFloat(updatedFormData.PurchaseRate) || 0;
-    const excise_Rate = parseFloat(updatedFormData.excise_rate) || 0;
-    const MemoGST_Rate = parseFloat(GSTMemoGstcode) || 0;
-    const salerate = parseFloat(updatedFormData.sale_rate) || 0;
+  const handleKeyDownCalculations = async (event) => {
+    debugger
+    if (event.key === "Tab") {
+      // event.preventDefault();
 
-    const rate = qntl !== 0 ? purc_Rate + excise_Rate : 0;
-    millamount = qntl * rate;
-    updatedFormData.amount = millamount;
-    updatedFormData.final_amout = millamount;
-    updatedFormData.Mill_AmtWO_TCS = millamount + millamounttcs - millamounttds;
 
-    updatedFormData.bags = parseFloat((qntl / updatedFormData.packing) * 100);
+      const { name, value } = event.target;
 
-    if (GSTMemoGstrate > 0) {
-      // console.log("updatedFormData.transport",updatedFormData.transport)
-      const matchStatus = checkMatchStatus(
-        updatedFormData.transport,
-        companyCode,
-        Year_Code
+      
+
+
+
+      const updatedFormData = await calculateDependentValues(
+        name,
+        value,
+        formData,
+        matchStatus,
+        gstRate
       );
-      console.log(matchStatus);
-      if (MemoGST_Rate != 0) {
-        updatedFormData = await calculatememogstrateamount(
+
+      setFormData(updatedFormData);
+     
+      const TDSTCSData = await AmountCalculation(
           name,
-          input,
-          updatedFormData,
-          GSTMemoGstrate,
-          matchStatus
+          value, // Pass the correct gstRate
+          updatedFormData // Pass gstRate explicitly to calculateDependentValues
         );
-      }
+        console.log('TDSTCSData',TDSTCSData)
+        setFormData(TDSTCSData);
+
     }
-    let MemoAdvance = parseFloat(updatedFormData.Memo_Advance) || 0.0;
-    MMRate = parseFloat(MemoAdvance / qntl);
-    updatedFormData.MM_Rate = MMRate;
+  }
 
-    let diffrate = 0.0;
-    let diffamount = 0.0;
-    diffrate = parseFloat(salerate - purc_Rate);
-    diffamount = parseFloat(diffrate * qntl);
-    updatedFormData.diff_rate = diffrate;
-    updatedFormData.diff_amount = diffamount;
+  const calculateDependentValues = async (name, input, formData) => {
+      
 
-    let Frieghtrate = parseFloat(updatedFormData.FreightPerQtl) || 0.0;
-    let Frieghtamt = parseFloat(updatedFormData.Freight_Amount) || 0.0;
-    let vasulirate = parseFloat(updatedFormData.vasuli_rate) || 0.0;
-    let vasuliamt = 0.0;
-    if (qntl != 0 && Frieghtrate != 0) {
-      Frieghtamt = parseFloat(qntl * Frieghtrate);
-    } else {
-      Frieghtamt = 0.0;
-    }
+          let updatedFormData = { ...formData, [name]: input };
+          const updatedFormDataDetail = { ...formDataDetail, [name]: input };
+          let MMRate = parseFloat(updatedFormData.MM_Rate) || 0.0;
+          let millamount = parseFloat(updatedFormData.amount) || 0.0;
+          const PurcTcsRate = parseFloat(updatedFormData.TCS_Rate) || 0.0;
+          const PurcTdsRate = parseFloat(updatedFormData.PurchaseTDSRate) || 0.0;
+          const qntl = parseFloat(updatedFormData.quantal) || 0.0;
+          const millamounttcs = millamount * PurcTcsRate * 100;
+          const millamounttds = millamount * PurcTdsRate * 100;
+          const purc_Rate = parseFloat(updatedFormData.PurchaseRate) || 0;
+          const excise_Rate = parseFloat(updatedFormData.excise_rate) || 0;
+          const MemoGST_Rate = parseFloat(GSTMemoGstcode) || 0;
+          const salerate = parseFloat(updatedFormData.sale_rate) || 0;
+          const insurance = parseFloat(updatedFormData.insurance) || 0;
 
-    updatedFormData.Freight_Amount = Frieghtamt;
+          const rate = qntl !== 0 ? purc_Rate + excise_Rate : 0;
+          millamount = qntl * rate;
+          updatedFormData.amount = millamount;
+          updatedFormData.final_amout = millamount;
+          updatedFormData.Mill_AmtWO_TCS = millamount + millamounttcs - millamounttds;
 
-    if (qntl != 0 && vasulirate != 0) {
-      vasuliamt = parseFloat(qntl * vasulirate);
-    } else {
-      vasuliamt = 0.0;
-    }
+          updatedFormData.bags = parseFloat((qntl / updatedFormData.packing) * 100);
 
-    updatedFormData.vasuli_amount = vasuliamt;
+          if (GSTMemoGstrate > 0) {
+            // console.log("updatedFormData.transport",updatedFormData.transport)
+            const matchStatus = checkMatchStatus(
+              updatedFormData.transport,
+              companyCode,
+              Year_Code
+            );
+            console.log(matchStatus);
+            if (MemoGST_Rate != 0) {
+              updatedFormData = await calculatememogstrateamount(
+                name,
+                input,
+                updatedFormData,
+                GSTMemoGstrate,
+                matchStatus
+              );
+            }
+          }
+          let MemoAdvance = parseFloat(updatedFormData.Memo_Advance) || 0.0;
+          updatedFormData.MM_Rate = parseFloat(MemoAdvance / qntl);
 
-    // setFormDataDetail(prevState => {
-    //     const newDetailData = {
-    //         ...prevState,
-    //         ...formDataDetail,
+          let diffrate = 0.0;
+          let diffamount = 0.0;
+          diffrate = parseFloat(salerate - purc_Rate);
+          diffamount = parseFloat(diffrate * qntl);
+          updatedFormData.diff_rate = diffrate;
+          updatedFormData.diff_amount = diffamount;
 
-    //         Amount:formData.amount,
+          let Frieghtrate = parseFloat(updatedFormData.FreightPerQtl) || 0.0;
+          let Frieghtamt = parseFloat(updatedFormData.Freight_Amount) || 0.0;
+          let vasulirate = parseFloat(updatedFormData.vasuli_rate) || 0.0;
+          let vasuliamt = 0.0;
+          if (qntl != 0 && Frieghtrate != 0) {
+            Frieghtamt = parseFloat(qntl * Frieghtrate);
+          } else {
+            Frieghtamt = 0.0;
+          }
 
-    //     }
-    //     setUsers([newDetailData])
-    //     console.log('newDetailData----',newDetailData)
-    //     return newDetailData
+          updatedFormData.Freight_Amount = Frieghtamt;
 
-    // });
+          if (qntl != 0 && vasulirate != 0) {
+            vasuliamt = parseFloat(qntl * vasulirate);
+          } else {
+            vasuliamt = 0.0;
+          }
 
-    console.log(updatedFormData);
-    return updatedFormData;
+          updatedFormData.vasuli_amount = vasuliamt;
+
+          let tdsac=updatedFormData.TDSAc
+          if(tdsac!=0)
+          {
+            let tdsrate=parseFloat(updatedFormData.TDSRate) || 0.0;
+            
+            updatedFormData.TDSAmt=(tdsrate* MemoAdvance)/100
+          }
+
+
+          console.log('updatedFormData',updatedFormData);
+          return updatedFormData;
   };
 
   // Handle change for all inputs
   const handleChange = async (event) => {
     debugger
     const { name, value } = event.target;
-    const updatedFormData = await calculateDependentValues(
-      name,
-      value, // Pass the correct gstRate
-      formData // Pass gstRate explicitly to calculateDependentValues
-    );
+    // const updatedFormData = await calculateDependentValues(
+    //   name,
+    //   value, // Pass the correct gstRate
+    //   formData // Pass gstRate explicitly to calculateDependentValues
+    // );
 
-    setFormData(updatedFormData);
-    const TDSTCSData = await AmountCalculation(
-      name,
-      value, // Pass the correct gstRate
-      formData // Pass gstRate explicitly to calculateDependentValues
-    );
-    setFormData(TDSTCSData);
+    // setFormData(updatedFormData);
+    // const TDSTCSData = await AmountCalculation(
+    //   name,
+    //   value, // Pass the correct gstRate
+    //   formData // Pass gstRate explicitly to calculateDependentValues
+    // );
+    // setFormData(TDSTCSData);
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
   };
 
   const deleteModeHandler = async (userToDelete) => {
@@ -2151,9 +2189,9 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
         const response = await axios.put(updateApiUrl, requestData);
 
         toast.success("Data updated successfully!");
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
+        // setTimeout(() => {
+        //   window.location.reload();
+        // }, 1000);
       } else {
         const response = await axios.post(
           `${API_URL}/insert-DeliveryOrder`,
@@ -2170,9 +2208,9 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
         setCancelButtonEnabled(false);
         setIsEditing(true);
 
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
+        // setTimeout(() => {
+        //   window.location.reload();
+        // }, 1000);
       }
     } catch (error) {
       toast.error("Error occurred while saving data");
@@ -2952,7 +2990,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
     <>
       <div>
 
-        <DeliveryOrderOurDoReport/>
+        <DeliveryOrderOurDoReport doc_no={formData.doc_no}/>
         <ToastContainer />
         <ActionButtonGroup
           handleAddOne={handleAddOne}
@@ -3319,6 +3357,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
                   : tenderDetails.Quantal || formData.quantal || pendingDOData.do_qntl
               }
               onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
               disabled={!isEditing && addOneButtonEnabled}
             />
             <label htmlFor="packing">Packing:</label>
@@ -3346,6 +3385,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               Name="excise_rate"
               value={tenderDetails.Excise_Rate || formData.excise_rate || pendingDOData.Excise_Rate}
               onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
               disabled={!isEditing && addOneButtonEnabled}
             />
             <label htmlFor="final_amout">Mill Amount:</label>
@@ -3366,6 +3406,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               Name="mill_rate"
               value={tenderDetails.mill_rate || formData.mill_rate }
               onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
               disabled={!isEditing && addOneButtonEnabled}
             />
             <label htmlFor="sale_rate">Sale Rate:</label>
@@ -3379,6 +3420,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
                   : tenderDetails.Sale_Rate || formData.sale_rate || pendingDOData.Sale_Rate
               }
               onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
               disabled={!isEditing && addOneButtonEnabled}
             />
             <label htmlFor="PurchaseRate">PurchaseRate:</label>
@@ -3388,6 +3430,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               Name="PurchaseRate"
               value={formData.PurchaseRate || pendingDOData.Purc_Rate}
               onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
               disabled={!isEditing && addOneButtonEnabled}
             />
           </div>
@@ -3404,6 +3447,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
                   : tenderDetails.CR || formData.Tender_Commission || pendingDOData.CR
               }
               onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
               disabled={!isEditing && addOneButtonEnabled}
             />
             <label htmlFor="diff_rate">Diff Rate:</label>
@@ -3413,6 +3457,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               Name="diff_rate"
               value={formData.diff_rate}
               onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
               disabled={!isEditing && addOneButtonEnabled}
             />
 
@@ -3423,6 +3468,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               Name="Insurance"
               value={formData.Insurance}
               onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
               disabled={!isEditing && addOneButtonEnabled}
             />
             <label htmlFor="TCS_Rate">Purchase TCS Rate:</label>
@@ -3432,6 +3478,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               Name="TCS_Rate"
               value={formData.TCS_Rate}
               onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
               disabled={!isEditing && addOneButtonEnabled}
             />
             <label htmlFor="Sale_TCS_Rate">Sale TCS Rate:</label>
@@ -3441,6 +3488,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               Name="Sale_TCS_Rate"
               value={formData.Sale_TCS_Rate}
               onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
               disabled={!isEditing && addOneButtonEnabled}
             />
             <label htmlFor="SaleTDSRate">SaleTDSRate:</label>
@@ -3450,6 +3498,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               Name="SaleTDSRate"
               value={formData.SaleTDSRate}
               onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
               disabled={!isEditing && addOneButtonEnabled}
             />
             <label htmlFor="PurchaseTDSRate">PurchaseTDSRate:</label>
@@ -3459,6 +3508,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               Name="PurchaseTDSRate"
               value={formData.PurchaseTDSRate}
               onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
               disabled={!isEditing && addOneButtonEnabled}
             />
             <label htmlFor="amount">Amount:</label>
@@ -3546,6 +3596,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               Name="FreightPerQtl"
               value={formData.FreightPerQtl}
               onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
               disabled={!isEditing && addOneButtonEnabled}
             />
             <label htmlFor="Freight_Amount">Freight Amount:</label>
@@ -3562,8 +3613,9 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
             <select
               id="MM_CC"
               name="MM_CC"
-              value={formData.EWayBillChk}
+              value={formData.MM_CC}
               onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
               disabled={!isEditing && addOneButtonEnabled}
             >
               <option value="Credit">Credit</option>
@@ -3576,6 +3628,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               Name="MM_Rate"
               value={formData.MM_Rate}
               onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
               disabled={!isEditing && addOneButtonEnabled}
             />
             <input
@@ -3584,6 +3637,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               Name="Memo_Advance"
               value={formData.Memo_Advance}
               onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
               disabled={!isEditing && addOneButtonEnabled}
             />
             <label htmlFor="MemoGSTRate">MemoGSTRate Code:</label>
@@ -3611,7 +3665,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               Name="TDSAc"
               onAcCodeClick={handleTDSAc}
               CategoryName={lbltdsacname}
-              CategoryCode={newTDSAc}
+              CategoryCode={newTDSAc || formData.TDSAc}
               tabIndex={145}
               disabledFeild={!isEditing && addOneButtonEnabled}
             />
@@ -3623,6 +3677,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               Name="TDSRate"
               value={formData.TDSRate}
               onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
               disabled={!isEditing && addOneButtonEnabled}
             />
             <input
@@ -3631,6 +3686,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               Name="TDSAmt"
               value={formData.TDSAmt}
               onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
               disabled={!isEditing && addOneButtonEnabled}
             />
             <label htmlFor="TDSCut">Tds cut:</label>
@@ -3649,6 +3705,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               Name="Cash_diff"
               value={formData.Cash_diff}
               onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
               disabled={!isEditing && addOneButtonEnabled}
             />
             <label htmlFor="CashDiffAc">B.P Ac</label>
@@ -3669,6 +3726,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               Name="vasuli_rate"
               value={formData.vasuli_rate}
               onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
               disabled={!isEditing && addOneButtonEnabled}
             />
             <input
@@ -3686,6 +3744,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               Name="vasuli_rate1"
               value={formData.vasuli_rate1}
               onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
               disabled={!isEditing && addOneButtonEnabled}
             />
 

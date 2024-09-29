@@ -27,13 +27,13 @@ def insert_Letter():
         Company_Code = new_record_data['Company_Code']
         Year_Code = new_record_data['Year_Code']
 
-        max_doc_no = db.session.query(func.max(Letter.DOC_NO)).filter_by(Company_Code=Company_Code, Year_Code=Year_Code).scalar()
+        # max_doc_no = db.session.query(func.max(Letter.DOC_NO)).filter_by(Company_Code=Company_Code, Year_Code=Year_Code).scalar()
 
-        # Set the new doc_no
-        if max_doc_no is not None:
-            new_record_data['DOC_NO'] = max_doc_no + 1
-        else:
-            new_record_data['DOC_NO'] = 1
+        # # Set the new doc_no
+        # if max_doc_no is not None:
+        #     new_record_data['DOC_NO'] = max_doc_no + 1
+        # else:
+        #     new_record_data['DOC_NO'] = 1
 
         new_record = Letter(**new_record_data)
         db.session.add(new_record)
@@ -297,6 +297,36 @@ def getAll_Letter():
         response = {
             "all_letters_data": all_records_data
         }
+        return jsonify(response), 200
+
+    except Exception as e:
+        print(e)
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+
+@app.route(API_URL + "/get-next-letter-no", methods=["GET"])
+def get_next_letter_no():
+    try:
+        # Get the company_code and year_code from the request parameters
+        company_code = request.args.get('Company_Code')
+        year_code = request.args.get('Year_Code')
+
+        # Validate required parameters
+        if not company_code or not year_code:
+            return jsonify({"error": "Missing 'Company_Code' or 'Year_Code' parameter"}), 400
+
+        # Query the database for the maximum doc_no in the specified company and year
+        max_doc_no = db.session.query(func.max(Letter.DOC_NO)).filter_by(Company_Code=company_code, Year_Code=year_code).scalar()
+
+        # If no records found, set doc_no to 1
+        next_doc_no = max_doc_no + 1 if max_doc_no else 1
+
+        # Prepare the response data
+        response = {
+            "next_doc_no": next_doc_no
+        }
+
+        # Return the next doc_no
         return jsonify(response), 200
 
     except Exception as e:

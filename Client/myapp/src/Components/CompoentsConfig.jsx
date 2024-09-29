@@ -52,6 +52,8 @@ import PendingDO from './BusinessRelated/DeliveryOrder/PendingDOUtility'
 import ServiceBill from './Outward/ServiceBill/ServiceBill'
 import ServiceBillUtility from './Outward/ServiceBill/ServiceBillUtility'
 import UserCreationWithPermission from './Utilities/UserCreationWithPermission/UserCreationWithPermission.jsx';
+import Letter from './BusinessRelated/Letter/Letter.jsx';
+import LetterUtility from './BusinessRelated/Letter/LetterUtility.jsx';
 
 const routes = [
   {
@@ -302,17 +304,23 @@ const routes = [
   element: UserCreationWithPermission
 }
 ,
+//Letter
+{
+  path:'/letter',
+  element: LetterUtility
+}
+,
 
-
-
-
-
+{
+  path:'/letter-data',
+  element: Letter
+}
+,
 //eBuySugar
 {
   path: '/eBuySugarian-user-utility',
   element: EBuySugarianUserUtility
 },
-
 {
   path: '/eBuySugarian-AcMaster-utility',
   element: EBuySugarAccountMasterUtility
