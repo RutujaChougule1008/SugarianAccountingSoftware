@@ -1,0 +1,71 @@
+.company-parameters-form-container {
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    background-color: #f9f9f9;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+
+
+.CompanyParameters-form-group {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    width: 100%;
+    align-items: center;
+}
+
+.CompanyParameters-form-group label {
+    flex: 0 0 30%;
+    text-align: right;
+    margin-right: 10px;
+    white-space: nowrap; 
+}
+
+.CompanyParameters-form-group .CompanyParameters-form-group-column input ,
+.CompanyParameters-form-group .CompanyParameters-form-group-row input,
+.CompanyParameters-form-group .CompanyParameters-form-group-column .AccountMasterHelp,
+.CompanyParameters-form-group .CompanyParameters-form-group-row .AccountMasterHelp
+{
+    flex: 0 0 30%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    display: flex;
+    max-width: 200px; 
+    
+}
+
+
+
+ 
+
+.button-container {
+    text-align: center;
+    margin-top: 20px;
+    width: 100%;
+}
+
+button {
+    padding: 10px 20px;
+    margin: 0 5px;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button:disabled {
+    background-color: #ccc;
+}
+
+button:hover:not(:disabled) {
+    background-color: #0056b3;
+}

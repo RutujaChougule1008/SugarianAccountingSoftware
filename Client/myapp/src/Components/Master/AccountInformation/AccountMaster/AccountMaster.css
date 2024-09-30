@@ -1,0 +1,264 @@
+.ac-master-form-container {
+    max-width: 100%;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #76D7C4 ;
+}
+.ac-master-form-col-Text{
+  flex: 0 0 auto;
+  padding: 0px;
+  margin-left: 10px;
+  width: 130px;
+}
+
+.ac-master-col-Ewaybillno{
+  flex: 0 0 auto;
+  padding: 0px;
+  margin-left: 10px;
+  width: 200px;
+}
+
+.ac-master-form-container .ac-master-form-form-group-type{
+    flex: 0 0 auto;
+    padding: 0px;
+    margin-left: 10px;
+    width: 250px;
+}
+
+
+.ac-master-form-container .ac-master-form-row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: -10px;
+    align-items: flex-start;
+    
+}
+
+.ac-master-form-container .ac-master-form-col {
+  flex: 0 0 auto;
+    padding: 0px;
+    margin-left: 10px;
+}
+
+.ac-master-form-container .ac-master-form-group {
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    
+}
+
+.ac-master-form-container .ac-master-form-label {
+  margin-bottom: .5rem;
+  font-weight: bold;
+  margin-left: 10px;
+}
+
+.ac-master-form-custom-select, .ac-master-form-control {
+    display: block;
+    width: 100%;
+    padding: .375rem .75rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #495057;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid #ced4da;
+    border-radius: .25rem;
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+}
+
+.ac-master-form-control[disabled], .ac-master-form-control[readonly] {
+    background-color: #e9ecef;
+    opacity: 1;
+}
+
+.ac-master-form-container textarea {
+    width: 20%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+ 
+  }
+  
+
+
+  #IsmillName{
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    color: blue;
+    font-weight: bold;
+  }
+
+  .eTenderButton {
+    margin-right: 20px;
+}
+
+.ac-master-form-container .ac-master-form-group #Ac_Code,#changeNo, #Ac_rate
+{
+  width: 100px;
+  font-size: 16px;
+  height: 30px;
+  border-radius: 4px;
+}
+
+.ac-master-form-container .ac-master-form-group #Ac_Name_E, #Ac_Name_R, #Address_E, #Address_R
+{
+  width: 400px;
+  font-size: 16px;
+  height: 30px;
+  border-radius: 4px;
+}
+
+
+
+
+
+
+  /* styles.css */
+
+
+
+  .modal-body-acMaster {
+    padding: 20px;
+    background-color: #f9f9f9; /* Light background for better readability */
+    border-radius: 4px;
+    display: flex;
+  }
+  
+  .modal-body-acMaster form {
+    display: flex;
+    flex-direction: column;
+    margin-left: 110px;
+  }
+
+  .modal-body-acMaster form textarea{
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+  }
+  
+  .modal-body-acMaster label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    margin-top: 5px; /* Space between the previous input and the next label */
+  }
+  
+  .modal-bodymodal-body-acMaster .form-element {
+    margin-bottom: 15px;
+  }
+  
+  .account-master-help {
+    margin-top: 5px;
+  }
+
+  .modal-title{
+    white-space: nowrap;
+  }
+  
+
+
+
+
+/* LoadingOverlay.css */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999; /* Ensure it's on top of other content */
+}
+
+.spinner-container {
+  text-align: center;
+}
+
+.Heading{
+  margin-bottom: -30px;
+}
+
+#Grid
+.ac-master-form-group {
+    margin: 0;
+    padding: 0;
+  }
+  
+  .custom-table {
+    width: 30%;
+    border-collapse: collapse;
+    margin: 0;
+  }
+  
+  .custom-table th, .custom-table td {
+    padding: 4px;
+    text-align: left;
+    border: 1px solid #ddd;
+    font-size: 13px;
+    font-weight: bold;
+  }
+  
+  .custom-table th {
+    background-color: #f2f2f2;
+  }
+  
+  .custom-table tbody tr td input[type="checkbox"] {
+    margin: 0;
+    padding: 0;
+    width: 16px; 
+    height: 16px;
+  }
+
+  .city-master-modal , .group-master-modal{
+    display: block; /* Show the modal */
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.4); /* Black background with opacity */
+  }
+  
+  .city-master-modal-content, .group-master-modal-content {
+    background-color: #fefefe;
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%; /* Could be more or less depending on screen size */
+  }
+  
+  .city-master-close-btn, .group-master-close-btn{
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+  }
+  
+  .city-master-close-btn:hover,
+  .city-master-close-btn:focus,
+  .group-master-close-btn:hover,
+  .group-master-close-btn:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  
+
+  
+
+
+
+  
+  
