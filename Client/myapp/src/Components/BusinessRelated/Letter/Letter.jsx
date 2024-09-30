@@ -251,8 +251,7 @@ const Letter = () => {
         try {
             const response = await axios.get(`${API_URL}/getByDocNo_Letter?Company_Code=${companyCode}&DOC_NO=${selectedRecord.DOC_NO}&Year_Code=${yearCode}`);
             const data = response.data;
-                partyCode = data.letterData.Ac_Code
-
+                partyCode = data.letterData.AC_CODE
 
                 setFormData({
                     ...formData,
@@ -364,7 +363,7 @@ const handleKeyDown = async (event) => {
                 const data = response.data;
                 console.log(data)
                 // Access the first element of the array
-                partyCode = data.nextLetterData.Ac_Code
+                partyCode = data.nextLetterData.AC_CODE
 
                 setFormData({
                     ...formData,

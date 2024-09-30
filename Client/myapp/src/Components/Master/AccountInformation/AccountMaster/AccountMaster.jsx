@@ -660,9 +660,7 @@ const AccountMaster = () => {
       setUsers(
         accountDetail.map((detail) => ({
           Id:
-            users.length > 0
-              ? Math.max(...users.map((user) => user.Id)) + 1
-              : 1,
+            detail.id,
           id: detail.id,
           Ac_Code: detail.Ac_Code,
           rowaction: "Normal",
@@ -678,7 +676,7 @@ const AccountMaster = () => {
 
   useEffect(() => {
     const updatedUsers = accountDetail.map((detail) => ({
-      Id: users.length > 0 ? Math.max(...users.map((user) => user.Id)) + 1 : 1,
+      Id: detail.id,
       id: detail.id,
       Ac_Code: detail.Ac_Code,
       rowaction: "Normal",
@@ -811,6 +809,8 @@ const AccountMaster = () => {
     fetchLastRecord();
     setFormData(initialFormData);
     setAccountDetail([]);
+    setSelectedGroups([]);
+    setCityMasterData("")
     newCity_Code = "";
     newGSTStateCode = "";
     newGroup_Code = "";
@@ -987,6 +987,9 @@ const AccountMaster = () => {
       setCancelButtonEnabled(false);
       setIsEditing(false);
       setIsLoading(false);
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (error) {
       console.error("Error during API call:", error);
       toast.error(`Error occurred while saving data: ${error.message}`);
@@ -1456,7 +1459,7 @@ const AccountMaster = () => {
             />
             <label htmlFor="City_Code">City Code:</label>
             <CityMasterHelp
-              Name="City_Code"
+              name="City_Code"
               onAcCodeClick={handleCity_Code}
               CityName={
                 cityMasterData
@@ -1664,7 +1667,7 @@ const AccountMaster = () => {
           <div className="ac-master-form-group ">
             <label htmlFor="Group_Code">Group Code:</label>
             <GroupMasterHelp
-              Name="Group_Code"
+              name="Group_Code"
               onAcCodeClick={handleGroup_Code}
               GroupName={
                 groupMasterData ? groupMasterData.group.group_Name_E : grpName

@@ -28,7 +28,7 @@ const GroupMasterHelp = ({ onAcCodeClick, name, GroupName,GroupCode,disabledFeil
             const response = await axios.get(`${API_URL}/group_master?Company_Code=${CompanyCode}`);
             const data = response.data;
             const filteredData = data.filter(item => 
-                item.group_Name_E.toLowerCase().includes(searchTerm.toLowerCase())
+                item.group_Name_E ? item.group_Name_E.toLowerCase().includes(searchTerm.toLowerCase()): ''
             );
             setPopupContent(filteredData);
             setShowModal(true);

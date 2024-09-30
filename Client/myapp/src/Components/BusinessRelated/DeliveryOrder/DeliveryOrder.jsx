@@ -2189,9 +2189,9 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
         const response = await axios.put(updateApiUrl, requestData);
 
         toast.success("Data updated successfully!");
-        // setTimeout(() => {
-        //   window.location.reload();
-        // }, 1000);
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       } else {
         const response = await axios.post(
           `${API_URL}/insert-DeliveryOrder`,
@@ -2199,6 +2199,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
           console.log("requestData", requestData)
         );
         toast.success("Data saved successfully!");
+        handleEdit();
         setIsEditMode(false);
         setAddOneButtonEnabled(true);
         setEditButtonEnabled(true);
@@ -2208,9 +2209,9 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
         setCancelButtonEnabled(false);
         setIsEditing(true);
 
-        // setTimeout(() => {
-        //   window.location.reload();
-        // }, 1000);
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       }
     } catch (error) {
       toast.error("Error occurred while saving data");
@@ -3973,6 +3974,7 @@ const CommisionBillCalculation = async (name, input, formData, gstRate) => {
               style={{ marginLeft: "10px" }}
               tabIndex="17"
               onClick={handleSBGenerate}
+              disabled={!formData.SB_No==0}
             >
               SB Generate
             </button>
