@@ -80,6 +80,8 @@ const CompanyList = () => {
     setPassword('');
   };
 
+  let formattedAccountingYear=null
+
   const handleLogin = async () => {
     if (!username || !password) {
       toast.error("Both Login Name and Password are required!");
@@ -93,7 +95,9 @@ const CompanyList = () => {
       if (selectedAccountingYear) {
         sessionStorage.setItem('Year_Code', selectedAccountingYear.yearCode);
         sessionStorage.setItem('username', username);
-
+        formattedAccountingYear = `${selectedAccountingYear.Start_Date} - ${selectedAccountingYear.End_Date}`;
+        sessionStorage.setItem('Accounting_Year', formattedAccountingYear); 
+        sessionStorage.setItem('Company_Name', selectedCompany.Company_Name_E);
       
       }
 
@@ -105,6 +109,12 @@ const CompanyList = () => {
       const permissionResponse = await axios.get(`http://localhost:8080/api/sugarian/get_user_permissions?uid=${response.data.user_id}`);
       const permissions = permissionResponse.data.permissions;  
       sessionStorage.setItem('permissions', JSON.stringify(permissions)); 
+
+      sessionStorage.setItem('Year_Code', selectedAccountingYear.yearCode);
+      sessionStorage.setItem('username', username);
+      formattedAccountingYear = `${selectedAccountingYear.Start_Date} - ${selectedAccountingYear.End_Date}`;
+      sessionStorage.setItem('Accounting_Year', formattedAccountingYear); 
+      sessionStorage.setItem('Company_Name', selectedCompany.Company_Name_E);
 
       setIsLoggedIn(true);
       toast.success("Logged in successfully!");

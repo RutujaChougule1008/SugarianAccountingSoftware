@@ -9,6 +9,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import GSTStateMasterHelp from "../../../../Helper/GSTStateMasterHelp"
 
 const API_URL = process.env.REACT_APP_API;
+const username = sessionStorage.getItem("username");
 
 var gstStateName;
 
@@ -113,14 +114,20 @@ const CityMaster = ({isPopup = false}, ref) => {
     }
 
     const handleSaveOrUpdate = () => {
+        const username = sessionStorage.getItem("username");
+    
         if (isEditMode) {
+            // Set the Modified_By field when updating
+            const updatedFormData = {
+                ...formData,
+                Modified_By: username, // Set the Modified_By field
+            };
+    
             axios
-                .put(
-                    `${API_URL}/update-city?company_code=${companyCode}&city_code=${formData.city_code}`, formData
-                )
+                .put(`${API_URL}/update-city?company_code=${companyCode}&city_code=${formData.city_code}`, updatedFormData)
                 .then((response) => {
                     console.log("Data updated successfully:", response.data);
-                    toast.success("City update successfully!");
+                    toast.success("City updated successfully!");
                     setIsEditMode(false);
                     setAddOneButtonEnabled(true);
                     setEditButtonEnabled(true);
@@ -136,11 +143,17 @@ const CityMaster = ({isPopup = false}, ref) => {
                     console.error("Error updating data:", error);
                 });
         } else {
+            
+            const newFormData = {
+                ...formData,
+                Created_By: username, 
+            };
+    
             axios
-                .post(`${API_URL}/create-city?company_code=${companyCode}`, formData)
+                .post(`${API_URL}/create-city?company_code=${companyCode}`, newFormData)
                 .then((response) => {
                     console.log("Data saved successfully:", response.data);
-                    toast.success("City Create successfully!");
+                    toast.success("City created successfully!");
                     setIsEditMode(false);
                     setAddOneButtonEnabled(true);
                     setEditButtonEnabled(true);
@@ -156,7 +169,7 @@ const CityMaster = ({isPopup = false}, ref) => {
                 });
         }
     };
-
+    
     const handleEdit = () => {
         setIsEditMode(true);
         setAddOneButtonEnabled(false);
