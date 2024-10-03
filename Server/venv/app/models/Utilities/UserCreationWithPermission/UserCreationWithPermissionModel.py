@@ -24,7 +24,7 @@ class TblUser(db.Model):
     IsLocked = db.Column(db.Boolean, nullable=True, default=True)
     LockedDateTime = db.Column(db.Date, nullable=True)
     Branch_Code = db.Column(db.Integer, nullable=True)
-    uid = db.Column(db.Integer, primary_key=True, autoincrement=True)  # Primary key
+    uid = db.Column(db.Integer, primary_key=True, autoincrement=True)  
     userfullname = db.Column(db.String(50), nullable=True)
     User_Security = db.Column(db.String(1), nullable=True)
     Bank_Security = db.Column(db.String(1), nullable=True)
