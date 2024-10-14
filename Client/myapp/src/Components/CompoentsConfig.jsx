@@ -54,6 +54,14 @@ import ServiceBillUtility from './Outward/ServiceBill/ServiceBillUtility'
 import UserCreationWithPermission from './Utilities/UserCreationWithPermission/UserCreationWithPermission.jsx';
 import Letter from './BusinessRelated/Letter/Letter.jsx';
 import LetterUtility from './BusinessRelated/Letter/LetterUtility.jsx';
+import UTREntryUtility from './Transactions/UTR/UTREntryUtility.jsx'
+import UTREntry from './Transactions/UTR/UTREntry.jsx';
+import RecieptPayment from './Transactions/RecieptPayment/RecieptPayment.jsx'
+import JournalVoucher from './Transactions/JournalVoucher/JournalVoucher.jsx'
+import SugarSaleReturnSaleUtility from './Outward/SugarSaleReturnSale/SugarSaleReturnSaleUtility.jsx';
+import RecieptPaymentUtility from './Transactions/RecieptPayment/RecieptPaymentUtility';
+import JournalVoucher_Utility from './Transactions/JournalVoucher/JournalVoucher_Utility';
+
 
 const routes = [
   {
@@ -281,6 +289,11 @@ const routes = [
 },
 
 //SugarSaleReturnSale
+
+{
+  path: '/sugar-sale-return-sale-utility',
+  element: SugarSaleReturnSaleUtility
+},
 {
   path: '/sugar-sale-return-sale',
   element: SugarSaleReturnSale
@@ -316,6 +329,39 @@ const routes = [
   element: Letter
 }
 ,
+//UTR 
+{
+  path:'/utrentry-Utility',
+  element: UTREntryUtility
+}
+,
+
+{
+  path:'/utr-entry',
+  element: UTREntry
+}
+,
+//ReceiptPaymeny
+{
+  path:'/receipt-payment',
+  element:RecieptPayment
+},
+{
+  path:'/RecieptPaymentUtility',
+  element:RecieptPaymentUtility
+},
+
+//Journal Voucher
+{
+  path:'/Journal-voucher',
+  element:JournalVoucher
+},
+
+{
+  path:'/JournalVoucher_Utility',
+  element:JournalVoucher_Utility
+},
+
 //eBuySugar
 {
   path: '/eBuySugarian-user-utility',

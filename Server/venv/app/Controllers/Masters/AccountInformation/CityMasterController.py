@@ -152,7 +152,10 @@ def create_city():
 
         return jsonify({
             'message': 'City created successfully',
-            'city': new_group_data
+            'city': {
+        **new_group_data,  
+        'cityid': new_group.cityid
+            }
         }), 201
     except Exception as e:
         db.session.rollback()

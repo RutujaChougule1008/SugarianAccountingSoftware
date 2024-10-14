@@ -15,7 +15,7 @@ import requests
 
 SUGAR_SALE_RETURN_DETAILS_QUERY = '''
 SELECT accode.Ac_Name_E AS partyname, mill.Ac_Name_E AS millname, unit.Ac_Name_E AS unitname, broker.Ac_Name_E AS brokername, item.System_Name_E AS itemname, transport.Ac_Name_E AS transportname, 
-                  billto.Ac_Name_E AS billtoname, fromac.Ac_Name_E AS fromacname, dbo.nt_1_gstratemaster.GST_Name
+                  billto.Ac_Name_E AS billtoname, fromac.Ac_Name_E AS fromacname, dbo.nt_1_gstratemaster.GST_Name,  item.System_Code AS item_code
 FROM     dbo.nt_1_accountmaster AS accode RIGHT OUTER JOIN
                   dbo.nt_1_accountmaster AS unit RIGHT OUTER JOIN
                   dbo.nt_1_accountmaster AS fromac RIGHT OUTER JOIN
@@ -94,7 +94,7 @@ def getdata_SugarSaleReturnSale():
         if not company_code or not year_code:
             return jsonify({"error": "Missing 'Company_Code' or 'Year_Code' parameter"}), 400
 
-        query = ('''SELECT dbo.nt_1_sugarsalereturn.doc_no, dbo.nt_1_sugarsalereturn.doc_date, accode.Ac_Name_E, dbo.nt_1_sugarsalereturn.NETQNTL, dbo.nt_1_sugarsaledetailsreturn.item_Amount, dbo.nt_1_sugarsalereturn.srid, 
+        query = ('''SELECT dbo.nt_1_sugarsalereturn.doc_no, dbo.nt_1_sugarsalereturn.doc_date, accode.Ac_Name_E, dbo.nt_1_sugarsalereturn.NETQNTL, dbo.nt_1_sugarsalereturn.Bill_Amount, dbo.nt_1_sugarsalereturn.srid, 
                   dbo.nt_1_sugarsalereturn.ackno, dbo.nt_1_sugarsalereturn.Eway_Bill_No
 FROM     dbo.nt_1_accountmaster AS accode RIGHT OUTER JOIN
                   dbo.nt_1_sugarsalereturn ON accode.accoid = dbo.nt_1_sugarsalereturn.ac LEFT OUTER JOIN

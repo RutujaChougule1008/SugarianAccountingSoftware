@@ -192,3 +192,9 @@ textarea {
   margin-left: 0.5rem; /* Space between input and feedback */
   white-space: row;
 }
+
+.error-message {
+  color: red;
+  font-size: 12px;
+}
+

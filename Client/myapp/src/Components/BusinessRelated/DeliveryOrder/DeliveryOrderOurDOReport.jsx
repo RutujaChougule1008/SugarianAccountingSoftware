@@ -5,6 +5,9 @@ import Sign from "../../../Assets/companylogo.jpg";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 
+const companyCode = sessionStorage.getItem("Company_Code");
+const Year_Code = sessionStorage.getItem("Year_Code");
+
 const DeliveryOrderOurDoReport = ({ doc_no }) => {
   const [invoiceData, setInvoiceData] = useState([]);
   const [isBillToShipToSame, setIsBillToShipToSame] = useState(true);
@@ -64,7 +67,7 @@ const DeliveryOrderOurDoReport = ({ doc_no }) => {
 
       try {
         const response = await fetch(
-          `http://localhost:8080/api/sugarian/generating_ourDO_report?Company_Code=1&Year_Code=1&doc_no=${doc_no}`
+          `http://localhost:8080/api/sugarian/generating_ourDO_report?Company_Code=${companyCode}&Year_Code=${Year_Code}&doc_no=${doc_no}`
         );
         if (!response.ok) {
           throw new Error("Network response was not ok");

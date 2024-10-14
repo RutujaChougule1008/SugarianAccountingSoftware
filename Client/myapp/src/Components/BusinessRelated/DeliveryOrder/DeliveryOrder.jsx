@@ -791,6 +791,7 @@ const DeliveryOrder = () => {
       setFormData((prevState) => ({
         ...prevState,
         ...newData,
+        amount: millamount
       }));
 
       //   const updatedFormData = await calculateDependentValues(

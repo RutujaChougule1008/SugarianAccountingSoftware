@@ -241,7 +241,7 @@ const SugarPurchase = () => {
 
     //Fetch last record
     const fetchLastRecord = () => {
-        fetch(`${API_URL}/get-lastrecordsugarpurchase?Company_Code=${companyCode}&Year_Code=${Year_Code}`)
+        fetch(`${API_URL}/get-next-doc-no-purchaseBill?Company_Code=${companyCode}&Year_Code=${Year_Code}`)
             .then((response) => {
                 if (!response.ok) {
                     throw new Error("Failed to fetch last record");
@@ -251,7 +251,7 @@ const SugarPurchase = () => {
             .then((data) => {
                 setFormData((prevState) => ({
                     ...prevState,
-                    doc_no: data.last_SugarPurchasehead.doc_no + 1,
+                    doc_no: data.next_doc_no
                 }));
             })
             .catch((error) => {

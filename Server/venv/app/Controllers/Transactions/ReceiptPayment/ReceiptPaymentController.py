@@ -7,8 +7,15 @@ from app.utils.CommonGLedgerFunctions import fetch_company_parameters, get_accoi
 from sqlalchemy import text, func
 from sqlalchemy.exc import SQLAlchemyError
 import os
+import requests
+import traceback
+import logging
 
+# Get the base URL from environment variables
 API_URL = os.getenv('API_URL')
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 RECEIPT_PAYMENT_DETAILS_QUERY = '''
 SELECT         
@@ -16,7 +23,13 @@ SELECT
     debitac.Ac_Name_E AS debitacname,  
     creditac.Ac_Name_E AS creditacname, 
     unit.Ac_Name_E AS unitacname,  
-    adjustedac.Ac_Name_E AS adjustedacname
+    adjustedac.Ac_Name_E AS adjustedacname,
+     dbo.nt_1_transactdetail.credit_ac, 
+     dbo.nt_1_transactdetail.Unit_Code, 
+     dbo.nt_1_transactdetail.AcadjAccode,
+     dbo.nt_1_transactdetail.debit_ac
+
+
 FROM
     dbo.nt_1_accountmaster AS creditac 
     RIGHT OUTER JOIN dbo.nt_1_accountmaster AS unit 
@@ -183,11 +196,11 @@ def insert_receiptpayment():
         max_doc_no = get_max_doc_no(tran_type)
         new_doc_no = max_doc_no + 1
         headData['doc_no'] = new_doc_no
-
+        print('headdata',headData)
         new_head = ReceiptPaymentHead(**headData)
         db.session.add(new_head)
 
-        print(new_head)
+       
 
         createdDetails = []
         updatedDetails = []
@@ -225,10 +238,13 @@ def insert_receiptpayment():
 
         for item in detailData:
             amount = float(item.get('amount', 0) or 0)
-            DrCr = item['drcr']
-            credit_ac = item['credit_ac']
-            cashbank = headData['cashbank']
-            debit_ac = item['debit_ac']
+            if tran_type in ["JV"]:
+                 DrCr = item['drcr']
+                 debit_ac = item['debit_ac']
+            elif tran_type in ["BR", "CR","CP","BP"]:
+                credit_ac = item['credit_ac']
+                cashbank = headData['cashbank']
+            
         
             if amount > 0:
                 if tran_type in ["CP", "BP"]:
@@ -264,6 +280,8 @@ def insert_receiptpayment():
         }), 201
 
     except Exception as e:
+        logger.error("Traceback: %s", traceback.format_exc())
+        logger.error("Error fetching data: %s", e)
         db.session.rollback()
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
@@ -310,7 +328,7 @@ def update_receiptpayment():
         data = request.get_json()
         headData = data['head_data']
         detailData = data['detail_data']
-
+        
         tran_type = headData.get('tran_type')
         if not tran_type:
             return jsonify({"error": "Bad Request", "message": "tran_type is required"}), 400
@@ -321,7 +339,7 @@ def update_receiptpayment():
         created_details = []
         updated_details = []
         deleted_detail_ids = []
-
+        print('headData',headData)
         for item in detailData:
             item['tranid'] = updated_head.tranid
             item['Tran_Type'] = updated_head.tran_type
@@ -353,11 +371,13 @@ def update_receiptpayment():
 
         for item in detailData:
             amount = float(item.get('amount', 0) or 0)
-            credit_ac = item['credit_ac']
-            cashbank = headData['cashbank']
-            DrCr = item['drcr']
-            debit_ac = item['debit_ac']
-
+            if tran_type in ["JV"]:
+                 DrCr = item['drcr']
+                 debit_ac = item['debit_ac']
+            elif tran_type in ["BR", "CR","CP","BP"]:
+                credit_ac = item['credit_ac']
+                cashbank = headData['cashbank']
+            
             if amount > 0:
                 if tran_type in ["CP", "BP"]:
                     add_gledger_entry(gledger_entries, headData, amount, "C", cashbank, get_accoid(cashbank, headData['company_code']), credit_ac)
@@ -374,7 +394,8 @@ def update_receiptpayment():
             'Year_Code': headData['year_code'],
             'TRAN_TYPE': headData['tran_type'],
         }
-
+        print('ledger',gledger_entries)
+        
         response = requests.post("http://localhost:8080/api/sugarian/create-Record-gLedger", params=query_params, json=gledger_entries)
 
         if response.status_code == 201:
@@ -392,9 +413,10 @@ def update_receiptpayment():
         }), 200
 
     except Exception as e:
+        logger.error("Traceback: %s", traceback.format_exc())
+        logger.error("Error fetching data: %s", e)
         db.session.rollback()
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
-
 
 # Delete record from database based on tranid
 @app.route(API_URL + "/delete_data_by_tranid", methods=["DELETE"])

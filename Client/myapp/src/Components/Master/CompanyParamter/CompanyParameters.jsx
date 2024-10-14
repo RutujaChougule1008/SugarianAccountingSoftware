@@ -564,7 +564,7 @@ const CompanyParameters = () => {
             <div className="CompanyParameters-form-group-column">
             <label htmlFor="COMMISSION_AC">Commission A/c</label>
             <AccountMasterHelp
-              Name="COMMISSION_AC"
+              name="COMMISSION_AC"
               onAcCodeClick={handleCOMMISSION_AC}
               CategoryName={CommissionAcName}
               CategoryCode={newCOMMISSION_AC}
@@ -574,7 +574,7 @@ const CompanyParameters = () => {
             <div className="CompanyParameters-form-group-row">
             <label htmlFor="INTEREST_AC">Interest A/c</label>
             <AccountMasterHelp
-              Name="INTEREST_AC"
+              name="INTEREST_AC"
               onAcCodeClick={handleINTEREST_AC}
               CategoryName={InterestAcName}
               CategoryCode={newINTEREST_AC}
@@ -586,7 +586,7 @@ const CompanyParameters = () => {
           <div className="CompanyParameters-form-group">
             <label htmlFor="TRANSPORT_AC">Transport A/c</label>
             <AccountMasterHelp
-              Name="TRANSPORT_AC"
+              name="TRANSPORT_AC"
               onAcCodeClick={handleTRANSPORT_AC}
               CategoryName={TransportAcName}
               CategoryCode={newTRANSPORT_AC}
@@ -594,7 +594,7 @@ const CompanyParameters = () => {
             />
             <label htmlFor="POSTAGE_AC">Postage A/c</label>
             <AccountMasterHelp
-              Name="POSTAGE_AC"
+              name="POSTAGE_AC"
               onAcCodeClick={handlePOSTAGE_AC}
               CategoryName={PostageAcName}
               CategoryCode={newPOSTAGE_AC}
@@ -605,7 +605,7 @@ const CompanyParameters = () => {
           <div className="CompanyParameters-form-group">
             <label htmlFor="SELF_AC">Self A/c</label>
             <AccountMasterHelp
-              Name="SELF_AC"
+              name="SELF_AC"
               onAcCodeClick={handleSELF_AC}
               CategoryName={SelfAc}
               CategoryCode={newSELF_AC}
@@ -624,7 +624,7 @@ const CompanyParameters = () => {
           <div className="CompanyParameters-form-group">
             <label htmlFor="GSTStateCode">GST State Code</label>
             <AccountMasterHelp
-              Name="GSTStateCode"
+              name="GSTStateCode"
               onAcCodeClick={handleGSTStateCode}
               CategoryName={GSTStateCodeName}
               CategoryCode={newGSTStateCode}
@@ -632,7 +632,7 @@ const CompanyParameters = () => {
             />
             <label htmlFor="CGSTAc">Sale CGST A/c</label>
             <AccountMasterHelp
-              Name="CGSTAc"
+              name="CGSTAc"
               onAcCodeClick={handleCGSTAc}
               CategoryName={SaleCGSTAcName}
               CategoryCode={newCGSTAc}
@@ -643,7 +643,7 @@ const CompanyParameters = () => {
           <div className="CompanyParameters-form-group">
             <label htmlFor="SGSTAc">Sale SGST A/c</label>
             <AccountMasterHelp
-              Name="SGSTAc"
+              name="SGSTAc"
               onAcCodeClick={handleSGSTAc}
               CategoryName={SaleSGSTAcName}
               CategoryCode={newSGSTAc}
@@ -651,7 +651,7 @@ const CompanyParameters = () => {
             />
             <label htmlFor="IGSTAc">Sale IGST A/c</label>
             <AccountMasterHelp
-              Name="IGSTAc"
+              name="IGSTAc"
               onAcCodeClick={handleIGSTAc}
               CategoryName={SaleIGSTAcName}
               CategoryCode={newIGSTAc}
@@ -662,7 +662,7 @@ const CompanyParameters = () => {
           <div className="CompanyParameters-form-group">
             <label htmlFor="PurchaseCGSTAc">Purchase CGST A/c</label>
             <AccountMasterHelp
-              Name="PurchaseCGSTAc"
+              name="PurchaseCGSTAc"
               onAcCodeClick={handlePurchaseCGSTAc}
               CategoryName={PurchaseCGSTAcName}
               CategoryCode={newPurchaseCGSTAc}
@@ -670,7 +670,7 @@ const CompanyParameters = () => {
             />
             <label htmlFor="PurchaseSGSTAc">Purchase SGST A/c</label>
             <AccountMasterHelp
-              Name="PurchaseSGSTAc"
+              name="PurchaseSGSTAc"
               onAcCodeClick={handlePurchaseSGSTAc}
               CategoryName={PurchaseSGSTAcName}
               CategoryCode={newPurchaseSGSTAc}
@@ -681,7 +681,7 @@ const CompanyParameters = () => {
           <div className="CompanyParameters-form-group">
             <label htmlFor="PurchaseIGSTAc">Purchase IGST A/c</label>
             <AccountMasterHelp
-              Name="PurchaseIGSTAc"
+              name="PurchaseIGSTAc"
               onAcCodeClick={handlePurchaseIGSTAc}
               CategoryName={PurchaseIGSTAcName}
               CategoryCode={newPurchaseIGSTAc}
@@ -689,7 +689,7 @@ const CompanyParameters = () => {
             />
             <label htmlFor="RoundOff">Round off</label>
             <AccountMasterHelp
-              Name="RoundOff"
+              name="RoundOff"
               onAcCodeClick={handleRoundOff}
               CategoryName={RoundOffAcName}
               CategoryCode={newRoundOff}
@@ -700,7 +700,7 @@ const CompanyParameters = () => {
           <div className="CompanyParameters-form-group">
             <label htmlFor="Transport_RCM_GSTRate">Transport RCM GSTRate</label>
             <AccountMasterHelp
-              Name="Transport_RCM_GSTRate"
+              name="Transport_RCM_GSTRate"
               onAcCodeClick={handleTransport_RCM_GSTRate}
               CategoryName={TransportRCMGSTAcName}
               CategoryCode={newTransport_RCM_GSTRate}
@@ -708,7 +708,7 @@ const CompanyParameters = () => {
             />
             <label htmlFor="CGST_RCM_Ac">CGST RCM Ac</label>
             <AccountMasterHelp
-              Name="CGST_RCM_Ac"
+              name="CGST_RCM_Ac"
               onAcCodeClick={handleCGST_RCM_Ac}
               CategoryName={CGST_RCMAcName}
               CategoryCode={newCGST_RCM_Ac}
@@ -719,7 +719,7 @@ const CompanyParameters = () => {
           <div className="CompanyParameters-form-group">
             <label htmlFor="SGST_RCM_Ac">SGST RCM Ac</label>
             <AccountMasterHelp
-              Name="SGST_RCM_Ac"
+              name="SGST_RCM_Ac"
               onAcCodeClick={handleSGST_RCM_Ac}
               CategoryName={SGST_RCMAcName}
               CategoryCode={newSGST_RCM_Ac}
@@ -727,7 +727,7 @@ const CompanyParameters = () => {
             />
             <label htmlFor="IGST_RCM_Ac">IGST RCM Ac</label>
             <AccountMasterHelp
-              Name="IGST_RCM_Ac"
+              name="IGST_RCM_Ac"
               onAcCodeClick={handleIGST_RCM_Ac}
               CategoryName={IGST_RCMAcName}
               CategoryCode={newIGST_RCM_Ac}
@@ -738,7 +738,7 @@ const CompanyParameters = () => {
           <div className="CompanyParameters-form-group">
             <label htmlFor="Freight_Ac">Freight A/C</label>
             <AccountMasterHelp
-              Name="Freight_Ac"
+              name="Freight_Ac"
               onAcCodeClick={handleFreight_Ac}
               CategoryName={FreightAcName}
               CategoryCode={newFreight_Ac}
@@ -757,7 +757,7 @@ const CompanyParameters = () => {
           <div className="CompanyParameters-form-group">
             <label htmlFor="PurchaseTCSAc">Purchase TCS A/c</label>
             <AccountMasterHelp
-              Name="PurchaseTCSAc"
+              name="PurchaseTCSAc"
               onAcCodeClick={handlePurchaseTCSAc}
               CategoryName={PurchaseTCS_AcName}
               CategoryCode={newPurchaseTCSAc}
@@ -765,7 +765,7 @@ const CompanyParameters = () => {
             />
             <label htmlFor="SaleTCSAc">Sale TCS A/c</label>
             <AccountMasterHelp
-              Name="SaleTCSAc"
+              name="SaleTCSAc"
               onAcCodeClick={handleSaleTCSAc}
               CategoryName={SaleTCS_AcName}
               CategoryCode={newSaleTCSAc}
@@ -776,7 +776,7 @@ const CompanyParameters = () => {
           <div className="CompanyParameters-form-group">
             <label htmlFor="OTHER_AMOUNT_AC">Other A/c</label>
             <AccountMasterHelp
-              Name="OTHER_AMOUNT_AC"
+              name="OTHER_AMOUNT_AC"
               onAcCodeClick={handleOTHER_AMOUNT_AC}
               CategoryName={OtherAcName}
               CategoryCode={newOTHER_AMOUNT_AC}
@@ -784,7 +784,7 @@ const CompanyParameters = () => {
             />
             <label htmlFor="MarketSase">Market Sase A/c</label>
             <AccountMasterHelp
-              Name="MarketSase"
+              name="MarketSase"
               onAcCodeClick={handleMarketSase}
               CategoryName={MarketSaseAcName}
               CategoryCode={newMarketSase}
@@ -795,7 +795,7 @@ const CompanyParameters = () => {
           <div className="CompanyParameters-form-group">
             <label htmlFor="SuperCost">Supercost A/c</label>
             <AccountMasterHelp
-              Name="SuperCost"
+              name="SuperCost"
               onAcCodeClick={handleSuperCost}
               CategoryName={SupercostAcName}
               CategoryCode={newSuperCost}
@@ -814,7 +814,7 @@ const CompanyParameters = () => {
           <div className="CompanyParameters-form-group">
             <label htmlFor="Hamali">Hamali A/c</label>
             <AccountMasterHelp
-              Name="Hamali"
+              name="Hamali"
               onAcCodeClick={handleHamali}
               CategoryName={HamaliAcName}
               CategoryCode={newHamali}
@@ -822,7 +822,7 @@ const CompanyParameters = () => {
             />
             <label htmlFor="TransportTDS_Ac">Transport TDS A/c</label>
             <AccountMasterHelp
-              Name="TransportTDS_Ac"
+              name="TransportTDS_Ac"
               onAcCodeClick={handleTransportTDS_Ac}
               CategoryName={TransportTDS_AcName}
               CategoryCode={newTransportTDS_Ac}
@@ -835,7 +835,7 @@ const CompanyParameters = () => {
               Transport TDS Cut by Us A/c
             </label>
             <AccountMasterHelp
-              Name="TransportTDS_AcCut"
+              name="TransportTDS_AcCut"
               onAcCodeClick={handleTransportTDS_AcCut}
               CategoryName={TransportTDS_CutAcName}
               CategoryCode={newTransportTDS_AcCut}
@@ -861,7 +861,7 @@ const CompanyParameters = () => {
             />
             <label htmlFor="ReturnSaleCGST">Return Sale CGST</label>
             <AccountMasterHelp
-              Name="ReturnSaleCGST"
+              name="ReturnSaleCGST"
               onAcCodeClick={handleReturnSaleCGST}
               CategoryName={ReturnSaleCGST_AcName}
               CategoryCode={newReturnSaleCGST}
@@ -872,7 +872,7 @@ const CompanyParameters = () => {
           <div className="CompanyParameters-form-group">
             <label htmlFor="ReturnSaleSGST">Return Sale SGST</label>
             <AccountMasterHelp
-              Name="ReturnSaleSGST"
+              name="ReturnSaleSGST"
               onAcCodeClick={handleReturnSaleSGST}
               CategoryName={ReturnSaleSGSTAc_Name}
               CategoryCode={newReturnSaleSGST}
@@ -880,7 +880,7 @@ const CompanyParameters = () => {
             />
             <label htmlFor="ReturnSaleIGST">Return Sale IGST</label>
             <AccountMasterHelp
-              Name="ReturnSaleIGST"
+              name="ReturnSaleIGST"
               onAcCodeClick={handleReturnSaleIGST}
               CategoryName={ReturnSaleIGSTName}
               CategoryCode={newReturnSaleIGST}
@@ -891,7 +891,7 @@ const CompanyParameters = () => {
           <div className="CompanyParameters-form-group">
             <label htmlFor="ReturnPurchaseCGST">Return Purchase CGST</label>
             <AccountMasterHelp
-              Name="ReturnPurchaseCGST"
+              name="ReturnPurchaseCGST"
               onAcCodeClick={handleReturnPurchaseCGST}
               CategoryName={ReturnPurchaseCGSTName}
               CategoryCode={newReturnPurchaseCGST}
@@ -899,7 +899,7 @@ const CompanyParameters = () => {
             />
             <label htmlFor="ReturnPurchaseSGST">Return Purchase SGST</label>
             <AccountMasterHelp
-              Name="ReturnPurchaseSGST"
+              name="ReturnPurchaseSGST"
               onAcCodeClick={handleReturnPurchaseSGST}
               CategoryName={ReturnPurchaseSGST}
               CategoryCode={newReturnPurchaseSGST}
@@ -910,7 +910,7 @@ const CompanyParameters = () => {
           <div className="CompanyParameters-form-group">
             <label htmlFor="ReturnPurchaseIGST">Return Purchase IGST</label>
             <AccountMasterHelp
-              Name="ReturnPurchaseIGST"
+              name="ReturnPurchaseIGST"
               onAcCodeClick={handleReturnPurchaseIGST}
               CategoryName={ReturnPurchaseIGSTName}
               CategoryCode={newReturnPurchaseIGST}
@@ -918,7 +918,7 @@ const CompanyParameters = () => {
             />
             <label htmlFor="SaleTDSAc">Sale TDS Ac</label>
             <AccountMasterHelp
-              Name="SaleTDSAc"
+              name="SaleTDSAc"
               onAcCodeClick={handleSaleTDSAc}
               CategoryName={SaleTDSAcName}
               CategoryCode={newSaleTDSAc}
@@ -929,7 +929,7 @@ const CompanyParameters = () => {
           <div className="CompanyParameters-form-group">
             <label htmlFor="PurchaseTDSAc">Purchase TDS Ac</label>
             <AccountMasterHelp
-              Name="PurchaseTDSAc"
+              name="PurchaseTDSAc"
               onAcCodeClick={handlePurchaseTDSAc}
               CategoryName={PurchaseTDSAcName}
               CategoryCode={newPurchaseTDSAc}
@@ -967,7 +967,7 @@ const CompanyParameters = () => {
           <div className="CompanyParameters-form-group">
             <label htmlFor="RateDiffAc">Rate Diff Ac</label>
             <AccountMasterHelp
-              Name="RateDiffAc"
+              name="RateDiffAc"
               onAcCodeClick={handleRateDiffAc}
               CategoryName={RateDiffAcName}
               CategoryCode={newRateDiffAc}
@@ -998,7 +998,7 @@ const CompanyParameters = () => {
             <input
               type="text"
               id="TCSPurchaseBalanceLimit"
-              Name="TCSPurchaseBalanceLimit"
+              name="TCSPurchaseBalanceLimit"
               value={formData.TCSPurchaseBalanceLimit}
               onChange={handleChange}
             />
@@ -1011,7 +1011,7 @@ const CompanyParameters = () => {
             <input
               type="text"
               id="TDSPurchaseBalanceLimit"
-              Name="TDSPurchaseBalanceLimit"
+              name="TDSPurchaseBalanceLimit"
               value={formData.TDSPurchaseBalanceLimit}
               onChange={handleChange}
             />
@@ -1019,7 +1019,7 @@ const CompanyParameters = () => {
             <input
               type="text"
               id="PurchaseSaleTcs"
-              Name="PurchaseSaleTcs"
+              name="PurchaseSaleTcs"
               value={formData.PurchaseSaleTcs}
               onChange={handleChange}
             />
@@ -1032,13 +1032,13 @@ const CompanyParameters = () => {
             <input
               type="text"
               id="TCSTDSSaleBalanceLimit"
-              Name="TCSTDSSaleBalanceLimit"
+              name="TCSTDSSaleBalanceLimit"
               value={formData.TCSTDSSaleBalanceLimit}
               onChange={handleChange}
             />
             <label htmlFor="DepreciationAC">Depreciation A/c</label>
             <AccountMasterHelp
-              Name="DepreciationAC"
+              name="DepreciationAC"
               onAcCodeClick={handleDepreciationAC}
               CategoryName={DepreciationAcName}
               CategoryCode={newDepreciationAC}
@@ -1051,13 +1051,13 @@ const CompanyParameters = () => {
             <input
               type="text"
               id="InterestRate"
-              Name="InterestRate"
+              name="InterestRate"
               value={formData.InterestRate}
               onChange={handleChange}
             />
             <label htmlFor="InterestTDSAc">Interest TDS Ac</label>
             <AccountMasterHelp
-              Name="InterestTDSAc"
+              name="InterestTDSAc"
               onAcCodeClick={handleInterestTDSAc}
               CategoryName={InterestTDS_AcName}
               CategoryCode={newInterestTDSAc}
@@ -1068,7 +1068,7 @@ const CompanyParameters = () => {
           <div className="CompanyParameters-form-group">
             <label htmlFor="BankPaymentAc">Bank Payment Ac</label>
             <AccountMasterHelp
-              Name="BankPaymentAc"
+              name="BankPaymentAc"
               onAcCodeClick={handleBankPaymentAc}
               CategoryName={BankPaymentAcName}
               CategoryCode={newBankPaymentAc}

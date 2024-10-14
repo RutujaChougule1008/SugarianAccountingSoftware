@@ -60,25 +60,28 @@ const CityMaster = ({isPopup = false}, ref) => {
                     a.State_Name.localeCompare(b.State_Name)
                 );
                 setStates(sortedStates); // Set sorted states
-                setFormData(prevData => ({ ...prevData, state: sortedStates[0]?.State_Code || '' })); // Set initial state in formData
-            
+    
+                // Set the initial state in formData to the State_Code of the first state
+                setFormData(prevData => ({
+                    ...prevData,
+                    state: sortedStates[0]?.State_Code || '' // Set initial state based on fetched data
+                }));
             })
             .catch(error => {
                 console.error('Error fetching states:', error);
             });
     }, []);
+    
 
     
 
 
-    // Handle change for all inputs
     const handleChange = (event) => {
         const { name, value } = event.target;
-        setFormData(prevState => {
-            // Create a new object based on existing state
-            const updatedFormData = { ...prevState, [name]: value };
-            return updatedFormData;
-        });
+        setFormData(prevState => ({
+            ...prevState,
+            [name]: value,
+        }));
     };
 
     const fetchLastCityCode = () => {
@@ -186,9 +189,13 @@ const CityMaster = ({isPopup = false}, ref) => {
         axios.get(`${API_URL}/getlast-city?company_code=${companyCode}`)
             .then((response) => {
                 const data = response.data;
-                setFormData({
-                    ...formData, ...data
-                });
+                gstStateName = data.state
+                setFormData(prevFormData=>({
+                    ...prevFormData, ...data,
+                    state:data.state
+                }));
+
+                console.log("State", formData.state, gstStateName)
             })
             .catch((error) => {
                 console.error("Error fetching latest data for edit:", error);
@@ -233,7 +240,7 @@ const CityMaster = ({isPopup = false}, ref) => {
         }
     };
 
-
+    
 
     const handleBack = () => {
         navigate("/city-master-utility")
@@ -247,11 +254,15 @@ const CityMaster = ({isPopup = false}, ref) => {
                 const data = await response.json();
                 // Access the first element of the array
                 const firstUserCreation = data[0];
+                gstStateName = firstUserCreation.state
 
-                setFormData({
-                    ...formData, ...firstUserCreation,
+                setFormData(prevFormData=>({
+                    ...prevFormData, ...firstUserCreation,
+                    state:firstUserCreation.state
 
-                });
+                }));
+
+                console.log("State", formData.state, gstStateName)
 
             } else {
                 console.error("Failed to fetch first tender data:", response.status, response.statusText);
@@ -269,11 +280,15 @@ const CityMaster = ({isPopup = false}, ref) => {
             if (response.ok) {
                 const data = await response.json();
                 console.log("previousCompanyCreation", data);
-
+                gstStateName = data.state
+                
                 // Assuming setFormData is a function to update the form data
-                setFormData({
-                    ...formData, ...data,
-                });
+                setFormData(prevFormData => ({
+                    ...prevFormData, ...data,
+                    state: data.state
+                }));
+
+                console.log("State", formData.state, gstStateName)
 
             } else {
                 console.error("Failed to fetch previous tender data:", response.status, response.statusText);
@@ -289,11 +304,16 @@ const CityMaster = ({isPopup = false}, ref) => {
 
             if (response.ok) {
                 const data = await response.json();
+                gstStateName = data.nextSelectedRecord.state
                 console.log("nextCompanyCreation", data);
                 // Assuming setFormData is a function to update the form data
-                setFormData({
-                    ...formData, ...data.nextSelectedRecord,
-                });
+                setFormData(prevFormData => ({
+                ...prevFormData,
+                ...data.nextSelectedRecord,
+                state: data.nextSelectedRecord.state // Ensure this is being set correctly
+            }));
+
+                console.log("State", formData.state, gstStateName)
             } else {
                 console.error("Failed to fetch next company creation data:", response.status, response.statusText);
             }
@@ -309,10 +329,14 @@ const CityMaster = ({isPopup = false}, ref) => {
                 const data = await response.json();
                 // Access the first element of the array
                 const last_Navigation = data[0];
+                gstStateName = last_Navigation.state
 
-                setFormData({
-                    ...formData, ...last_Navigation,
-                });
+                setFormData(prevFormData=>({
+                    ...prevFormData, ...last_Navigation,
+                    state: last_Navigation.state
+                }));
+
+                console.log("State", formData.state, gstStateName)
             } else {
                 console.error("Failed to fetch first tender data:", response.status, response.statusText);
             }
@@ -326,7 +350,8 @@ const CityMaster = ({isPopup = false}, ref) => {
         try {
             const response = await axios.get(`${API_URL}/get-citybycitycode?company_code=${companyCode}&city_code=${selectedRecord.city_code}`);
             const data = response.data;
-            setFormData({...formData, ...data});
+            gstStateName = data.state
+            setFormData(prevFormData=>({...prevFormData, ...data, state:data.state}));
             setIsEditing(false);
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -358,7 +383,8 @@ const CityMaster = ({isPopup = false}, ref) => {
             try {
                 const response = await axios.get(`${API_URL}/get-citybycitycode?company_code=${companyCode}&city_code=${changeNoValue}`);
                 const data = response.data;
-                setFormData(data);
+                gstStateName = data.state
+                setFormData(prevFormData=>({...prevFormData, ...data, state:data.state}));
                 setIsEditing(false);
 
             } catch (error) {
@@ -442,7 +468,7 @@ const CityMaster = ({isPopup = false}, ref) => {
                             name="city_code"
                             value={formData.city_code}
                             onChange={handleChange}
-                            disabled={!isEditing && addOneButtonEnabled}
+                            disabled={true}
 
                         />
                     </div>
@@ -505,7 +531,7 @@ const CityMaster = ({isPopup = false}, ref) => {
                         <select id="state" name="state" className="custom-select" value={formData.state}
                             onChange={handleChange} disabled={!isEditing && addOneButtonEnabled}>
                             {states.map(state => (
-                                <option key={state.State_Code} value={state.value}>{state.State_Name}</option>
+                                <option key={state.State_Code} value={state.State_Code}>{state.State_Name}</option>
                             ))}
                         </select>
                     </div>

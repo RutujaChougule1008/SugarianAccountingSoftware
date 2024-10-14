@@ -389,7 +389,7 @@ const FinicialMaster = ({isPopup = false}, ref) => {
                             name="group_Code"
                             value={formData.group_Code}
                             onChange={handleChange}
-                            disabled={!isEditing && addOneButtonEnabled}
+                            disabled={true}
 
                         />
                     </div>

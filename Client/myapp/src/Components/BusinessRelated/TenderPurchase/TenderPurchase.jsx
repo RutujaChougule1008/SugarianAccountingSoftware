@@ -2829,6 +2829,7 @@ const handleSaveOrUpdate = async (event) => {
                         <label>Bill To</label>
                         <div className="form-element">
                           <AccountMasterHelp
+                            key={billTo} 
                             onAcCodeClick={handleBillTo}
                             CategoryName={ selfAcCode ?  selfAcName : billtoName}
                             CategoryCode={billTo || selfAcCode}
@@ -2841,6 +2842,7 @@ const handleSaveOrUpdate = async (event) => {
                         <label>Ship To</label>
                         <div className="form-element">
                           <AccountMasterHelp
+                          key={shipTo} 
                             onAcCodeClick={handleShipTo}
                             CategoryName={ selfAcCode ?  selfAcName : shiptoName}
                             CategoryCode={shipTo || selfAcCode}
@@ -2873,6 +2875,7 @@ const handleSaveOrUpdate = async (event) => {
                         <label>Broker</label>
                         <div className="form-element">
                           <AccountMasterHelp
+                          key={buyerParty}
                             onAcCodeClick={handleBuyerParty}
                             CategoryName={self_ac_Code ? self_acName : buyerPartyName}
                             CategoryCode={buyerParty || selfAcCode || self_ac_Code || 2}
@@ -3227,7 +3230,7 @@ const handleSaveOrUpdate = async (event) => {
                     <td>{user.Narration}</td>
                     <td>{user.Delivery_Type || dispatchType}</td>
                     <td>{user.gst_rate}</td>
-                    <td>{user.gst_amt || gstCode}</td>
+                    <td>{user.gst_amt}</td>
                     <td>{user.tcs_rate || formData.TCS_Rate}</td>
                     <td>{user.tcs_amt}</td>
                     {/* <td>{user.saledetailid}</td> */}

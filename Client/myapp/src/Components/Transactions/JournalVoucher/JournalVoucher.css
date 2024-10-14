@@ -1,0 +1,76 @@
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1050;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+    outline: 0;
+  }
+  
+  .modal-dialog {
+    background: white;
+    border-radius: 8px;
+    width: 100%; 
+    max-width: 95%; /* Increase max-width to make the modal wider */
+    padding: 20px;
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto; /* Enable scrolling inside modal */
+  }
+  
+  @media (min-width: 768px) {
+    .modal-dialog {
+      max-width: 80%; /* Make it wider for tablets and larger screens */
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .modal-dialog {
+      max-width: 70%; /* Wider modal on larger desktops */
+    }
+  }
+  
+  @media (min-width: 1440px) {
+    .modal-dialog {
+      max-width: 60%; /* Extra-wide on very large screens */
+    }
+  }
+  
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .modal-body {
+    padding: 20px;
+  }
+  
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 20px;
+  }
+  .container.mt-4 .table.table-bordered {
+    margin-left: 0 !important; /* Remove left margin */
+
+}
+.JVform-container {
+    max-width: 100%;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #0f0f0f;
+    border-radius: 8px;
+    background-color: #E8F8F5;
+    display: block; /* Use block layout */
+}
+
+.container.mt-4 {
+    text-align: left; 
+}
