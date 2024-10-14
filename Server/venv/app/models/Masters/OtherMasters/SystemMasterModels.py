@@ -38,4 +38,5 @@ class SystemMaster(db.Model):
     weight = db.Column(db.Numeric(18,2))
     gstratecode = db.Column(db.Numeric(18,0))
     category = db.Column(db.Numeric(50))
+    unit_code = db.Column(db.Integer)
 

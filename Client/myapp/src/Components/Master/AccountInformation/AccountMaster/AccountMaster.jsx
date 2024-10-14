@@ -160,7 +160,7 @@ const AccountMaster = () => {
     setAccountCode(code);
     setFormData({
       ...formData,
-      City_Code: code,
+      City_Code:code,
       cityid: cityId,
       Pincode: pinCode,
     });
@@ -589,7 +589,14 @@ const AccountMaster = () => {
         toast.success("City created successfully!");
         console.log("City saved!", response.data);
         setCityMasterData(response.data);
-        setShowCityPopup(false); // Close the popup after saving
+
+        handleCity_Code(
+          response.data.city.city_code,
+          response.data.city.cityid,
+          response.data.city.city_name_e,
+          response.data.city.pincode
+        );
+        setShowCityPopup(false); 
       } catch (error) {
         toast.error(
           "Error occurred while creating city: " +
@@ -616,6 +623,11 @@ const AccountMaster = () => {
         toast.success("Group created successfully!");
         console.log("Group saved!", response.data);
         setGroupMasterData(response.data);
+        handleGroup_Code(
+          response.data.group.group_Code,
+          response.data.group.bsid,
+          
+        );
         setShowGroupPopup(false); // Close the popup after saving
       } catch (error) {
         toast.error(
@@ -925,7 +937,7 @@ const AccountMaster = () => {
     setIsEditing(true);
     setIsLoading(true);
 
-    const master_data = { ...formData };
+    const master_data = { ...formData};
 
     if (isEditMode) {
       delete master_data.accoid;
@@ -1112,28 +1124,33 @@ const AccountMaster = () => {
   //Handle Record DoubleCliked in Utility Page Show that record for Edit
   const handlerecordDoubleClicked = async () => {
     try {
-      const response = await axios.get(
+      const response = await fetch(
         `${API_URL}/getaccountmasterByid?Company_Code=${companyCode}&Ac_Code=${selectedRecord.Ac_Code}`
       );
-      const data = response.data.account_master_data;
-      const labels = response.data.account_labels;
-      const detailData = response.data.account_detail_data;
-      const groupCodes = data.group_codes ?? [];
-      newAccoid = data.accoid;
-      newCity_Code = data.City_Code;
-      cityName = labels.cityname;
-      grpName = labels.groupcodename;
-      newGroup_Code = data.Group_Code;
-      gstStateName = labels.State_Name;
-      newGSTStateCode = data.GSTStateCode;
-      console.log(data);
-      setFormData({
-        ...formData,
-        ...data,
-      });
-      setAccountData(data || {});
-      setAccountDetail(detailData || []);
-      setSelectedGroups(groupCodes);
+      const data = await response.json();
+        // Access the first element of the array
+        const acData = data.account_master_data;
+        const labels = data.account_labels;
+        const detailData = data.account_detail_data;
+        const groupCodes = data.group_codes ?? [];
+        console.log("acData", acData);
+        console.log("labels", labels);
+        console.log("detailData", detailData);
+        newAccoid = acData.accoid;
+        newCity_Code = acData.City_Code;
+        cityName = labels.cityname;
+        grpName = labels.groupcodename;
+        newGroup_Code = acData.Group_Code;
+        gstStateName = labels.State_Name;
+        newGSTStateCode = acData.GSTStateCode;
+        setFormData({
+          ...formData,
+          ...acData,
+        });
+
+        setAccountData(acData || {});
+        setAccountDetail(detailData || []);
+        setSelectedGroups(groupCodes || []);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -1162,28 +1179,33 @@ const AccountMaster = () => {
     if (event.key === "Tab") {
       const changeNoValue = event.target.value;
       try {
-        const response = await axios.get(
+        const response = await fetch(
           `${API_URL}/getaccountmasterByid?Company_Code=${companyCode}&Ac_Code=${changeNoValue}`
         );
-        const data = response.data.account_master_data;
-        const labels = response.data.account_labels;
-        const detailData = response.data.account_detail_data;
+        const data = await response.json();
+        // Access the first element of the array
+        const acData = data.account_master_data;
+        const labels = data.account_labels;
+        const detailData = data.account_detail_data;
         const groupCodes = data.group_codes ?? [];
-        newAccoid = data.accoid;
-        newCity_Code = data.City_Code;
+        console.log("acData", acData);
+        console.log("labels", labels);
+        console.log("detailData", detailData);
+        newAccoid = acData.accoid;
+        newCity_Code = acData.City_Code;
         cityName = labels.cityname;
         grpName = labels.groupcodename;
-        newGroup_Code = data.Group_Code;
+        newGroup_Code = acData.Group_Code;
         gstStateName = labels.State_Name;
-        newGSTStateCode = data.GSTStateCode;
-        console.log(data);
+        newGSTStateCode = acData.GSTStateCode;
         setFormData({
           ...formData,
-          ...data,
+          ...acData,
         });
-        setAccountData(data || {});
+
+        setAccountData(acData || {});
         setAccountDetail(detailData || []);
-        setSelectedGroups(groupCodes);
+        setSelectedGroups(groupCodes || []);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -1220,7 +1242,7 @@ const AccountMaster = () => {
 
         setAccountData(acData || {});
         setAccountDetail(detailData || []);
-        setSelectedGroups(groupCodes);
+        setSelectedGroups(groupCodes || []);
       } else {
         console.error(
           "Failed to fetch first record:",
@@ -1264,7 +1286,7 @@ const AccountMaster = () => {
 
         setAccountData(acData || {});
         setAccountDetail(detailData || []);
-        setSelectedGroups(groupCodes);
+        setSelectedGroups(groupCodes || []);
 
         console.log("Account Data:", acData);
       console.log("Group Codes:", groupCodes);
@@ -1309,7 +1331,7 @@ const AccountMaster = () => {
 
         setAccountData(acData || {});
         setAccountDetail(detailData || []);
-        setSelectedGroups(groupCodes);
+        setSelectedGroups(groupCodes || []);
       } else {
         console.error(
           "Failed to fetch next record:",
@@ -1830,7 +1852,7 @@ const AccountMaster = () => {
             />
             <label htmlFor="GSTStateCode">GST State Code:</label>
             <GSTStateMasterHelp
-              Name="GSTStateCode"
+              name="GSTStateCode"
               onAcCodeClick={handleGSTStateCode}
               GstStateName={gstStateName}
               GstStateCode={newGSTStateCode}

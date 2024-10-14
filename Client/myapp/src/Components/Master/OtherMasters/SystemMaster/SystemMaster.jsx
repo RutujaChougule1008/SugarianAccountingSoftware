@@ -85,7 +85,8 @@ const SystemMaster = () => {
         Insurance: 0.00,
         weight: 0.00,
         gstratecode: 0,
-        category: 0.00
+        category: 0.00,
+        unit_code: 0
 
     };
 
@@ -158,11 +159,15 @@ const SystemMaster = () => {
     };
 
     const handleSaveOrUpdate = () => {
+        const updatedFormData = {
+            ...formData,
+            unit_code: SystemType === 'U' ? formData.System_Code : 0
+        };
         if (isEditMode) {
             axios
                 .put(
                     `${API_URL}/update-SystemMaster?System_Code=${formData.System_Code}&Company_Code=${companyCode}&System_Type=${SystemType}`,
-                    formData
+                    updatedFormData
                 )
                 .then((response) => {
                     console.log("Data updated successfully:", response.data);
@@ -185,7 +190,7 @@ const SystemMaster = () => {
             axios
                 .post(
                     `${API_URL}/create-Record-SystemMaster?Company_Code=${companyCode}&System_Type=${SystemType}`,
-                    formData
+                    updatedFormData
                 )
                 .then((response) => {
                     console.log("Data saved successfully:", response.data);
@@ -565,6 +570,8 @@ const SystemMaster = () => {
                                 <option value="V">Vat</option>
                                 <option value="I">Item</option>
                                 <option value="S">Grade</option>
+                                <option value="Z">Season</option>
+                                <option value="U">Unit</option>
                             </select>
                         </div>
                     </div>

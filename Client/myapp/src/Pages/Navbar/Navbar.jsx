@@ -245,13 +245,13 @@ const Navbar = () => {
         {activeMenu === "transactions" && (
           <div className="submenu">
             <div className="submenu-item">
-              <a href="/receipt-payment">Receipt/Payment</a>
+              <a href="/RecieptPaymentUtility">Receipt/Payment</a>
             </div>
             <div className="submenu-item">
-              <a href="/Journal-voucher">Journal Vouchar</a>
+              <a href="/JournalVoucher_Utility">Journal Vouchar</a>
             </div>
             <div className="submenu-item">
-              <a href="/utr-entry">UTR Entry</a>
+              <a href="/utrentry-Utility">UTR Entry</a>
             </div>
             <div className="submenu-item">
               <a href="/debitcreditnote-utility">Debit/Credit Note</a>
@@ -360,7 +360,7 @@ const Navbar = () => {
               <a href="/retail-sale-bill">Retail Sale Bill</a>
             </div>
             <div className="submenu-item">
-              <a href="/sugar-sale-return-sale">Sugar Sale Return Sale</a>
+              <a href="/sugar-sale-return-sale-utility">Sugar Sale Return Sale</a>
             </div>
             <div className="submenu-item">
               <a href="/ServiceBill-utility">Service Bill</a>

@@ -9,6 +9,8 @@ const CompanyCode = sessionStorage.getItem("Company_Code");
 const API_URL = process.env.REACT_APP_API;
 const Year_Code = sessionStorage.getItem("Year_Code");
 
+var lActiveInputFeild = "";
+
 const PurcNoFromReturnSaleHelp = ({
     onAcCodeClick,
     name,
@@ -31,6 +33,7 @@ const PurcNoFromReturnSaleHelp = ({
     const [totalQuintal, setTotalQuintal] = useState(0);
     const [totalBillAmount, setTotalBillAmount] = useState(0);
     const [loading, setLoading] = useState(false); 
+    const [type, setType] = useState("");
 
     const fetchAndOpenPopup = async () => {
         try {
@@ -50,7 +53,8 @@ const PurcNoFromReturnSaleHelp = ({
 
     useEffect(() => {
         setEnteredAcCode(purchaseNo);
-    }, [purchaseNo]);
+        setType(Type);
+    }, [purchaseNo, Type]);
 
     const handleMillCodeButtonClick = () => {
         fetchAndOpenPopup();
@@ -73,25 +77,29 @@ const PurcNoFromReturnSaleHelp = ({
             const matchingItem = data.find((item) => item.doc_no === parseInt(value, 10));
             if (matchingItem) {
                 setEnteredAcCode(matchingItem.doc_no);
+                setType(data.Tran_Type);
             }
         } catch (error) {
             console.error("Error fetching data:", error);
         }
     };
 
-    const handleCheckboxChange = (item, index, checked) => {
-        const updatedItem = { ...item, isSelected: checked };
-        const updatedContent = [...popupContent.slice(0, index), updatedItem, ...popupContent.slice(index + 1)];
-        setPopupContent(updatedContent);
-
+    const handleCheckboxChange = (item, checked) => {
+        // Don't update popupContent; only manage selected items and totals
         if (checked) {
-            setSelectedItems((prevSelected) => [...prevSelected, updatedItem]);
-            setTotalQuintal((prevTotal) => prevTotal + parseFloat(updatedItem.Quantal));
-            setTotalBillAmount((prevTotal) => prevTotal + parseFloat(updatedItem.Bill_Amount));
+            // Add the item to selectedItems if it's checked and not already selected
+            const alreadyExists = selectedItems.some(selectedItem => selectedItem.doc_no === item.doc_no);
+            if (!alreadyExists) {
+                setSelectedItems([...selectedItems, item]);
+                setTotalQuintal(prevTotal => prevTotal + parseFloat(item.Quantal));
+                setTotalBillAmount(prevTotal => prevTotal + parseFloat(item.Bill_Amount));
+            }
         } else {
-            setSelectedItems((prevSelected) => prevSelected.filter((i) => i.doc_no !== updatedItem.doc_no));
-            setTotalQuintal((prevTotal) => prevTotal - parseFloat(updatedItem.Quantal));
-            setTotalBillAmount((prevTotal) => prevTotal - parseFloat(updatedItem.Bill_Amount));
+            // Remove the item from selectedItems if unchecked
+            const updatedSelectedItems = selectedItems.filter(selectedItem => selectedItem.doc_no !== item.doc_no);
+            setSelectedItems(updatedSelectedItems);
+            setTotalQuintal(prevTotal => prevTotal - parseFloat(item.Quantal));
+            setTotalBillAmount(prevTotal => prevTotal - parseFloat(item.Bill_Amount));
         }
     };
 
@@ -99,43 +107,41 @@ const PurcNoFromReturnSaleHelp = ({
         setLoading(true); 
         try {
             const response = await axios.get(`${API_URL}/get-sugarpurchasereturn-by-id?doc_no=${purchaNo}&Company_Code=${CompanyCode}&Year_Code=${Year_Code}`);
+            
+            console.log("Full API Response:", response.data);
+            
             const saleBillHead = response.data.last_head_data;
-        const saleBillDetail = response.data.details_data; 
-        const saleBillLabels = response.data.last_labels_data; 
-
+            const saleBillDetail = response.data.detail_data; 
+            const saleBillLabels = response.data.last_labels_data; 
     
-
-        // Ensure saleBillDetail and saleBillLabels exist and are arrays
-        if (Array.isArray(saleBillDetail) && saleBillDetail.length > 0 && Array.isArray(saleBillLabels)) {
-            // Call OnSaleBillHead with the head data
-           
-
-            // Map over saleBillDetail and merge corresponding saleBillLabels
-            saleBillDetail.forEach((detail, index) => {
-                // Merge detail with the corresponding label by index
-                const label = saleBillLabels[index] || {};
-                const combinedDetail = {
-                    ...detail,
-                    ...label,  // Add label data (e.g., partyname, brokername)
-                };
-
-                // Log combined data for debugging
-                console.log("Combined Detail:", combinedDetail);
-
-                // Call your saleBillDetailData function with the combined detail
-                OnSaleBillDetail(combinedDetail);
-                setShowModal(true);  
-            });
-        } else {
-            console.warn("No sale bill details or labels available.");
-            OnSaleBillDetail([]);
+            console.log("Sale Bill Head:", saleBillHead);
+            console.log("Sale Bill Detail:", saleBillDetail);
+            console.log("Sale Bill Labels:", saleBillLabels);
+    
+            if (Array.isArray(saleBillDetail) && saleBillDetail.length > 0 && Array.isArray(saleBillLabels)) {
+                saleBillDetail.forEach((detail, index) => {
+                    const label = saleBillLabels[index] || {};
+                    const combinedDetail = {
+                        ...detail,
+                        ...label,
+                    };
+                    OnSaleBillDetail(combinedDetail);
+                    setShowModal(true);  
+                });
+            } else {
+                console.warn("No sale bill details or labels available.");
+                OnSaleBillDetail([]);
+            }
+            
+            OnSaleBillHead(saleBillHead);
+    
+        } catch (error) {
+            console.error("Error fetching SaleBill data:", error);
+        } finally {
+            setLoading(false);
         }
-        OnSaleBillHead(saleBillHead);
-
-    } catch (error) {
-        console.error("Error fetching SaleBill data:", error);
-    }
-};
+    };
+    
     const handleSelectClick = () => {
         if (sugarSaleReturnSale) {
             sugarSaleReturnSale(totalBillAmount, totalQuintal, selectedItems);
@@ -145,11 +151,19 @@ const PurcNoFromReturnSaleHelp = ({
 
     const handleRecordDoubleClick = (item) => {
         setEnteredAcCode(item.PURCNO);
-        fetchSaleBillData(item.doc_no);
+        setType(item.Tran_Type);
+        
+        fetchSaleBillData(item.doc_no)
+            .then(() => {
+                setShowModal(false);
+            })
+            .catch((error) => {
+                console.error("Error during fetch or modal close:", error);
+            });
+    
         if (onAcCodeClick) {
-            onAcCodeClick(item.doc_no);
+            onAcCodeClick(item.doc_no, item.Tran_Type);
         }
-        setShowModal(false);
     };
 
     const handlePageChange = (newPage) => {
@@ -160,7 +174,7 @@ const PurcNoFromReturnSaleHelp = ({
         setSearchTerm(searchValue);
     };
 
-    const filteredData = popupContent.filter((item) =>
+    const filteredData = popupContent.filter(item =>
         item.PartyName && item.PartyName.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -171,17 +185,21 @@ const PurcNoFromReturnSaleHelp = ({
     useEffect(() => {
         const handleKeyDown = (event) => {
             if (event.key === "F1") {
-                setSearchTerm(event.target.value);
-                fetchAndOpenPopup();
-                event.preventDefault();
+                if (event.target.id === name) {
+                    lActiveInputFeild = name;
+                    setSearchTerm(event.target.value);
+                    fetchAndOpenPopup();
+                    event.preventDefault();
+                }
             }
         };
 
         window.addEventListener("keydown", handleKeyDown);
+
         return () => {
             window.removeEventListener("keydown", handleKeyDown);
         };
-    }, []);
+    }, [name, fetchAndOpenPopup]);
 
     useEffect(() => {
         const handleKeyNavigation = (event) => {
@@ -230,7 +248,7 @@ const PurcNoFromReturnSaleHelp = ({
                         ...
                     </Button>
                     <label id="name" className="form-labels ms-2">
-                        {Type}
+                        {type !== '' ? type : Type}
                     </label>
                 </div>
             </div>
@@ -278,8 +296,8 @@ const PurcNoFromReturnSaleHelp = ({
                                         <td>
                                             <input
                                                 type="checkbox"
-                                                checked={item.isSelected || false}
-                                                onChange={(e) => handleCheckboxChange(item, index, e.target.checked)}
+                                                checked={selectedItems.some(selectedItem => selectedItem.doc_no === item.doc_no)}
+                                                onChange={(e) => handleCheckboxChange(item, e.target.checked)}
                                             />
                                         </td>
                                         <td>{item.doc_no}</td>

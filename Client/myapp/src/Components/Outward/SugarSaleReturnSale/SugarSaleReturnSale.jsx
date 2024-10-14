@@ -28,60 +28,85 @@ const stringToNumber = z
 
 // Validation Schemas
 const SugarSaleReturnSaleSchema = z.object({
-  doc_no: z.string().optional(),
-  PURCNO: z.number().int().nonnegative(),
-  PurcTranType: z.string().optional(),
-  Tran_Type: z.string().default("PR"),
-  doc_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"), // Date in YYYY-MM-DD
-  Ac_Code: z.number().int().nonnegative(),
-  Unit_Code: z.number().int().nonnegative(),
-  mill_code: z.number().int().nonnegative(),
-  FROM_STATION: z.string().optional(),
-  TO_STATION: z.string().optional(),
-  LORRYNO: z.string().optional(),
-  BROKER: z.number().int().nonnegative(),
-  wearhouse: z.string().optional(),
-  subTotal: z.number().nonnegative(),
-  LESS_FRT_RATE: z.number().nonnegative(),
-  freight: z.number().nonnegative(),
-  cash_advance: z.number().nonnegative(),
-  bank_commission: z.number().nonnegative(),
-  OTHER_AMT: z.number().nonnegative(),
-  Bill_Amount: z.number().nonnegative(),
-  Due_Days: z.number().int().nonnegative(),
-  NETQNTL: z.number().nonnegative(),
-  Company_Code: z.string().optional(),
-  Year_Code: z.string().optional(),
-  Branch_Code: z.number().int().nonnegative(),
-  Created_By: z.string().optional(),
-  Modified_By: z.string().optional(),
-  Bill_No: z.string().optional(),
-  CGSTRate: z.number().nonnegative(),
-  CGSTAmount: z.number().nonnegative(),
-  SGSTRate: z.number().nonnegative(),
-  SGSTAmount: z.number().nonnegative(),
-  IGSTRate: z.number().nonnegative(),
-  IGSTAmount: z.number().nonnegative(),
-  GstRateCode: z.number().int().nonnegative(),
-  purcyearcode: z.string().optional(),
-  bill_to: z.number().int().nonnegative(),
-  srid: z.number().int().nonnegative(),
-  ac: z.number().int().nonnegative(),
-  uc: z.number().int().nonnegative(),
-  mc: z.number().int().nonnegative(),
-  bc: z.number().int().nonnegative(),
-  bt: z.number().int().nonnegative(),
-  sbid: z.number().int().nonnegative(),
-  TCS_Rate: z.number().nonnegative(),
-  TCS_Amt: z.number().nonnegative(),
-  TCS_Net_Payable: z.number().nonnegative(),
-  einvoiceno: z.string().optional(),
-  ackno: z.string().optional(),
-  TDS_Rate: z.number().nonnegative(),
-  TDS_Amt: z.number().nonnegative(),
-  QRCode: z.string().optional(),
-  gstid: z.number().int().nonnegative(),
+  //PURCNO: z.preprocess((val) => (val === '' ? undefined : parseFloat(val)), z.number().optional()),
+  //PurcTranType: z.string().optional(),
+  Ac_Code: z
+  .number({
+    required_error: "This field is required", // This shows when the field is empty
+  })
+  .refine((val) => !isNaN(val) && val !== "", {
+    message: "Only numbers accepted", // This shows when the input is not a number
+  }),
+  
+ // Unit_Code: z.preprocess((val) => (val === "" || val === null ? undefined : parseFloat(val)), z.number().optional()),
+
+  mill_code: z
+  .number({
+    required_error: "This field is required", // This shows when the field is empty
+  })
+  .refine((val) => !isNaN(val) && val !== "", {
+    message: "Only numbers accepted", // This shows when the input is not a number
+  }),
+  // FROM_STATION: z.string().optional(),
+  // TO_STATION: z.string().optional(),
+  // LORRYNO: z.string().optional(),
+  // BROKER: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
+  // wearhouse: z.string().optional(),
+  LESS_FRT_RATE: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
+  freight: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
+  cash_advance: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
+  bank_commission: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
+  OTHER_AMT: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
+  Bill_Amount: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
+  Due_Days: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
+  NETQNTL: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
+  CGSTRate: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
+  CGSTAmount: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
+  SGSTRate: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
+  SGSTAmount: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
+  IGSTRate: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
+  IGSTAmount: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
+  GstRateCode: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
+  // PO_Details: z.string().optional(),
+  // ASN_No: z.string().optional(),
+  // Eway_Bill_No: z.string().optional(),
+  TCS_Rate: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
+  TCS_Amt: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
+  TCS_Net_Payable: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
+  // einvoiceno: z.string().optional(),
+  // ackno: z.string().optional(),
+  TDS_Rate: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
+  TDS_Amt: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
 });
+
+// Zod validation schema for the detail section
+const DetailValidationSchema = z.object({
+  // item_code: z.number({
+  //   required_error: "Item Code is required", // Mandatory field
+  // }),
+  Quantal: z.number({
+    required_error: "Quantal is required", // Mandatory field
+  }).refine(val => val > 0, {
+    message: "Quantal must be greater than 0",
+  }),
+  bags: z.number({
+    required_error: "Bags are required", // Mandatory field
+  }).refine(val => val > 0, {
+    message: "Bags must be greater than 0",
+  }),
+  rate: z.number({
+    required_error: "Rate is required", // Mandatory field
+  }).refine(val => val > 0, {
+    message: "Rate must be greater than 0",
+  }),
+  item_Amount: z.number({
+    required_error: "Item Amount is required", // Mandatory field
+  }).refine(val => val > 0, {
+    message: "Item Amount must be greater than 0",
+  }),
+});
+
+
 
 //Global Variables
 var newsrid = "";
@@ -103,7 +128,7 @@ var billToCode = "";
 var TYPE = "";
 var purchaseNo = "";
 var transportCode = "";
-var transportName = ""
+var transportName = "";
 
 const API_URL = process.env.REACT_APP_API;
 const companyCode = sessionStorage.getItem("Company_Code");
@@ -146,6 +171,7 @@ const SugarSaleReturnSale = () => {
   const [purchNo, setPurchno] = useState("");
   const [saleBillDataDetails, setSaleBillDataDetials] = useState({});
   const [nextId, setNextId] = useState(1);
+ 
 
   //In utility page record doubleClicked that recod show for edit functionality
   const location = useLocation();
@@ -217,8 +243,8 @@ const SugarSaleReturnSale = () => {
     QRCode: "",
     IsDeleted: 0,
     gstid: 0,
-    srid:null,
-};
+    srid: null,
+  };
 
   const [formData, setFormData] = useState(initialFormData);
   const [billFrom, setBillFrom] = useState("");
@@ -239,49 +265,79 @@ const SugarSaleReturnSale = () => {
 
   const handleChange = async (event) => {
     const { name, value } = event.target;
-
-    const matchStatus = await checkMatchStatus(
-      formData.Ac_Code,
-      companyCode,
-      Year_Code
-    );
-
-    let gstRate = GstRate;
-
-    if (!gstRate || gstRate === 0) {
-      const cgstRate = parseFloat(formData.CGSTRate) || 0;
-      const sgstRate = parseFloat(formData.SGSTRate) || 0;
-      const igstRate = parseFloat(formData.IGSTRate) || 0;
-
-      gstRate = igstRate > 0 ? igstRate : cgstRate + sgstRate;
-    }
-
-    // Calculate dependent values and update form data
-    const updatedFormData = await calculateDependentValues(
-      name,
-      value,
-      formData,
-      matchStatus,
-      gstRate
-    );
-
-    setFormData(updatedFormData);
-    validateField(name, value);
-  };
-
-  const handleOnChange = () => {
-    setIsChecked((prev) => {
-      const newValue = !prev;
-      const value = newValue ? "Y" : "N";
-
-      setFormData((prevData) => ({
-        ...prevData,
-        EWayBill_Chk: value,
-      }));
-
-      return newValue;
+    setFormData({
+      ...formData,
+      [name]: value,
     });
+    
+    // Validate field as user types
+    validateField(name, value);
+    // const matchStatus = await checkMatchStatus(
+    //   formData.Ac_Code,
+    //   companyCode,
+    //   Year_Code
+    // );
+
+    // let gstRate = GstRate;
+
+    // if (!gstRate || gstRate === 0) {
+    //   const cgstRate = parseFloat(formData.CGSTRate) || 0;
+    //   const sgstRate = parseFloat(formData.SGSTRate) || 0;
+    //   const igstRate = parseFloat(formData.IGSTRate) || 0;
+
+    //   gstRate = igstRate > 0 ? igstRate : cgstRate + sgstRate;
+    // }
+
+    // // Calculate dependent values and update form data
+    // const updatedFormData = await calculateDependentValues(
+    //   name,
+    //   value,
+    //   formData,
+    //   matchStatus,
+    //   gstRate
+    // );
+
+    // setFormData(updatedFormData);
+    // validateField(name, value);
   };
+
+  const handleKeyDownCalculations = async (event) => {
+    if (event.key === "Tab") {
+      // event.preventDefault();
+
+      const { name, value } = event.target;
+
+      // const matchStatus = await checkMatchStatus(
+      //   formData.Ac_Code,
+      //   companyCode,
+      //   Year_Code
+      // );
+
+      let gstRate = GstRate;
+
+      if (!gstRate || gstRate === 0) {
+        const cgstRate = parseFloat(formData.CGSTRate) || 0;
+        const sgstRate = parseFloat(formData.SGSTRate) || 0;
+        const igstRate = parseFloat(formData.IGSTRate) || 0;
+  
+        gstRate = igstRate > 0 ? igstRate : cgstRate + sgstRate;
+      }
+  
+      // Calculate dependent values and update form data
+      const updatedFormData = await calculateDependentValues(
+        name,
+        value,
+        formData,
+        matchStatus,
+        gstRate
+      );
+  
+      setFormData(updatedFormData);
+      validateField(name, value);
+    }
+  };
+
+  
 
   const handleDateChange = (event, fieldName) => {
     setFormData((prevFormData) => ({
@@ -299,76 +355,94 @@ const SugarSaleReturnSale = () => {
 
   // Validation Part
   const validateField = (name, value) => {
+
+    let parsedValue = value;
+
+  // Manually convert to number if the field expects a number
+  if (name === "NETQNTL" && typeof value === "string") {
+    parsedValue = parseFloat(value); // Convert string to number
+  }
+
     try {
-      // Validate the field using the schema
+      // Validate the specific field against the schema
       SugarSaleReturnSaleSchema.pick({ [name]: true }).parse({
         [name]: value,
       });
-
-      // If validation passes, remove any existing error for the field
+  
+      // If no error, remove any existing errors for that field
       setFormErrors((prevErrors) => {
         const updatedErrors = { ...prevErrors };
         delete updatedErrors[name];
         return updatedErrors;
       });
     } catch (err) {
-      let errorMessage = "Invalid input.";
-
-      // Check if the error is related to a number validation failure
-      if (err.errors && err.errors[0]?.code === "invalid_type") {
-        if (typeof value !== "number") {
-          errorMessage = "Only numbers accepted";
-        } else if (typeof value === "string") {
-          errorMessage = "Invalid text input";
-        }
-      } else if (err.errors && err.errors[0]?.message) {
-        // Use the schema-provided error message
-        errorMessage = err.errors[0].message;
+      // Check if Zod errors exist and handle them
+      if (err.errors && err.errors.length > 0) {
+        setFormErrors((prevErrors) => ({
+          ...prevErrors,
+          [name]: err.errors[0].message, // Show the first error message
+        }));
+      } else {
+        setFormErrors((prevErrors) => ({
+          ...prevErrors,
+          [name]: "An unexpected error occurred", // Fallback error message
+        }));
       }
-
-      // Set the custom or schema-provided error message
-      setFormErrors((prevErrors) => ({
-        ...prevErrors,
-        [name]: errorMessage,
-      }));
     }
   };
-
+  
   const validateForm = () => {
     try {
-      // Attempt to parse the formData against the schema
+      // Parse the formData against the schema
       SugarSaleReturnSaleSchema.parse(formData);
-
-      // If successful, clear any existing errors and return true
+  
+      // If validation passes, clear form errors and return true
       setFormErrors({});
       return true;
     } catch (err) {
       const errors = {};
-
-      // Loop through all errors returned by the validation schema
+  
+      // Loop through all errors returned by the schema
       err.errors.forEach((error) => {
         let errorMessage = error.message;
-
-        // Customize error message for specific types
-        if (error.code === "invalid_type") {
-          if (error.expected === "number") {
-            errorMessage = "Only numbers accepted";
-          } else if (error.expected === "string") {
-            errorMessage = "Only text is allowed";
-          }
-          // Add more conditions as needed for other types
+  
+        // Customize the error message for required fields and numbers
+        if (error.message.includes("required")) {
+          errorMessage = "This field is required"; // Show if field is empty
+        } else if (error.message.includes("number")) {
+          errorMessage = "Only numbers accepted"; // Show if not a valid number
         }
-
-        // Assign the customized or default error message to the corresponding field
+  
+        // Assign the error message to the corresponding field
         errors[error.path[0]] = errorMessage;
       });
-
-      // Update formErrors with the collected errors
+  
+      // Set the form errors state
       setFormErrors(errors);
       return false;
     }
   };
-
+  
+  const validateDetailForm = () => {
+    try {
+      // Parse the formDataDetail against the schema
+      DetailValidationSchema.parse(formDataDetail);
+      
+      // Clear errors if validation passes
+      setFormErrors({});
+      return true;
+    } catch (err) {
+      const errors = {};
+      err.errors.forEach((error) => {
+        errors[error.path[0]] = error.message; // Assign the error message to the corresponding field
+      });
+  
+      // Set form errors for the detail form
+      setFormErrors(errors);
+      return false;
+    }
+  };
+  
   const fetchLastRecord = () => {
     fetch(
       `${API_URL}/getNextDocNo_SugarSaleReturnSale?Company_Code=${companyCode}&Year_Code=${Year_Code}`
@@ -389,6 +463,8 @@ const SugarSaleReturnSale = () => {
       });
   };
 
+
+  
   const handleAddOne = async () => {
     setAddOneButtonEnabled(false);
     setSaveButtonEnabled(true);
@@ -413,7 +489,11 @@ const SugarSaleReturnSale = () => {
     gstRateCode = "";
     billToName = "";
     billToCode = "";
+    purchaseNo = "";
     setLastTenderDetails([]);
+    setUsers([])
+    setType("")
+    setFormErrors({})
   };
 
   const handleEdit = () => {
@@ -428,32 +508,45 @@ const SugarSaleReturnSale = () => {
   };
 
   const handleSaveOrUpdate = async () => {
+    if (!validateForm()) {
+      toast.error("Please Check the validations");
+      return;
+    }
     setIsEditing(true);
     setIsLoading(true);
 
+    
+
     const {
-      ASN_No,
-      DO_No,
-      Delivery_type,
-      DoNarrtion,
-      EWayBill_Chk,
-      EWay_Bill_No,
-      EwayBillValidDate,
-      Insured,
-      IsDeleted,
-      MillInvoiceNo,
-      RateDiff,
-      RoundOff,
-      newsbdate,
-      newsbno,
-      saleid,
-      Purcid,
-      SBNarration,
-      TaxableAmount,
-      Transport_Code,
-      saleidnew,
-      bk,
-      tc,
+      // Bill_To,
+      // Bill_No,
+      // DO_No,
+      // Delivery_type,
+      // DoNarrtion,
+      // EWayBill_Chk,
+      // EWay_Bill_No,
+      // EwayBillValidDate,
+      // Insured,
+      // IsDeleted,
+      // MillInvoiceNo,
+      //RateDiff,
+      // RoundOff,
+      // newsbdate,
+      // newsbno,
+      // saleid,
+      // Purcid,
+      // SBNarration,
+      // TaxableAmount,
+      // Transport_Code,
+      // saleidnew,
+      // bk,
+      // tc,
+      Bill_No,
+      Bill_To,
+      prid,
+      purcyearcode,
+      wearhouse,
+      srid,
       ...filteredFormData
     } = formData;
 
@@ -462,11 +555,13 @@ const SugarSaleReturnSale = () => {
     const headData = {
       ...initialFormData,
       ...filteredFormData,
+      PURCNO: purchaseNo,
+      bill_to: Bill_To || formData.bill_to,
 
       GstRateCode: gstCode || gstRateCode,
       //   Company_Code: companyCode || saleBillDataDetails.Company_Code,
       // Year_Code: Year_Code || saleBillDataDetails.Year_Code,
-      // Tran_Type: "PR"
+      Tran_Type: "RS" || type
     };
 
     console.log("headData:", headData);
@@ -509,6 +604,8 @@ const SugarSaleReturnSale = () => {
     console.log("Request Data:", requestData);
 
     try {
+
+      
       if (isEditMode) {
         const updateApiUrl = `${API_URL}/update-sugarsalereturn?srid=${newsrid}`;
         const response = await axios.put(updateApiUrl, requestData);
@@ -534,12 +631,7 @@ const SugarSaleReturnSale = () => {
           window.location.reload();
         }, 1000);
       }
-    } catch (error) {
-      console.error(
-        "Error during API call:",
-        error.response ? error.response.data : error.message
-      );
-      toast.error("Error occurred while saving data");
+    } catch (err) {
     } finally {
       setIsEditing(false);
       setIsLoading(false);
@@ -561,7 +653,7 @@ const SugarSaleReturnSale = () => {
       setIsLoading(true);
 
       try {
-        const deleteApiUrl = `${API_URL}/delete-sugarpurchasereturn?srid=${newsrid}&Company_Code=${companyCode}&doc_no=${formData.doc_no}&Year_Code=${Year_Code}&tran_type=${formData.Tran_Type}`;
+        const deleteApiUrl = `${API_URL}/delete-sugarsalereturn?srid=${newsrid}&Company_Code=${companyCode}&doc_no=${formData.doc_no}&Year_Code=${Year_Code}&tran_type=${formData.Tran_Type}`;
         const response = await axios.delete(deleteApiUrl);
 
         if (response.status === 200) {
@@ -616,7 +708,7 @@ const SugarSaleReturnSale = () => {
         unitName = last_labels_data[0].unitname;
         unitCode = last_head_data.Unit_Code;
         billToName = last_labels_data[0].billtoname;
-        billToCode = last_head_data.Bill_To;
+        billToCode = last_head_data.bill_to;
         gstRateCode = last_head_data.GstRateCode;
         gstName = last_labels_data[0].GSTName;
         millName = last_labels_data[0].millname;
@@ -628,72 +720,6 @@ const SugarSaleReturnSale = () => {
         transportCode = last_head_data.Transport_Code;
         transportName = last_labels_data[0].transportname;
 
-        const enrichedDetails = detailsArray.map((detail) => {
-            const itemName = last_labels_data[0].itemname || "Unknown Item"; 
-            return {
-              ...detail,
-              itemname: itemName,
-            };
-          });
-    
-
-        // Log enriched details
-        console.log("Enriched Details:", enrichedDetails);
-
-        // Updating state
-        setFormData((prevData) => ({
-          ...prevData,
-          ...last_head_data,
-        }));
-        setLastTenderData(last_head_data || {});
-        setLastTenderDetails(enrichedDetails);
-        setType(last_head_data.Tran_Type);
-        console.log("TYPE", last_head_data.Tran_Type);
-      } else {
-        console.error(
-          "Failed to fetch last data:",
-          response.status,
-          response.statusText
-        );
-      }
-    } catch (error) {
-      console.error("Error during API call:", error);
-    }
-  };
-
-  const handleBack = () => {
-    navigate("/sugar-sale-return-purchase-utility");
-  };
-
-  const handleFirstButtonClick = async () => {
-    try {
-      const response = await axios.get(
-        `${API_URL}/get-first-sugarpurchasereturn?Company_Code=${companyCode}&Year_Code=${Year_Code}`
-      );
-      if (response.status === 200) {
-        const data = response.data;
-        const { last_head_data, detail_data, last_labels_data } = data;
-
-        // Ensure detail_data is an array
-        const detailsArray = Array.isArray(detail_data) ? detail_data : [];
-
-        newsrid = last_head_data.srid;
-        partyName = last_labels_data[0].partyname;
-        partyCode = last_head_data.Ac_Code;
-        unitName = last_labels_data[0].unitname;
-        unitCode = last_head_data.Unit_Code;
-        billToName = last_labels_data[0].billtoname;
-        billToCode = last_head_data.Bill_To;
-        gstRateCode = last_head_data.GstRateCode;
-        gstName = last_labels_data[0].GSTName;
-        millName = last_labels_data[0].millname;
-        millCode = last_head_data.mill_code;
-        itemName = last_labels_data[0].itemname;
-        item_Code = detail_data.item_code;
-        brokerCode = last_head_data.BROKER;
-        brokerName = last_labels_data[0].brokername;
-
-        // Create a mapping for itemname based on item_code
         const itemNameMap = last_labels_data.reduce((map, label) => {
           if (label.item_code !== undefined && label.itemname) {
             map[label.item_code] = label.itemname;
@@ -716,7 +742,78 @@ const SugarSaleReturnSale = () => {
           ...last_head_data,
         }));
         setLastTenderData(last_head_data || {});
+        setType(last_head_data.Tran_Type)
         setLastTenderDetails(enrichedDetails);
+      } else {
+        console.error(
+          "Failed to fetch last data:",
+          response.status,
+          response.statusText
+        );
+      }
+    } catch (error) {
+      console.error("Error during API call:", error);
+    }
+  };
+
+  const handleBack = () => {
+    navigate("/sugar-sale-return-sale-utility");
+  };
+
+  const handleFirstButtonClick = async () => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/get-first-sugarsalereturn?Company_Code=${companyCode}&Year_Code=${Year_Code}`
+      );
+      if (response.status === 200) {
+        const data = response.data;
+        const { first_head_data, detail_data, first_labels_data } = data;
+
+        // Ensure detail_data is an array
+        const detailsArray = Array.isArray(detail_data) ? detail_data : [];
+
+        newsrid = first_head_data.srid;
+        partyName = first_labels_data[0].partyname;
+        partyCode = first_head_data.Ac_Code;
+        unitName = first_labels_data[0].unitname;
+        unitCode = first_head_data.Unit_Code;
+        billToName = first_labels_data[0].billtoname;
+        billToCode = first_head_data.bill_to;
+        gstRateCode = first_head_data.GstRateCode;
+        gstName = first_labels_data[0].GSTName;
+        millName = first_labels_data[0].millname;
+        millCode = first_head_data.mill_code;
+        itemName = first_labels_data[0].itemname;
+        item_Code = detail_data.item_code;
+        brokerCode = first_head_data.BROKER;
+        brokerName = first_labels_data[0].brokername;
+        purchaseNo = first_head_data.PURCNO
+
+        // Create a mapping for itemname based on item_code
+        const itemNameMap = first_labels_data.reduce((map, label) => {
+          if (label.item_code !== undefined && label.itemname) {
+            map[label.item_code] = label.itemname;
+          }
+          return map;
+        }, {});
+
+        // Enrich detail_data with itemname
+        const enrichedDetails = detailsArray.map((detail) => ({
+          ...detail,
+          itemname: itemNameMap[detail.item_code] || "Unknown Item",
+        }));
+
+        // Log enriched details
+        console.log("Enriched Details:", enrichedDetails);
+
+        // Updating state
+        setFormData((prevData) => ({
+          ...prevData,
+          ...first_head_data,
+        }));
+        setLastTenderData(first_head_data || {});
+        setLastTenderDetails(enrichedDetails);
+        setType(first_head_data.Tran_Type);
       } else {
         console.error(
           "Failed to fetch first tender data:",
@@ -732,33 +829,34 @@ const SugarSaleReturnSale = () => {
   const handleNextButtonClick = async () => {
     try {
       const response = await axios.get(
-        `${API_URL}/get-next-sugarpurchasereturn?Company_Code=${companyCode}&Year_Code=${Year_Code}&doc_no=${formData.doc_no}`
+        `${API_URL}/get-next-sugarsalereturn?Company_Code=${companyCode}&Year_Code=${Year_Code}&doc_no=${formData.doc_no}`
       );
       if (response.status === 200) {
         const data = response.data;
-        const { last_head_data, detail_data, last_labels_data } = data;
+        const { next_head_data, detail_data, next_labels_data } = data;
 
         // Ensure detail_data is an array
         const detailsArray = Array.isArray(detail_data) ? detail_data : [];
 
-        newsrid = last_head_data.srid;
-        partyName = last_labels_data[0].partyname;
-        partyCode = last_head_data.Ac_Code;
-        unitName = last_labels_data[0].unitname;
-        unitCode = last_head_data.Unit_Code;
-        billToName = last_labels_data[0].billtoname;
-        billToCode = last_head_data.Bill_To;
-        gstRateCode = last_head_data.GstRateCode;
-        gstName = last_labels_data[0].GSTName;
-        millName = last_labels_data[0].millname;
-        millCode = last_head_data.mill_code;
-        itemName = last_labels_data[0].itemname;
+        newsrid = next_head_data.srid;
+        partyName = next_labels_data[0].partyname;
+        partyCode = next_head_data.Ac_Code;
+        unitName = next_labels_data[0].unitname;
+        unitCode = next_head_data.Unit_Code;
+        billToName = next_labels_data[0].billtoname;
+        billToCode = next_head_data.bill_to;
+        gstRateCode = next_head_data.GstRateCode;
+        gstName = next_labels_data[0].GSTName;
+        millName = next_labels_data[0].millname;
+        millCode = next_head_data.mill_code;
+        itemName = next_labels_data[0].itemname;
         item_Code = detail_data.item_code;
-        brokerCode = last_head_data.BROKER;
-        brokerName = last_labels_data[0].brokername;
+        brokerCode = next_head_data.BROKER;
+        brokerName = next_labels_data[0].brokername;
+        purchaseNo = next_head_data.purchNo;
 
         // Create a mapping for itemname based on item_code
-        const itemNameMap = last_labels_data.reduce((map, label) => {
+        const itemNameMap = next_labels_data.reduce((map, label) => {
           if (label.item_code !== undefined && label.itemname) {
             map[label.item_code] = label.itemname;
           }
@@ -777,9 +875,10 @@ const SugarSaleReturnSale = () => {
         // Updating state
         setFormData((prevData) => ({
           ...prevData,
-          ...last_head_data,
+          ...next_head_data,
         }));
-        setLastTenderData(last_head_data || {});
+        setLastTenderData(next_head_data || {});
+        setType(next_head_data.Tran_Type)
         setLastTenderDetails(enrichedDetails);
       } else {
         console.error(
@@ -796,34 +895,35 @@ const SugarSaleReturnSale = () => {
   const handlePreviousButtonClick = async () => {
     try {
       const response = await axios.get(
-        `${API_URL}/get-previous-sugarpurchasereturn?Company_Code=${companyCode}&Year_Code=${Year_Code}&doc_no=${formData.doc_no}`
+        `${API_URL}/get-previous-sugarsalereturn?Company_Code=${companyCode}&Year_Code=${Year_Code}&doc_no=${formData.doc_no}`
       );
 
       if (response.status === 200) {
         const data = response.data;
-        const { last_head_data, detail_data, last_labels_data } = data;
+        const { previous_head_data, detail_data, previous_labels_data } = data;
 
         // Ensure detail_data is an array
         const detailsArray = Array.isArray(detail_data) ? detail_data : [];
 
-        newsrid = last_head_data.srid;
-        partyName = last_labels_data[0].partyname;
-        partyCode = last_head_data.Ac_Code;
-        unitName = last_labels_data[0].unitname;
-        unitCode = last_head_data.Unit_Code;
-        billToName = last_labels_data[0].billtoname;
-        billToCode = last_head_data.Bill_To;
-        gstRateCode = last_head_data.GstRateCode;
-        gstName = last_labels_data[0].GSTName;
-        millName = last_labels_data[0].millname;
-        millCode = last_head_data.mill_code;
-        itemName = last_labels_data[0].itemname;
+        newsrid = previous_head_data.srid;
+        partyName = previous_labels_data[0].partyname;
+        partyCode = previous_head_data.Ac_Code;
+        unitName = previous_labels_data[0].unitname;
+        unitCode = previous_head_data.Unit_Code;
+        billToName = previous_labels_data[0].billtoname;
+        billToCode = previous_head_data.bill_to;
+        gstRateCode = previous_head_data.GstRateCode;
+        gstName = previous_labels_data[0].GSTName;
+        millName = previous_labels_data[0].millname;
+        millCode = previous_head_data.mill_code;
+        itemName = previous_labels_data[0].itemname;
         item_Code = detail_data.item_code;
-        brokerCode = last_head_data.BROKER;
-        brokerName = last_labels_data[0].brokername;
+        brokerCode = previous_head_data.BROKER;
+        brokerName = previous_labels_data[0].brokername;
+        purchaseNo = previous_head_data.PURCNO
 
         // Create a mapping for itemname based on item_code
-        const itemNameMap = last_labels_data.reduce((map, label) => {
+        const itemNameMap = previous_labels_data.reduce((map, label) => {
           if (label.item_code !== undefined && label.itemname) {
             map[label.item_code] = label.itemname;
           }
@@ -842,9 +942,10 @@ const SugarSaleReturnSale = () => {
         // Updating state
         setFormData((prevData) => ({
           ...prevData,
-          ...last_head_data,
+          ...previous_head_data,
         }));
-        setLastTenderData(last_head_data || {});
+        setLastTenderData(previous_head_data || {});
+        setType(previous_head_data.Tran_Type);
         setLastTenderDetails(enrichedDetails);
       } else {
         console.error(
@@ -883,7 +984,7 @@ const SugarSaleReturnSale = () => {
     try {
       console.log(selectedRecord);
       const response = await axios.get(
-        `${API_URL}/get-sugarpurchasereturn-by-id?doc_no=${selectedRecord.returnPurchaseData.doc_no}&Company_Code=${companyCode}&Year_Code=${Year_Code}`
+        `${API_URL}/getsugarsalereturnByid?doc_no=${selectedRecord.doc_no}&Company_Code=${companyCode}&Year_Code=${Year_Code}`
       );
       if (response.status === 200) {
         const data = response.data;
@@ -898,7 +999,7 @@ const SugarSaleReturnSale = () => {
         unitName = last_labels_data[0].unitname;
         unitCode = last_head_data.Unit_Code;
         billToName = last_labels_data[0].billtoname;
-        billToCode = last_head_data.Bill_To;
+        billToCode = last_head_data.bill_to;
         gstRateCode = last_head_data.GstRateCode;
         gstName = last_labels_data[0].GSTName;
         millName = last_labels_data[0].millname;
@@ -907,7 +1008,7 @@ const SugarSaleReturnSale = () => {
         item_Code = detail_data.item_code;
         brokerCode = last_head_data.BROKER;
         brokerName = last_labels_data[0].brokername;
-
+        purchaseNo = last_head_data.PURCNO
         // Create a mapping for itemname based on item_code
         const itemNameMap = last_labels_data.reduce((map, label) => {
           if (label.item_code !== undefined && label.itemname) {
@@ -931,6 +1032,7 @@ const SugarSaleReturnSale = () => {
           ...last_head_data,
         }));
         setLastTenderData(last_head_data || {});
+        setType(last_head_data.Tran_Type)
         setLastTenderDetails(enrichedDetails);
       } else {
         console.error(
@@ -949,7 +1051,7 @@ const SugarSaleReturnSale = () => {
       const changeNoValue = event.target.value;
       try {
         const response = await axios.get(
-          `${API_URL}/get-sugarpurchasereturn-by-id?doc_no=${changeNoValue}&Company_Code=${companyCode}&Year_Code=${Year_Code}`
+          `${API_URL}/getsugarsalereturnByid?doc_no=${changeNoValue}&Company_Code=${companyCode}&Year_Code=${Year_Code}`
         );
         const data = response.data;
         const { last_head_data, detail_data, last_labels_data } = data;
@@ -963,7 +1065,7 @@ const SugarSaleReturnSale = () => {
         unitName = last_labels_data[0].unitname;
         unitCode = last_head_data.Unit_Code;
         billToName = last_labels_data[0].billtoname;
-        billToCode = last_head_data.Bill_To;
+        billToCode = last_head_data.bill_to;
         gstRateCode = last_head_data.GstRateCode;
         gstName = last_labels_data[0].GSTName;
         millName = last_labels_data[0].millname;
@@ -972,6 +1074,7 @@ const SugarSaleReturnSale = () => {
         item_Code = detail_data.item_code;
         brokerCode = last_head_data.BROKER;
         brokerName = last_labels_data[0].brokername;
+        purchaseNo = last_head_data.PURCNO
 
         // Create a mapping for itemname based on item_code
         const itemNameMap = last_labels_data.reduce((map, label) => {
@@ -1018,7 +1121,6 @@ const SugarSaleReturnSale = () => {
       );
       return data.match_status;
     } catch (error) {
-      toast.error("Error checking GST State Code match.");
       console.error("Couldn't able to match GST State Code:", error);
       return error;
     }
@@ -1049,11 +1151,11 @@ const SugarSaleReturnSale = () => {
       .reduce((sum, user) => sum + parseFloat(user.item_Amount || 0), 0);
   };
 
-  const calculateRateDiffAmount = () => {
-    const NETQNTL = Number(formData.NETQNTL);
-    const RateDiff = Number(formData.RateDiff);
-    return !isNaN(NETQNTL) && !isNaN(RateDiff) ? NETQNTL * RateDiff : 0;
-  };
+  // const calculateRateDiffAmount = () => {
+  //   const NETQNTL = Number(formData.NETQNTL);
+  //   const RateDiff = Number(formData.RateDiff);
+  //   return !isNaN(NETQNTL) && !isNaN(RateDiff) ? NETQNTL * RateDiff : 0;
+  // };
 
   const calculateDependentValues = async (
     name,
@@ -1137,14 +1239,17 @@ const SugarSaleReturnSale = () => {
   };
 
   const saleBillHeadData = (data) => {
-    console.log(data);
+    console.log("saleBillHeadData",data);
 
-     partyCode = data.Ac_Code || '';
-     unitCode = data.Unit_Code || '';
-     billToCode = data.Bill_To || '';
-     gstRateCode = data.GstRateCode || '';
-     millCode = data.mill_code || '';
-     brokerCode = data.BROKER || '';
+    partyCode = data.Ac_Code || "";
+    unitCode = data.Unit_Code || "";
+    billToCode = data.Bill_To || "";
+    gstRateCode = data.GstRateCode || "";
+    millCode = data.mill_code || "";
+    brokerCode = data.BROKER || "";
+    purchaseNo = data.doc_no || "";
+
+    console.log("BillTo", billToCode)
 
     // Update form data with new values
     setFormData((prevData) => {
@@ -1160,34 +1265,103 @@ const SugarSaleReturnSale = () => {
 
     // Store the received sale bill head data for further use
     setLastTenderData(data || {});
-    setLastTenderDetails(data.details_data || []);  // Only update if details_data is available
-};
+    setLastTenderDetails(data.details_data || []); // Only update if details_data is available
+  };
 
-const saleBillDetailData = (details) => {
-  console.log("Sale Bill Details Received:", details);
+  // const saleBillDetailData = (details) => {
+  //   console.log("Sale Bill Details Received:", details);
 
-   partyName = details.partyname;
-   unitName = details.unitname ;
-   billToName = details.billtoname;
-   gstName = details.GSTName ;
-   millName = details.millname ;
-   itemName = details.itemname ;
-   brokerName = details.brokername ;
+  //   // Extract necessary details like partyName, unitName, etc.
+  //   partyName = details.partyname;
+  //   unitName = details.unitname;
+  //   billToName = details.billtoname;
+  //   gstName = details.GSTName;
+  //   millName = details.millname;
+  //   itemName = details.itemname;
+  //   brokerName = details.brokername;
 
-  // Extract existing detail_ids from users
-  const existingDetailIds = users.map(user => user.detail_id).filter(id => id != null);
+  //   // Extract existing detail_ids from users
+  //   const existingDetailIds = users.map(user => user.detail_id).filter(id => id != null);
 
-  // Determine if the current detail is an existing entry
-  const isExisting = users.some(user => user.detail_id === details.detail_id);
+  //   // Determine if the current detail is an existing entry
+  //   const isExisting = users.some(user => user.detail_id === details.detail_id);
 
-  // Assign a new detail_id if it's a new entry
-  const newDetailId = existingDetailIds.length > 0 ? Math.max(...existingDetailIds) + 1 : 1;
+  //   // Assign a new detail_id if it's a new entry
+  //   const newDetailId = existingDetailIds.length > 0 ? Math.max(...existingDetailIds) + 1 : 1;
 
-  // Prepare the new detail data to be added or updated
-  const newDetailData = {
+  //   // Assign a unique id for rendering purposes
+  //   const newUserId = users.length > 0 ? Math.max(...users.map(user => user.id)) + 1 : 1;
+
+  //   // Prepare the new detail data to be added or updated
+  //   const newDetailData = {
+  //     item_code: details.item_code || 0,
+  //     itemname: details.itemname || "Unknown Item",
+  //     id: newUserId,  // Ensure id is assigned here for rendering in JSX
+  //     ic: details.ic || 0,
+  //     narration: details.narration || "",
+  //     Quantal: parseFloat(details.Quantal) || 0,
+  //     bags: details.bags || 0,
+  //     packing: details.packing || 0,
+  //     rate: parseFloat(details.rate) || 0,
+  //     item_Amount: parseFloat(details.item_Amount) || 0,
+  //     detail_id: isExisting ? details.detail_id : newDetailId,
+  //     rowaction: isExisting ? "update" : "add",
+  //     ...(isExisting && details.srdtid ? { srdtid: details.srdtid } : {}),
+  //   };
+
+  //   console.log("New Detail Data Before State Update:", newDetailData);
+
+  //   // Update the state
+  //   setUsers((prevUsers) => {
+  //     const updatedUsers = isExisting
+  //       ? prevUsers.map(user => user.detail_id === details.detail_id ? newDetailData : user)
+  //       : [...prevUsers, newDetailData];
+
+  //     return [...updatedUsers];  // Return a new array to ensure re-render
+  //   });
+  // };
+
+  const saleBillDetailData = (details) => {
+    debugger;
+    console.log("Sale Bill Details Received:", details);
+
+    if (!details || Object.keys(details).length === 0) {
+      console.error("No details provided to saleBillDetailData");
+      return;
+    }
+
+    // Extract necessary details like partyName, unitName, etc.
+    partyName = details.partyname;
+    unitName = details.unitname;
+    billToName = details.billtoname;
+    gstName = details.GSTName;
+    millName = details.millname;
+    itemName = details.itemname;
+    brokerName = details.brokername;
+
+    // Extract existing detail_ids from users
+    const existingDetailIds = users
+      .map((user) => user.detail_id)
+      .filter((id) => id != null);
+
+    // Determine if the current detail is an existing entry
+    const isExisting = users.some(
+      (user) => user.detail_id === details.detail_id
+    );
+
+    // Assign a new detail_id if it's a new entry
+    const newDetailId =
+      existingDetailIds.length > 0 ? Math.max(...existingDetailIds) + 1 : 1;
+
+    // Assign a unique id for rendering purposes
+    const newUserId =
+      users.length > 0 ? Math.max(...users.map((user) => user.id)) + 1 : 1;
+
+    // Prepare the new detail data to be added or updated
+    const newDetailData = {
       item_code: details.item_code || 0,
-      itemname: details.itemname || "Unknown Item",
-      id: details.id || (users.length > 0 ? Math.max(...users.map(user => user.id || 0)) + 1 : 1),
+      item_Name: details.itemname || "Unknown Item",
+      id: newUserId, // Ensure id is assigned here for rendering in JSX
       ic: details.ic || 0,
       narration: details.narration || "",
       Quantal: parseFloat(details.Quantal) || 0,
@@ -1197,22 +1371,15 @@ const saleBillDetailData = (details) => {
       item_Amount: parseFloat(details.item_Amount) || 0,
       detail_id: isExisting ? details.detail_id : newDetailId,
       rowaction: isExisting ? "update" : "add",
-      srdtid: isExisting ? details.srdtid : undefined,
+      ...(isExisting && details.srdtid ? { srdtid: details.srdtid } : {}),
+    };
+
+    console.log("New Detail Data Before State Update:", newDetailData);
+
+    setUsers((prevUsers) => [...prevUsers, newDetailData]);
+
+    setLastTenderData(newDetailData);
   };
-
-  console.log("New Detail Data Before State Update:", newDetailData);
-
-  // Update the `users` state
-  const updatedUsers = isExisting
-      ? users.map(user => user.detail_id === details.detail_id ? newDetailData : user)
-      : [...users, newDetailData];
-
-  console.log("Updated Users State Before setUsers:", updatedUsers);
-
-  // Update the state with the updated users list
-  setUsers(updatedUsers);
-  setLastTenderDetails(updatedUsers || []);  // Also update `lastTenderDetails` with the new list
-};
 
   useEffect(() => {
     if (selectedRecord) {
@@ -1237,24 +1404,56 @@ const saleBillDetailData = (details) => {
     }
   }, [selectedRecord, lastTenderDetails]);
 
+  // useEffect(() => {
+  //   debugger;
+  //   const updatedUsers = lastTenderDetails.map((detail) => ({
+  //     id: detail.srdtid,
+  //     srdtid: detail.srdtid,
+  //     narration: detail.narration,
+  //     Quantal: detail.Quantal,
+  //     bags: detail.bags,
+  //     packing: detail.packing,
+  //     rate: detail.rate,
+  //     item_Amount: detail.item_Amount,
+  //     item_code: detail.item_code,
+  //     item_Name: detail.itemname,
+  //     ic: detail.ic,
+  //     rowaction: "Normal",
+  //     detail_id: detail.srdtid,
+  //   }));
+  //   setUsers(updatedUsers);
+  //   console.log(updatedUsers);
+  // }, [lastTenderDetails]);
+
   useEffect(() => {
-    const updatedUsers = lastTenderDetails.map((detail) => ({
-      id: detail.srdtid,
-      srdtid: detail.srdtid,
-      narration: detail.narration,
-      Quantal: detail.Quantal,
-      bags: detail.bags,
-      packing: detail.packing,
-      rate: detail.rate,
-      item_Amount: detail.item_Amount,
-      item_code: detail.item_code,
-      item_Name: detail.itemname,
-      ic: detail.ic,
-      rowaction: "Normal",
-      detail_id: detail.srdtid,
-    }));
-    setUsers(updatedUsers);
-    console.log(lastTenderDetails);
+    if (lastTenderDetails.length > 0) {
+      const updatedUsers = lastTenderDetails.map((detail) => {
+        // Find existing user with the same detail_id in the current users
+        const existingUser = users.find(
+          (user) => user.detail_id === detail.srdtid
+        );
+
+        // Merge the existing user with the new detail data or create new if not found
+        return {
+          id: detail.srdtid,
+          srdtid: detail.srdtid,
+          narration: detail.narration || existingUser?.narration || "",
+          Quantal: detail.Quantal || existingUser?.Quantal || 0,
+          bags: detail.bags || existingUser?.bags || 0,
+          packing: detail.packing || existingUser?.packing || 0,
+          rate: detail.rate || existingUser?.rate || 0.0,
+          item_Amount: detail.item_Amount || existingUser?.item_Amount || 0.0,
+          item_code: detail.item_code || existingUser?.item_code || "",
+          item_Name: detail.itemname || existingUser?.item_Name || "",
+          ic: detail.ic || existingUser?.ic || 0,
+          rowaction: existingUser?.rowaction || "Normal",
+          detail_id: detail.srdtid,
+        };
+      });
+
+      setUsers(updatedUsers);
+      console.log("Updated users:", updatedUsers);
+    }
   }, [lastTenderDetails]);
 
   const calculateDetails = (quantal, packing, rate) => {
@@ -1280,6 +1479,8 @@ const saleBillDetailData = (details) => {
             : parseFloat(value) || value,
       };
 
+      setFormErrors({})
+
       const { Quantal, packing, rate } = updatedDetail;
       const { bags, item_Amount } = calculateDetails(Quantal, packing, rate);
 
@@ -1290,86 +1491,100 @@ const saleBillDetailData = (details) => {
     });
   };
 
-  const sugarSaleReturnSale = async (totalAmount, totalQuintal, selectedItems) => {
+  const sugarSaleReturnSale = async (
+    totalAmount,
+    totalQuintal,
+    selectedItems
+  ) => {
     selectedItems.forEach(async (details) => {
-        const millName = details.MillName;
-        const itemName = details.ItemName;
+      const millName = details.MillName;
+      const itemName = details.ItemName;
 
-        // Determine if the detail is new or existing based on `detail_id`
-        const isExisting = users.some(
-            (user) => user.detail_id === details.detail_id
-        );
+      // Determine if the detail is new or existing based on `detail_id`
+      const isExisting = users.some(
+        (user) => user.detail_id === details.detail_id
+      );
 
-        // Create new or updated detail data
-        const newDetailData = {
-            ...formDataDetail, // Spread the form data details if needed
-            item_code: details.item_code || 0,
-            itemname: itemName || "Unknown Item",
-            id: users.length > 0 ? Math.max(...users.map((user) => user.id)) + 1 : 1,
-            ic: details.ic || 0,
-            narration: details.narration || "",
-            Quantal: parseFloat(totalQuintal) || 0,
-            bags: 50,
-            packing: details.packing || 0,
-            rate: parseFloat(details.rate) || 0,
-            item_Amount: parseFloat(totalAmount) || 0,
-            rowaction: isExisting ? "update" : "add", 
-            detail_id: isExisting ? details.detail_id : (users.length > 0 ? Math.max(...users.map((user) => user.detail_id || 0)) + 1 : 1),
-        };
+      // Create new or updated detail data
+      const newDetailData = {
+        ...formDataDetail, // Spread the form data details if needed
+        item_code: details.item_code || 0,
+        itemname: itemName || "Unknown Item",
+        id:
+          users.length > 0 ? Math.max(...users.map((user) => user.id)) + 1 : 1,
+        ic: details.ic || 0,
+        narration: details.narration || "",
+        Quantal: parseFloat(totalQuintal) || 0,
+        bags: parseFloat(totalQuintal)/50 * 100 ,
+        packing:50,
+        rate: parseFloat(details.rate) || 0,
+        item_Amount: parseFloat(totalAmount) || 0,
+        rowaction: isExisting ? "update" : "add",
+        detail_id: isExisting
+          ? details.detail_id
+          : users.length > 0
+          ? Math.max(...users.map((user) => user.detail_id || 0)) + 1
+          : 1,
+      };
 
-        // Update or add to `users` state
-        const updatedUsers = isExisting
-            ? users.map((user) =>
-                user.detail_id === details.detail_id ? newDetailData : user
-            )
-            : [...users, newDetailData];
+      // Update or add to `users` state
+      const updatedUsers = isExisting
+        ? users.map((user) =>
+            user.detail_id === details.detail_id ? newDetailData : user
+          )
+        : [...users, newDetailData];
 
-        setUsers(updatedUsers);
+      setUsers(updatedUsers);
 
-        // Calculate net quantal and subtotal
-        const netQuantal = calculateNetQuantal(updatedUsers);
-        const subtotal = calculateTotalItemAmount(updatedUsers);
+      // Calculate net quantal and subtotal
+      const netQuantal = calculateNetQuantal(updatedUsers);
+      const subtotal = calculateTotalItemAmount(updatedUsers);
 
-        // Update form data with calculated values
-        let updatedFormData = {
-            ...formData,
-            NETQNTL: netQuantal,
-            subTotal: subtotal,
-        };
+      // Update form data with calculated values
+      let updatedFormData = {
+        ...formData,
+        NETQNTL: parseFloat(netQuantal),
+        subTotal: parseFloat(subtotal),
+        PURCNO: 0
+      };
 
-        // Check match status and calculate GST rate
-        const matchStatus = await checkMatchStatus(
-            updatedFormData.Ac_Code,
-            companyCode,
-            Year_Code
-        );
+      // Check match status and calculate GST rate
+      const matchStatus = await checkMatchStatus(
+        updatedFormData.Ac_Code,
+        companyCode,
+        Year_Code
+      );
 
-        let gstRate = GstRate;
-        if (!gstRate || gstRate === 0) {
-            const cgstRate = parseFloat(formData.CGSTRate) || 0;
-            const sgstRate = parseFloat(formData.SGSTRate) || 0;
-            const igstRate = parseFloat(formData.IGSTRate) || 0;
-            gstRate = igstRate > 0 ? igstRate : cgstRate + sgstRate;
-        }
+      let gstRate = GstRate;
+      if (!gstRate || gstRate === 0) {
+        const cgstRate = parseFloat(formData.CGSTRate) || 0;
+        const sgstRate = parseFloat(formData.SGSTRate) || 0;
+        const igstRate = parseFloat(formData.IGSTRate) || 0;
+        gstRate = igstRate > 0 ? igstRate : cgstRate + sgstRate;
+      }
 
-        // Calculate dependent values based on GST rate
-        updatedFormData = await calculateDependentValues(
-            "GstRateCode",
-            gstRate,
-            updatedFormData,
-            matchStatus,
-            gstRate
-        );
+      // Calculate dependent values based on GST rate
+      updatedFormData = await calculateDependentValues(
+        "GstRateCode",
+        gstRate,
+        updatedFormData,
+        matchStatus,
+        gstRate
+      );
 
-        // Update form data state
-        setFormData(updatedFormData);
+      // Update form data state
+      setFormData(updatedFormData);
 
-        // Optional: close the popup if needed
-        // closePopup();
+      // Optional: close the popup if needed
+      // closePopup();
     });
-};
+  };
 
   const addUser = async () => {
+    if (!validateDetailForm()) {
+      toast.error("Please fix the errors before adding.");
+      return;
+    }
     const newUser = {
       id: users.length > 0 ? Math.max(...users.map((user) => user.id)) + 1 : 1,
       item_code: itemCode,
@@ -1598,6 +1813,7 @@ const saleBillDetailData = (details) => {
     setShowPopup(true);
     if (mode === "add") {
       clearForm();
+      setFormErrors({})
     }
   };
 
@@ -1605,6 +1821,7 @@ const saleBillDetailData = (details) => {
     setShowPopup(false);
     setSelectedUser({});
     clearForm();
+    setFormErrors({})
   };
 
   const clearForm = () => {
@@ -1638,9 +1855,11 @@ const saleBillDetailData = (details) => {
   };
 
   const handleItemCode = (code, accoid, hsn, name) => {
+    setFormErrors({})
     setItemCode(code);
     setItemName(name);
     setItemCodeAccoid(accoid);
+   
   };
 
   //Head Section help Functions to manage the Ac_Code and accoid
@@ -1689,14 +1908,18 @@ const saleBillDetailData = (details) => {
     } catch (error) {
       console.error("Error in handleBillFrom:", error);
     }
+    setFormErrors((prevErrors) => ({
+      ...prevErrors,
+      Ac_Code: "", // Clear the error for this field
+    }));
   };
   const handlePurchaseNo = (purchaseNo, type) => {
     setPurchno(purchaseNo);
     setType(type);
     setFormData({
       ...formData,
-    //   PURCNO: purchaseNo,
-    //   Tran_Type: type,
+       PURCNO: purchaseNo,
+       Tran_Type: type,
     });
   };
 
@@ -1720,6 +1943,10 @@ const saleBillDetailData = (details) => {
       mill_code: code,
       mc: accoid,
     });
+    setFormErrors((prevErrors) => ({
+      ...prevErrors,
+      mill_code: "", 
+    }));
   };
 
   const handleShipTo = (code, accoid, name, Mobile_No) => {
@@ -1787,79 +2014,85 @@ const saleBillDetailData = (details) => {
 
   const handlePrint = async () => {
     try {
-        const pdf = new jsPDF({
-            orientation: "portrait",
-        });
+      const pdf = new jsPDF({
+        orientation: "portrait",
+      });
 
-        // Setting the font size for the text
-        pdf.setFontSize(10);
+      // Setting the font size for the text
+      pdf.setFontSize(10);
 
-        // Header section
-        pdf.text(`Salary No:`, 15, 10);
-        pdf.text(`Employee Code: ${cancelButtonClicked}`, 15, 15);
-        pdf.text(`Employee Name: ${cancelButtonClicked}`, 15, 20);
-        pdf.text(`Salary Date: `, pdf.internal.pageSize.width - 80, 10);
-        pdf.text(`Days In Month: ${cancelButtonClicked}`, pdf.internal.pageSize.width - 80, 15);
+      // Header section
+      pdf.text(`Salary No:`, 15, 10);
+      pdf.text(`Employee Code: ${cancelButtonClicked}`, 15, 15);
+      pdf.text(`Employee Name: ${cancelButtonClicked}`, 15, 20);
+      pdf.text(`Salary Date: `, pdf.internal.pageSize.width - 80, 10);
+      pdf.text(
+        `Days In Month: ${cancelButtonClicked}`,
+        pdf.internal.pageSize.width - 80,
+        15
+      );
 
-        // Add data from the API to the PDF
-        const apiData = {}; // Replace with your actual API data
-        Object.keys(apiData).forEach((key, index) => {
-            const value = apiData[key];
-            pdf.text(`${key}: ${value}`, 15, 25 + (index * 5));
-        });
+      // Add data from the API to the PDF
+      const apiData = {}; // Replace with your actual API data
+      Object.keys(apiData).forEach((key, index) => {
+        const value = apiData[key];
+        pdf.text(`${key}: ${value}`, 15, 25 + index * 5);
+      });
 
-        // Add table headers
-        const headers = [
-            "Late(min)", "Day", "Date", "D/HRS", "R/HRS", "PDS", "Deduction",
-            ...Array.from({ length: 5 }, (_, idx) => [
-                `In ${idx + 1}`,
-                `Out ${idx + 1}`,
-            ]).flat(),
-        ];
+      // Add table headers
+      const headers = [
+        "Late(min)",
+        "Day",
+        "Date",
+        "D/HRS",
+        "R/HRS",
+        "PDS",
+        "Deduction",
+        ...Array.from({ length: 5 }, (_, idx) => [
+          `In ${idx + 1}`,
+          `Out ${idx + 1}`,
+        ]).flat(),
+      ];
 
-        // Example data to be added to the table
-        const data = [
-            [15, "Mon", "2024-08-01", "8H", "7H", "PDS1", "$10"],
-            [10, "Tue", "2024-08-02", "8H", "7H", "PDS2", "$8"],
-        ];
+      // Example data to be added to the table
+      const data = [
+        [15, "Mon", "2024-08-01", "8H", "7H", "PDS1", "$10"],
+        [10, "Tue", "2024-08-02", "8H", "7H", "PDS2", "$8"],
+      ];
 
-        // Using autoTable plugin to add the table
-        pdf.autoTable({
-            head: [headers],
-            body: data,
-            startY: 30,
-        });
+      // Using autoTable plugin to add the table
+      pdf.autoTable({
+        head: [headers],
+        body: data,
+        startY: 30,
+      });
 
-        // Summary information
-        const finalY = pdf.autoTable.previous.finalY;
-        pdf.setFontSize(10);
-        pdf.text(`\u2022 Total Monthly Working Hours= 160 Hr`, 15, finalY + 10);
-        pdf.text(`\u2022 Total Sunday Deduction= 2`, 15, finalY + 15);
-        pdf.text(`\u2022 Total Monthly Leave's = 5`, 15, finalY + 20);
-        pdf.text(`\u2022 Total Monthly Sunday Leave's = 2`, 15, finalY + 25);
-        pdf.text(`\u2022 Total Monthly Late Minutes= 120 min`, 15, finalY + 30);
-        pdf.text(`\u2022 Total Monthly Late Days= 3 days`, 15, finalY + 35);
+      // Summary information
+      const finalY = pdf.autoTable.previous.finalY;
+      pdf.setFontSize(10);
+      pdf.text(`\u2022 Total Monthly Working Hours= 160 Hr`, 15, finalY + 10);
+      pdf.text(`\u2022 Total Sunday Deduction= 2`, 15, finalY + 15);
+      pdf.text(`\u2022 Total Monthly Leave's = 5`, 15, finalY + 20);
+      pdf.text(`\u2022 Total Monthly Sunday Leave's = 2`, 15, finalY + 25);
+      pdf.text(`\u2022 Total Monthly Late Minutes= 120 min`, 15, finalY + 30);
+      pdf.text(`\u2022 Total Monthly Late Days= 3 days`, 15, finalY + 35);
 
-        // Total salary
-        pdf.setFontSize(14);
-        pdf.text(`Total: $1000/-`, pdf.internal.pageSize.width - 80, finalY + 50);
+      // Total salary
+      pdf.setFontSize(14);
+      pdf.text(`Total: $1000/-`, pdf.internal.pageSize.width - 80, finalY + 50);
 
-        // Save the PDF
-        pdf.save(`salary_details.pdf`);
+      // Save the PDF
+      pdf.save(`salary_details.pdf`);
     } catch (error) {
-        console.error("Error generating PDF:", error);
+      console.error("Error generating PDF:", error);
     }
-};
-
+  };
 
   return (
     <>
       <ToastContainer />
 
-      <form
-        className="SugarSaleReturnSale-container"
-        onSubmit={handleSubmit}
-      >
+      <form className="SugarSaleReturnSale-container" onSubmit={handleSubmit}>
         <h6 className="Heading">Sale Return</h6>
 
         <div>
@@ -1891,9 +2124,7 @@ const saleBillDetailData = (details) => {
         </div>
         <button onClick={handlePrint}>Print</button>
         <div className="SugarSaleReturnSale-row">
-          <label className="SugarSaleReturnSale-form-label">
-            Change No:
-          </label>
+          <label className="SugarSaleReturnSale-form-label">Change No:</label>
           <div className="SugarSaleReturnSale-col-Text">
             <div className="SugarSaleReturnSale-form-group">
               <input
@@ -1922,10 +2153,7 @@ const saleBillDetailData = (details) => {
             </div>
           </div>
 
-          <label
-            htmlFor="PURCNO"
-            className="SugarSaleReturnSale-form-label"
-          >
+          <label htmlFor="PURCNO" className="SugarSaleReturnSale-form-label">
             Purchase No
           </label>
           <div className="SugarSaleReturnSale-col">
@@ -1939,7 +2167,7 @@ const saleBillDetailData = (details) => {
                 tabIndexHelp={2}
                 disabledFeild={!isEditing && addOneButtonEnabled}
                 Type={type}
-                sugarSaleReturnSale={sugarSaleReturnSale} 
+                sugarSaleReturnSale={sugarSaleReturnSale}
               />
             </div>
           </div>
@@ -1979,10 +2207,7 @@ const saleBillDetailData = (details) => {
         </div>
 
         <div className="SugarSaleReturnSale-row">
-          <label
-            htmlFor="Ac_Code"
-            className="SugarSaleReturnSale-form-label"
-          >
+          <label htmlFor="Ac_Code" className="SugarSaleReturnSale-form-label">
             From A/C:
           </label>
           <div className="SugarSaleReturnSale-col">
@@ -1996,13 +2221,11 @@ const saleBillDetailData = (details) => {
                 disabledFeild={!isEditing && addOneButtonEnabled}
               />
             </div>
+            {formErrors.Ac_Code && <p className="error-message">{formErrors.Ac_Code}</p>}
           </div>
         </div>
         <div className="SugarSaleReturnSale-row">
-          <label
-            htmlFor="bill_to"
-            className="SugarSaleReturnSale-form-label"
-          >
+          <label htmlFor="bill_to" className="SugarSaleReturnSale-form-label">
             Bill To:
           </label>
           <div className="SugarSaleReturnSale-col">
@@ -2019,10 +2242,7 @@ const saleBillDetailData = (details) => {
           </div>
         </div>
         <div className="SugarSaleReturnSale-row">
-          <label
-            htmlFor="Unit_Code"
-            className="SugarSaleReturnSale-form-label"
-          >
+          <label htmlFor="Unit_Code" className="SugarSaleReturnSale-form-label">
             Unit:
           </label>
           <div className="SugarSaleReturnSale-col">
@@ -2039,10 +2259,7 @@ const saleBillDetailData = (details) => {
           </div>
         </div>
         <div className="SugarSaleReturnSale-row">
-          <label
-            htmlFor="mill_code"
-            className="SugarSaleReturnSale-form-label"
-          >
+          <label htmlFor="mill_code" className="SugarSaleReturnSale-form-label">
             Mill:
           </label>
           <div className="SugarSaleReturnSale-col">
@@ -2056,105 +2273,99 @@ const saleBillDetailData = (details) => {
                 disabledFeild={!isEditing && addOneButtonEnabled}
               />
             </div>
+            {formErrors.mill_code && <p className="error-message">{formErrors.mill_code}</p>}
           </div>
           <div className="SugarSaleReturnSale-row">
-          <label className="SugarSaleReturnSale-form-label">From:</label>
-          <div className="SugarSaleReturnSale-col-Text">
-            <div className="SugarSaleReturnSale-form-group">
-              <input
-                type="text"
-                className="SugarSaleReturnSale-form-control"
-                name="FROM_STATION"
-                autoComplete="off"
-                value={formData.FROM_STATION}
-                onChange={handleChange}
-                disabled={!isEditing && addOneButtonEnabled}
-              />
+            <label className="SugarSaleReturnSale-form-label">From:</label>
+            <div className="SugarSaleReturnSale-col-Text">
+              <div className="SugarSaleReturnSale-form-group">
+                <input
+                  type="text"
+                  className="SugarSaleReturnSale-form-control"
+                  name="FROM_STATION"
+                  autoComplete="off"
+                  value={formData.FROM_STATION}
+                  onChange={handleChange}
+                  disabled={!isEditing && addOneButtonEnabled}
+                />
+              </div>
+            </div>
+            <label className="SugarSaleReturnSale-form-label">To:</label>
+            <div className="SugarSaleReturnSale-col-Text">
+              <div className="SugarSaleReturnSale-form-group">
+                <input
+                  type="text"
+                  className="SugarSaleReturnSale-form-control"
+                  name="TO_STATION"
+                  autoComplete="off"
+                  value={formData.TO_STATION}
+                  onChange={handleChange}
+                  disabled={!isEditing && addOneButtonEnabled}
+                />
+              </div>
+            </div>
+            <label className="SugarSaleReturnSale-form-label">Lorry No:</label>
+            <div className="SugarSaleReturnSale-col-Text">
+              <div className="SugarSaleReturnSale-form-group">
+                <input
+                  type="text"
+                  className="SugarSaleReturnSale-form-control"
+                  name="LORRYNO"
+                  autoComplete="off"
+                  value={formData.LORRYNO}
+                  onChange={handleChange}
+                  disabled={!isEditing && addOneButtonEnabled}
+                />
+              </div>
+            </div>
+            <label className="SugarSaleReturnSale-form-label">WareHouse:</label>
+            <div className="SugarSaleReturnSale-col-Text">
+              <div className="SugarSaleReturnSale-form-group">
+                <input
+                  type="text"
+                  className="SugarSaleReturnSale-form-control"
+                  name="wearhouse"
+                  autoComplete="off"
+                  value={formData.wearhouse}
+                  onChange={handleChange}
+                  disabled={!isEditing && addOneButtonEnabled}
+                />
+              </div>
+            </div>
+            <label htmlFor="BROKER" className="SugarSaleReturnSale-form-label">
+              Broker:
+            </label>
+            <div className="SugarSaleReturnSale-col">
+              <div className="SugarSaleReturnSale-form-group">
+                <AccountMasterHelp
+                  onAcCodeClick={handleBroker}
+                  CategoryName={brokerName}
+                  CategoryCode={brokerCode}
+                  name="BROKER"
+                  tabIndexHelp={2}
+                  disabledFeild={!isEditing && addOneButtonEnabled}
+                />
+              </div>
+            </div>
+            <label
+              htmlFor="GstRateCode"
+              className="SugarSaleReturnSale-form-label"
+            >
+              GST Rate Code:
+            </label>
+            <div className="SugarSaleReturnSale-col">
+              <div className="SugarSaleReturnSale-form-group">
+                <GSTRateMasterHelp
+                  onAcCodeClick={handleGstCode}
+                  GstRateName={gstName}
+                  GstRateCode={gstRateCode}
+                  name="GstRateCode"
+                  tabIndexHelp={8}
+                  disabledFeild={!isEditing && addOneButtonEnabled}
+                />
+              </div>
             </div>
           </div>
-          <label className="SugarSaleReturnSale-form-label">To:</label>
-          <div className="SugarSaleReturnSale-col-Text">
-            <div className="SugarSaleReturnSale-form-group">
-              <input
-                type="text"
-                className="SugarSaleReturnSale-form-control"
-                name="TO_STATION"
-                autoComplete="off"
-                value={formData.TO_STATION}
-                onChange={handleChange}
-                disabled={!isEditing && addOneButtonEnabled}
-              />
-            </div>
-          </div>
-          <label className="SugarSaleReturnSale-form-label">
-            Lorry No:
-          </label>
-          <div className="SugarSaleReturnSale-col-Text">
-            <div className="SugarSaleReturnSale-form-group">
-              <input
-                type="text"
-                className="SugarSaleReturnSale-form-control"
-                name="LORRYNO"
-                autoComplete="off"
-                value={formData.LORRYNO}
-                onChange={handleChange}
-                disabled={!isEditing && addOneButtonEnabled}
-              />
-            </div>
-          </div>
-          <label className="SugarSaleReturnSale-form-label">
-            WareHouse:
-          </label>
-          <div className="SugarSaleReturnSale-col-Text">
-            <div className="SugarSaleReturnSale-form-group">
-              <input
-                type="text"
-                className="SugarSaleReturnSale-form-control"
-                name="wearhouse"
-                autoComplete="off"
-                value={formData.wearhouse}
-                onChange={handleChange}
-                disabled={!isEditing && addOneButtonEnabled}
-              />
-            </div>
-          </div>
-          <label
-            htmlFor="BROKER"
-            className="SugarSaleReturnSale-form-label"
-          >
-            Broker:
-          </label>
-          <div className="SugarSaleReturnSale-col">
-            <div className="SugarSaleReturnSale-form-group">
-              <AccountMasterHelp
-                onAcCodeClick={handleBroker}
-                CategoryName={brokerName}
-                CategoryCode={brokerCode}
-                name="BROKER"
-                tabIndexHelp={2}
-                disabledFeild={!isEditing && addOneButtonEnabled}
-              />
-            </div>
-          </div>
-          <label
-            htmlFor="GstRateCode"
-            className="SugarSaleReturnSale-form-label"
-          >
-            GST Rate Code:
-          </label>
-          <div className="SugarSaleReturnSale-col">
-            <div className="SugarSaleReturnSale-form-group">
-              <GSTRateMasterHelp
-                onAcCodeClick={handleGstCode}
-                GstRateName={gstName}
-                GstRateCode={gstRateCode}
-                name="GstRateCode"
-                tabIndexHelp={8}
-                disabledFeild={!isEditing && addOneButtonEnabled}
-              />
-            </div>
-          </div>
-        </div>
         </div>
 
         {isLoading && (
@@ -2216,8 +2427,10 @@ const saleBillDetailData = (details) => {
                             autoComplete="off"
                             value={formDataDetail.Quantal}
                             onChange={handleChangeDetail}
+                          
                           />
                         </div>
+                        {formErrors.Quantal && <p className="error-message">{formErrors.Quantal}</p>}
                       </div>
                       <label className="SugarSaleReturnSale-form-label">
                         Packing:
@@ -2234,6 +2447,7 @@ const saleBillDetailData = (details) => {
                             onChange={handleChangeDetail}
                           />
                         </div>
+                        {formErrors.packing && <p className="error-message">{formErrors.packing}</p>}
                       </div>
                       <label className="SugarSaleReturnSale-form-label">
                         Bags:
@@ -2250,6 +2464,7 @@ const saleBillDetailData = (details) => {
                             onChange={handleChangeDetail}
                           />
                         </div>
+                        {formErrors.bags && <p className="error-message">{formErrors.bags}</p>}
                       </div>
                       <label className="SugarSaleReturnSale-form-label">
                         Rate:
@@ -2266,6 +2481,7 @@ const saleBillDetailData = (details) => {
                             onChange={handleChangeDetail}
                           />
                         </div>
+                        {formErrors.rate && <p className="error-message">{formErrors.rate}</p>}
                       </div>
                       <label className="SugarSaleReturnSale-form-label">
                         Item Amount:
@@ -2282,6 +2498,7 @@ const saleBillDetailData = (details) => {
                             onChange={handleChangeDetail}
                           />
                         </div>
+                        {formErrors.item_Amount && <p className="error-message">{formErrors.item_Amount}</p>}
                       </div>
                       <label className="SugarSaleReturnSale-form-label">
                         Narration:
@@ -2386,6 +2603,7 @@ const saleBillDetailData = (details) => {
                 </tr>
               </thead>
               <tbody>
+                {console.log("Rendering users:", users)}
                 {users.map((user) => (
                   <tr key={user.id}>
                     <td>
@@ -2433,7 +2651,7 @@ const saleBillDetailData = (details) => {
                     {/* <td>{user.id}</td>
                   <td>{user.rowaction}</td> */}
                     <td>{user.item_code}</td>
-                    <td>{user.item_Name || user.itemname}</td>
+                    <td>{user.item_Name}</td>
                     <td>{user.Quantal}</td>
                     <td>{user.packing}</td>
                     <td>{user.bags}</td>
@@ -2448,27 +2666,21 @@ const saleBillDetailData = (details) => {
         </div>
 
         <div className="SugarSaleReturnSale-row">
-          <label className="SugarSaleReturnSale-form-label">
-            Net Quantal
-          </label>
+          <label className="SugarSaleReturnSale-form-label">Net Quantal</label>
           <div className="SugarSaleReturnSale-col-Text">
             <div className="SugarSaleReturnSale-form-group">
               <input
                 tabIndex="9"
                 type="text"
-                className={`SugarSaleReturnSale-form-control ${
-                  formErrors.NETQNTL ? "is-invalid" : ""
-                }`}
                 name="NETQNTL"
                 autoComplete="off"
                 value={formData.NETQNTL}
                 onChange={handleChange}
                 disabled={!isEditing && addOneButtonEnabled}
+                onKeyDown={handleKeyDownCalculations}
               />
-              {formErrors.NETQNTL && (
-                <div className="invalid-feedback">{formErrors.NETQNTL}</div>
-              )}
             </div>
+            {formErrors.NETQNTL && <p className="error-message">{formErrors.NETQNTL}</p>}
           </div>
           <label className="SugarSaleReturnSale-form-label">Due Days</label>
           <div className="SugarSaleReturnSale-col-Text">
@@ -2503,34 +2715,28 @@ const saleBillDetailData = (details) => {
           </div>
 
           <div className="SugarSaleReturnSale-row">
-          <label
-            htmlFor="Transport_Code"
-            className="SugarSaleReturnSale-form-label"
-          >
-            Transport:
-          </label>
-          <div className="SugarSaleReturnSale-col">
-            <div className="SugarSaleReturnSale-form-group">
-              <AccountMasterHelp
-                onAcCodeClick={handleTransport}
-                CategoryName={transportName}
-                CategoryCode={transportCode}
-                name="Transport_Code"
-                tabIndexHelp={6}
-                disabledFeild={!isEditing && addOneButtonEnabled}
-              />
+            <label
+              htmlFor="Transport_Code"
+              className="SugarSaleReturnSale-form-label"
+            >
+              Transport:
+            </label>
+            <div className="SugarSaleReturnSale-col">
+              <div className="SugarSaleReturnSale-form-group">
+                <AccountMasterHelp
+                  onAcCodeClick={handleTransport}
+                  CategoryName={transportName}
+                  CategoryCode={transportCode}
+                  name="Transport_Code"
+                  tabIndexHelp={6}
+                  disabledFeild={!isEditing && addOneButtonEnabled}
+                />
+              </div>
             </div>
           </div>
-          </div>
-
-        
-          
-          
         </div>
         <div className="SugarSaleReturnSale-row">
-        <label className="SugarSaleReturnSale-form-label">
-            ASN/GRN No:
-          </label>
+          <label className="SugarSaleReturnSale-form-label">ASN/GRN No:</label>
           <div className="SugarSaleReturnSale-col-Ewaybillno">
             <div className="SugarSaleReturnSale-form-group">
               <input
@@ -2546,9 +2752,7 @@ const saleBillDetailData = (details) => {
             </div>
           </div>
 
-          <label className="SugarSaleReturnSale-form-label">
-            EWayBill No
-          </label>
+          <label className="SugarSaleReturnSale-form-label">EWayBill No</label>
           <div className="SugarSaleReturnSale-col-Ewaybillno">
             <div className="SugarSaleReturnSale-form-group">
               <input
@@ -2563,9 +2767,8 @@ const saleBillDetailData = (details) => {
               />
             </div>
           </div>
-          
 
-        <label className="SugarSaleReturnSale-form-label">ACK No:</label>
+          <label className="SugarSaleReturnSale-form-label">ACK No:</label>
           <div className="SugarSaleReturnSale-col-Ewaybillno">
             <div className="SugarSaleReturnSale-form-group">
               <input
@@ -2580,9 +2783,7 @@ const saleBillDetailData = (details) => {
               />
             </div>
           </div>
-        <label className="SugarSaleReturnSale-form-label">
-            EInvoice No:
-          </label>
+          <label className="SugarSaleReturnSale-form-label">EInvoice No:</label>
           <div className="SugarSaleReturnSale-col-Ewaybillno">
             <div className="SugarSaleReturnSale-form-group">
               <input
@@ -2597,11 +2798,9 @@ const saleBillDetailData = (details) => {
               />
             </div>
           </div>
-          </div>
+        </div>
         <div className="SugarSaleReturnSale-row">
-          <label className="SugarSaleReturnSale-form-label">
-            SubTotal:
-          </label>
+          <label className="SugarSaleReturnSale-form-label">SubTotal:</label>
           <div className="SugarSaleReturnSale-col-Text">
             <div className="SugarSaleReturnSale-form-group">
               <input
@@ -2613,12 +2812,11 @@ const saleBillDetailData = (details) => {
                 value={formData.subTotal}
                 onChange={handleChange}
                 disabled={!isEditing && addOneButtonEnabled}
+                onKeyDown={handleKeyDownCalculations}
               />
             </div>
           </div>
-          <label className="SugarSaleReturnSale-form-label">
-            Add Frt. Rs:
-          </label>
+          <label className="SugarSaleReturnSale-form-label">Add Frt. Rs:</label>
           <div className="SugarSaleReturnSale-col-Text">
             <div className="SugarSaleReturnSale-form-group">
               <input
@@ -2630,7 +2828,9 @@ const saleBillDetailData = (details) => {
                 value={formData.LESS_FRT_RATE}
                 onChange={handleChange}
                 disabled={!isEditing && addOneButtonEnabled}
+                onKeyDown={handleKeyDownCalculations}
               />
+              {formErrors.LESS_FRT_RATE && <p className="error-message">{formErrors.LESS_FRT_RATE}</p>}
 
               <input
                 tabIndex="15"
@@ -2641,8 +2841,10 @@ const saleBillDetailData = (details) => {
                 value={formData.freight}
                 onChange={handleChange}
                 disabled={!isEditing && addOneButtonEnabled}
+                onKeyDown={handleKeyDownCalculations}
               />
             </div>
+            {formErrors.freight && <p className="error-message">{formErrors.freight}</p>}
           </div>
 
           {/* <label className="SugarSaleReturnSale-form-label">Taxable Amount:</label>
@@ -2673,6 +2875,7 @@ const saleBillDetailData = (details) => {
                 value={formData.CGSTRate}
                 onChange={handleChange}
                 disabled={!isEditing && addOneButtonEnabled}
+                onKeyDown={handleKeyDownCalculations}
               />
 
               <input
@@ -2684,6 +2887,7 @@ const saleBillDetailData = (details) => {
                 value={formData.CGSTAmount}
                 onChange={handleChange}
                 disabled={!isEditing && addOneButtonEnabled}
+                onKeyDown={handleKeyDownCalculations}
               />
             </div>
           </div>
@@ -2700,6 +2904,7 @@ const saleBillDetailData = (details) => {
                 value={formData.SGSTRate}
                 onChange={handleChange}
                 disabled={!isEditing && addOneButtonEnabled}
+                onKeyDown={handleKeyDownCalculations}
               />
 
               <input
@@ -2711,6 +2916,7 @@ const saleBillDetailData = (details) => {
                 value={formData.SGSTAmount}
                 onChange={handleChange}
                 disabled={!isEditing && addOneButtonEnabled}
+                onKeyDown={handleKeyDownCalculations}
               />
             </div>
           </div>
@@ -2727,6 +2933,7 @@ const saleBillDetailData = (details) => {
                 value={formData.IGSTRate}
                 onChange={handleChange}
                 disabled={!isEditing && addOneButtonEnabled}
+                onKeyDown={handleKeyDownCalculations}
               />
 
               <input
@@ -2738,13 +2945,12 @@ const saleBillDetailData = (details) => {
                 value={formData.IGSTAmount}
                 onChange={handleChange}
                 disabled={!isEditing && addOneButtonEnabled}
+                onKeyDown={handleKeyDownCalculations}
               />
             </div>
           </div>
 
-          <label className="SugarSaleReturnSale-form-label">
-            Rate Diff:
-          </label>
+          {/* <label className="SugarSaleReturnSale-form-label">Rate Diff:</label>
           <div className="SugarSaleReturnSale-col-Text">
             <div className="SugarSaleReturnSale-form-group">
               <input
@@ -2756,7 +2962,9 @@ const saleBillDetailData = (details) => {
                 value={formData.RateDiff}
                 onChange={handleChange}
                 disabled={!isEditing && addOneButtonEnabled}
+                onKeyDown={handleKeyDownCalculations}
               />
+              {formErrors.RateDiff && <p className="error-message">{formErrors.RateDiff}</p>}
 
               <input
                 tabIndex="19"
@@ -2767,9 +2975,10 @@ const saleBillDetailData = (details) => {
                 value={calculateRateDiffAmount()}
                 onChange={handleChange}
                 disabled={!isEditing && addOneButtonEnabled}
+                onKeyDown={handleKeyDownCalculations}
               />
             </div>
-          </div>
+          </div> */}
 
           <label className="SugarSaleReturnSale-form-label">MISC:</label>
           <div className="SugarSaleReturnSale-col-Text">
@@ -2783,12 +2992,13 @@ const saleBillDetailData = (details) => {
                 value={formData.OTHER_AMT}
                 onChange={handleChange}
                 disabled={!isEditing && addOneButtonEnabled}
+                onKeyDown={handleKeyDownCalculations}
               />
+               
             </div>
+            {formErrors.OTHER_AMT && <p className="error-message">{formErrors.OTHER_AMT}</p>}
           </div>
-          <label className="SugarSaleReturnSale-form-label">
-            Cash Advance
-          </label>
+          <label className="SugarSaleReturnSale-form-label">Cash Advance</label>
           <div className="SugarSaleReturnSale-col-Text">
             <div className="SugarSaleReturnSale-form-group">
               <input
@@ -2800,13 +3010,12 @@ const saleBillDetailData = (details) => {
                 value={formData.cash_advance}
                 onChange={handleChange}
                 disabled={!isEditing && addOneButtonEnabled}
+                onKeyDown={handleKeyDownCalculations}
               />
             </div>
           </div>
 
-          <label className="SugarSaleReturnSale-form-label">
-            Round Off
-          </label>
+          {/* <label className="SugarSaleReturnSale-form-label">Round Off</label>
           <div className="SugarSaleReturnSale-col-Text">
             <div className="SugarSaleReturnSale-form-group">
               <input
@@ -2818,13 +3027,13 @@ const saleBillDetailData = (details) => {
                 value={formData.RoundOff}
                 onChange={handleChange}
                 disabled={!isEditing && addOneButtonEnabled}
+                onKeyDown={handleKeyDownCalculations}
               />
             </div>
-          </div>
+            {formErrors.RoundOff && <p className="error-message">{formErrors.RoundOff}</p>}
+          </div> */}
 
-          <label className="SugarSaleReturnSale-form-label">
-            Bill Amount:
-          </label>
+          <label className="SugarSaleReturnSale-form-label">Bill Amount:</label>
           <div className="SugarSaleReturnSale-col-Text">
             <div className="SugarSaleReturnSale-form-group">
               <input
@@ -2837,8 +3046,10 @@ const saleBillDetailData = (details) => {
                 onChange={handleChange}
                 style={{ color: "red", fontWeight: "bold" }}
                 disabled={!isEditing && addOneButtonEnabled}
+                onKeyDown={handleKeyDownCalculations}
               />
             </div>
+            {formErrors.Bill_Amount && <p className="error-message">{formErrors.Bill_Amount}</p>}
           </div>
 
           <label className="SugarSaleReturnSale-form-label">TCS %:</label>
@@ -2853,7 +3064,9 @@ const saleBillDetailData = (details) => {
                 value={formData.TCS_Rate}
                 onChange={handleChange}
                 disabled={!isEditing && addOneButtonEnabled}
+                onKeyDown={handleKeyDownCalculations}
               />
+              {formErrors.TCS_Rate && <p className="error-message">{formErrors.TCS_Rate}</p>}
               <input
                 tabIndex="23"
                 type="text"
@@ -2863,13 +3076,13 @@ const saleBillDetailData = (details) => {
                 value={formData.TCS_Amt}
                 onChange={handleChange}
                 disabled={!isEditing && addOneButtonEnabled}
+                onKeyDown={handleKeyDownCalculations}
               />
             </div>
+            {formErrors.TCS_Amt && <p className="error-message">{formErrors.TCS_Amt}</p>}
           </div>
 
-          <label className="SugarSaleReturnSale-form-label">
-            Net Payable:
-          </label>
+          <label className="SugarSaleReturnSale-form-label">Net Payable:</label>
           <div className="SugarSaleReturnSale-col-Text">
             <div className="SugarSaleReturnSale-form-group">
               <input
@@ -2882,8 +3095,10 @@ const saleBillDetailData = (details) => {
                 value={formData.TCS_Net_Payable}
                 onChange={handleChange}
                 disabled={!isEditing && addOneButtonEnabled}
+                onKeyDown={handleKeyDownCalculations}
               />
             </div>
+            {formErrors.TCS_Net_Payable && <p className="error-message">{formErrors.TCS_Net_Payable}</p>}
           </div>
         </div>
 
@@ -2900,7 +3115,9 @@ const saleBillDetailData = (details) => {
                 value={formData.TDS_Rate}
                 onChange={handleChange}
                 disabled={!isEditing && addOneButtonEnabled}
+                onKeyDown={handleKeyDownCalculations}
               />
+              {formErrors.TDS_Rate && <p className="error-message">{formErrors.TDS_Rate}</p>}
               <input
                 tabIndex="26"
                 type="text"
@@ -2911,8 +3128,10 @@ const saleBillDetailData = (details) => {
                 // value={formData.TDS_Amt}
                 onChange={handleChange}
                 disabled={!isEditing && addOneButtonEnabled}
+                onKeyDown={handleKeyDownCalculations}
               />
             </div>
+            {formErrors.TDS_Amt && <p className="error-message">{formErrors.TDS_Amt}</p>}
           </div>
         </div>
       </form>

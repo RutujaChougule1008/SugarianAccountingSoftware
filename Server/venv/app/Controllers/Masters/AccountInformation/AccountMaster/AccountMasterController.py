@@ -148,6 +148,8 @@ def getaccountmasterByid():
         group_codes_data = AcGroups.query.filter_by(Ac_Code=ac_code, Company_Code=company_code).all()
         group_codes = [group.Group_Code for group in group_codes_data] if group_codes_data else []
 
+        print("group_codes", group_codes)
+
         account_master_data = {column.name: getattr(account_master, column.name) for column in account_master.__table__.columns}
 
         account_labels = dict(additional_data_row._mapping) if additional_data_row else {}

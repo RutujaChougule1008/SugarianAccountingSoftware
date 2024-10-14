@@ -173,7 +173,7 @@ def insert_tender_head_detail():
         headData = data['headData']
         detailData = data['detailData']
         try:
-            maxTender_No = db.session.query(db.func.max(TenderHead.Tender_No)).scalar() or 0
+            maxTender_No = db.session.query(db.func.max(TenderHead.Tender_No)).filter_by(Company_Code=headData['Company_Code'],Year_Code=headData['Year_Code']).scalar() or 0
             newTenderNo = maxTender_No + 1
             # Update Task_No in headData
             headData['Tender_No'] = newTenderNo

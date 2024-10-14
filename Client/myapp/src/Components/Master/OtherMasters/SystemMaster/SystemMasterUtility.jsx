@@ -146,6 +146,8 @@ function SystemMasterUtility() {
                         <MenuItem value="V">Vat</MenuItem>
                         <MenuItem value="I">Item</MenuItem>
                         <MenuItem value="S">Grade</MenuItem>
+                        <MenuItem value="Z">Season</MenuItem>
+                        <MenuItem value="U">Unit</MenuItem>
                     </Select>
                 </FormControl>
 

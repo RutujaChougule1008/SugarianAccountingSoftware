@@ -175,6 +175,7 @@ const handlemill_code =(code,accoid) =>{
     }
 
     const handleSaveOrUpdate = () => {
+        setIsLoading(true);
         debugger
         let head_data = {
             ...formData,
@@ -242,6 +243,11 @@ const handlemill_code =(code,accoid) =>{
                     setCancelButtonEnabled(false);
                     setUpdateButtonClicked(true);
                     setIsEditing(false);
+                    setIsLoading(false);
+                    setTimeout(()=>{
+                        window.location.reload()
+                    },1000)
+
                 })
                 .catch((error) => {
                     handleCancel();
@@ -269,6 +275,10 @@ const handlemill_code =(code,accoid) =>{
                     setCancelButtonEnabled(false);
                     setUpdateButtonClicked(true);
                     setIsEditing(false);
+                    setIsLoading(false);
+                    setTimeout(()=>{
+                        window.location.reload()
+                    },1000)
                 })
                 .catch((error) => {
                     console.error("Error saving data:", error);

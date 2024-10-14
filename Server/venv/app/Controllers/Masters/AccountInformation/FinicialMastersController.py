@@ -133,7 +133,7 @@ def create_group():
 
         return jsonify({
             'message': 'Group created successfully',
-            'group': new_group_data
+            'group': {**new_group_data, "bsid":new_group.bsid}
         }), 201
     except Exception as e:
         db.session.rollback()
