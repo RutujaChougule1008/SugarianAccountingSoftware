@@ -14,6 +14,7 @@ import "./SaleBill.css";
 import { HashLoader } from "react-spinners";
 import { z } from "zod";
 import SaleBillReport from './SaleBillReport'
+import EWayBillReport from "./EWayBillReport/EWayBillReport";
 // Validation Part Using Zod Library
 const stringToNumber = z
   .string()
@@ -543,6 +544,7 @@ const SaleBill = () => {
   const handleBack = () => {
     navigate("/SaleBill-utility");
   };
+
 
   const handleFirstButtonClick = async () => {
     try {
@@ -1495,6 +1497,7 @@ const SaleBill = () => {
         </div>
 
         <SaleBillReport doc_no = {formData.doc_no}/>
+        <EWayBillReport doc_no={formData.doc_no}/>
 
         <div className="SaleBill-row">
           <label className="SaleBill-form-label">Change No:</label>

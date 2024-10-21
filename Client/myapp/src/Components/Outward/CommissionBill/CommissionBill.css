@@ -23,12 +23,12 @@
     max-width: 150px;
 }
 
-.commission-form-container #HSN, #grade, #mill_rate, #sale_rate, #purc_rate,#TenderDiffRate, #resale_commission, #BANK_COMMISSION, #subtotal, #Frieght_amt,
+.commission-form-container #HSN, #grade, #mill_rate, #sale_rate, #purc_rate,#commission_amount, #resale_commission, #BANK_COMMISSION, #subtotal, #Frieght_amt,
 #texable_amount,#cgst_amount,#sgst_amount,#igst_amount,#bill_amount,#TCS_Amt,#TCS_Net_Payable,#misc_amount,#TDSAmount,#TDS{
     max-width: 200px;
 }
 
-.commission-form-container #commission_amount, #resale_rate,#Frieght_Rate,#cgst_rate,#sgst_rate,#igst_rate,#TCS_Rate,#TDS_Per{
+.commission-form-container  #TenderDiffRate,#resale_rate,#Frieght_Rate,#cgst_rate,#sgst_rate,#igst_rate,#TCS_Rate,#TDS_Per{
     max-width: 100px;
 }
 

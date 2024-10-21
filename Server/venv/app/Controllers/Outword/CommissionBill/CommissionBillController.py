@@ -4,6 +4,7 @@ from app import app, db
 from app.models.Outword.CommissionBill.CommissionBillModel import CommissionBill
 from sqlalchemy.sql import text
 import os
+import requests
 
 from app.utils.CommonGLedgerFunctions import fetch_company_parameters,get_accoid,getSaleAc,get_acShort_Name
 
@@ -175,8 +176,7 @@ def get_CommissionBillSelectedRecord():
 # Create a new group API
 @app.route(API_URL + "/create-RecordCommissionBill", methods=["POST"])
 def create_CommissionBill():
-
-    def create_gledger_entry(data, amount, drcr, ac_code, accoid,narration,ordercode):
+    def create_gledger_entry(data, amount, drcr, ac_code, accoid,narration):
         return {
             "TRAN_TYPE": new_Record_data['Tran_Type'],
             "DOC_NO": new_Record_data["doc_no"],
@@ -196,7 +196,7 @@ def create_CommissionBill():
             "ADJUSTED_AMOUNT": 0,
             "Branch_Code": 1,
             "SORT_TYPE": new_Record_data['Tran_Type'],
-            "SORT_NO": new_Record_data,
+            "SORT_NO": new_Record_data['doc_no'],
             "vc": 0,
             "progid": 0,
             "tranid": 0,
@@ -204,9 +204,9 @@ def create_CommissionBill():
             "ac": accoid
         }
 
-    def add_gledger_entry(entries, data, amount, drcr, ac_code, accoid,narration,ordercode):
+    def add_gledger_entry(entries, data, amount, drcr, ac_code, accoid,narration):
         if amount > 0:
-            entries.append(create_gledger_entry(data, amount, drcr, ac_code, accoid,narration,ordercode))
+            entries.append(create_gledger_entry(data, amount, drcr, ac_code, accoid,narration))
     
     try:
         # Extract parameters from query
@@ -235,6 +235,9 @@ def create_CommissionBill():
         new_Record_data['Year_Code'] = year_code
 
         new_Record = CommissionBill(**new_Record_data)
+
+
+        print(new_Record_data)
         
 
 
@@ -252,16 +255,15 @@ def create_CommissionBill():
        
         ac_code = company_parameters.RoundOff
         accoid = get_accoid(ac_code, new_Record_data['Company_Code'])
-        ordercode=0    
-        def add_gledger_entry(entries, data, amount, drcr, ac_code, accoid, narration,ordercode):
+        def add_gledger_entry(entries, data, amount, drcr, ac_code, accoid, narration):
               
-            if amount > 0:
-                entries.append(create_gledger_entry(data, amount, drcr, ac_code, accoid,new_Record_data["narration1"]),ordercode)
+            if float(amount) > 0:
+                entries.append(create_gledger_entry(data, amount, drcr, ac_code, accoid,new_Record_data["narration1"]))
 
         dono=new_Record_data['link_no']
         ac_code = new_Record_data['ac_code']
         accoid = get_accoid(ac_code, new_Record_data['Company_Code'])
-        add_gledger_entry(gledger_entries, new_Record_data, bill_amount, 'C', ac_code, accoid, new_Record_data["narration1"],ordercode)
+        add_gledger_entry(gledger_entries, new_Record_data, new_Record_data['TCS_Net_Payable'], 'D', ac_code, accoid, new_Record_data["narration1"])
         cgstamount=new_Record_data['cgst_amount']
         sgstamount=new_Record_data['sgst_amount']
         igstamount=new_Record_data['igst_amount']
@@ -274,110 +276,121 @@ def create_CommissionBill():
         if dono==0:
             frieght_amount=new_Record_data['Frieght_amt']
             if frieght_amount>0:
-                ordercode=ordercode+1
                 ac_code = company_parameters.SGSTAc
                 accoid = get_accoid(ac_code, new_Record_data['Company_Code'])
-                add_gledger_entry(gledger_entries, new_Record_data, frieght_amount, 'C', ac_code, accoid, "",ordercode)
+                add_gledger_entry(gledger_entries, new_Record_data, frieght_amount, 'C', ac_code, accoid, "")
             else:
-                ordercode=ordercode+1
                 ac_code = company_parameters.Freight_Ac
                 accoid = get_accoid(ac_code, new_Record_data['Company_Code'])
-                add_gledger_entry(gledger_entries, new_Record_data, frieght_amount, 'D', ac_code, accoid, "",ordercode)
+                add_gledger_entry(gledger_entries, new_Record_data, frieght_amount, 'D', ac_code, accoid, "")
           
 
         if bill_amount>0:
             if cgstamount>0:
-                ordercode=ordercode+1
                 ac_code = company_parameters.CGSTAc
                 accoid = get_accoid(ac_code, new_Record_data['Company_Code'])
-                add_gledger_entry(gledger_entries, new_Record_data, cgstamount, 'C', ac_code, accoid, "",ordercode)
+                add_gledger_entry(gledger_entries, new_Record_data, cgstamount, 'C', ac_code, accoid, "")
             if sgstamount >0:    
-                ordercode=ordercode+1
                 ac_code = company_parameters.SGSTAc
                 accoid = get_accoid(ac_code, new_Record_data['Company_Code'])
-                add_gledger_entry(gledger_entries, new_Record_data, sgstamount, 'C', ac_code, accoid, "",ordercode)
+                add_gledger_entry(gledger_entries, new_Record_data, sgstamount, 'C', ac_code, accoid, "")
             if igstamount >0:    
-                ordercode=ordercode+1
                 ac_code = company_parameters.IGSTAc
                 accoid = get_accoid(ac_code, new_Record_data['Company_Code'])
-                add_gledger_entry(gledger_entries, new_Record_data, igstamount, 'C', ac_code, accoid, "",ordercode)
+                add_gledger_entry(gledger_entries, new_Record_data, igstamount, 'C', ac_code, accoid, "")
             if tcsamt >0:    
                 ac_code = company_parameters.SaleTCSAc
-                ordercode=ordercode+1
                 accoid = get_accoid(ac_code, new_Record_data['Company_Code'])
-                add_gledger_entry(gledger_entries, new_Record_data, tcsamt, 'D', ac_code, accoid, "",ordercode)
+                add_gledger_entry(gledger_entries, new_Record_data, tcsamt, 'D', ac_code, accoid, "")
             
           
         else:
             if cgstamount!=0:
-                ordercode=ordercode+1
                 ac_code = company_parameters.PurchaseCGSTAc
                 accoid = get_accoid(ac_code, new_Record_data['Company_Code'])
-                add_gledger_entry(gledger_entries, new_Record_data, cgstamount, 'D', ac_code, accoid, "",ordercode)
+                add_gledger_entry(gledger_entries, new_Record_data, cgstamount, 'D', ac_code, accoid, "")
             if sgstamount !=0:    
-                ordercode=ordercode+1
+                
                 ac_code = company_parameters.PurchaseSGSTAc
                 accoid = get_accoid(ac_code, new_Record_data['Company_Code'])
-                add_gledger_entry(gledger_entries, new_Record_data, sgstamount, 'D', ac_code, accoid, "",ordercode)
+                add_gledger_entry(gledger_entries, new_Record_data, sgstamount, 'D', ac_code, accoid, "")
             if igstamount !=0:    
-                ordercode=ordercode+1
+                
                 ac_code = company_parameters.PurchaseIGSTAc
                 accoid = get_accoid(ac_code, new_Record_data['Company_Code'])
-                add_gledger_entry(gledger_entries, new_Record_data, igstamount, 'D', ac_code, accoid, "",ordercode)
+                add_gledger_entry(gledger_entries, new_Record_data, igstamount, 'D', ac_code, accoid, "")
             if tcsamt >0:    
-                ordercode=ordercode+1
+                
                 ac_code = company_parameters.SaleTCSAc
                 accoid = get_accoid(ac_code, new_Record_data['Company_Code'])
-                add_gledger_entry(gledger_entries, new_Record_data, tcsamt, 'C', ac_code, accoid, "",ordercode)
+                add_gledger_entry(gledger_entries, new_Record_data, tcsamt, 'C', ac_code, accoid, "")
 
         if tdsamt!=0 : 
             if tdsamt>0:
-                ordercode=ordercode+1
-                ac_code = new_Record_data['ac-code']
-                accoid = get_accoid(ac_code, new_Record_data['Company_Code'])
-                add_gledger_entry(gledger_entries, new_Record_data, tdsamt, 'C', ac_code, accoid, "",ordercode)
-
-                ordercode=ordercode+1
-                accoid = get_accoid(tdsac, new_Record_data['Company_Code'])
-                add_gledger_entry(gledger_entries, new_Record_data, tdsamt, 'D', tdsac, accoid, "",ordercode)
-            else:
-                ordercode=ordercode+1
+                
                 ac_code = new_Record_data['ac_code']
                 accoid = get_accoid(ac_code, new_Record_data['Company_Code'])
-                add_gledger_entry(gledger_entries, new_Record_data, tdsamt, 'D', ac_code, accoid, "",ordercode)
+                add_gledger_entry(gledger_entries, new_Record_data, tdsamt, 'C', ac_code, accoid, "")
 
-                ordercode=ordercode+1
+                
                 accoid = get_accoid(tdsac, new_Record_data['Company_Code'])
-                add_gledger_entry(gledger_entries, new_Record_data, tdsamt, 'C', tdsac, accoid, "",ordercode)
+                add_gledger_entry(gledger_entries, new_Record_data, tdsamt, 'D', tdsac, accoid, "")
+            else:
+                
+                ac_code = new_Record_data['ac_code']
+                accoid = get_accoid(ac_code, new_Record_data['Company_Code'])
+                add_gledger_entry(gledger_entries, new_Record_data, tdsamt, 'D', ac_code, accoid, "")
+
+                
+                accoid = get_accoid(tdsac, new_Record_data['Company_Code'])
+                add_gledger_entry(gledger_entries, new_Record_data, tdsamt, 'C', tdsac, accoid, "")
 
         if resalecomm != 0:
-            if resalecomm  >0:
+            if float(resalecomm) >0:
                 drcr="C"      
             else:
                 drcr="D"  
-            ordercode=ordercode+1
+            
             ac_code=company_parameters.COMMISSION_AC    
             accoid = get_accoid(tdsac, new_Record_data['Company_Code'])
-            add_gledger_entry(gledger_entries, new_Record_data, resalecomm, drcr, ac_code, accoid, "",ordercode)    
+            add_gledger_entry(gledger_entries, new_Record_data, resalecomm, drcr, ac_code, accoid, "")    
         
         commission_amount=new_Record_data['commission_amount']
+        print("commission_amount", commission_amount)
         if commission_amount !=0:
             if commission_amount>0:
-                ordercode=ordercode+1
+                
                 ac_code=company_parameters.RateDiffAc    
                 accoid = get_accoid(tdsac, new_Record_data['Company_Code'])
-                add_gledger_entry(gledger_entries, new_Record_data, resalecomm, 'C', ac_code, accoid, "",ordercode)  
+                add_gledger_entry(gledger_entries, new_Record_data, resalecomm, 'C', ac_code, accoid, "")  
             else:
-                ordercode=ordercode+1
+                
                 ac_code=company_parameters.RateDiffAc    
                 accoid = get_accoid(tdsac, new_Record_data['Company_Code'])
-                add_gledger_entry(gledger_entries, new_Record_data, resalecomm, 'D', ac_code, accoid, "",ordercode) 
+                add_gledger_entry(gledger_entries, new_Record_data, resalecomm, 'D', ac_code, accoid, "") 
 
         db.session.add(new_Record)
         db.session.commit()
 
         # Fetch the commisionid of the newly created record
         commisionid = new_Record.commissionid
+
+        query_params = {
+            'Company_Code': new_Record_data['Company_Code'],
+            'DOC_NO': new_Record_data['doc_no'],
+            'Year_Code': new_Record_data['Year_Code'],
+            'TRAN_TYPE': new_Record_data['Tran_Type']
+        }
+
+        print("gledger_entries", gledger_entries)
+
+        response = requests.post("http://localhost:8080/api/sugarian/create-Record-gLedger", params=query_params, json=gledger_entries)
+
+        if response.status_code == 201:
+            db.session.commit()
+        else:
+            db.session.rollback()
+            return jsonify({"error": "Failed to create gLedger record", "details": response.json()}), response.status_code
 
         return jsonify({
             'message': 'Record created successfully',
@@ -462,7 +475,7 @@ def update_CommissionBill():
         company_parameters = fetch_company_parameters(new_Record_data.Company_Code, new_Record_data.Year_Code)
         
         gledger_entries = []
-        bill_amount =new_Record_data.Company_Code
+        bill_amount = float(new_Record_data.bill_amount)
         drcr=""
         if bill_amount>0:
             drcr="D"
@@ -472,25 +485,25 @@ def update_CommissionBill():
         accoid = get_accoid(ac_code, new_Record_data.Company_Code)
         ordercode=0
         def add_gledger_entry(entries, data, amount, drcr, ac_code, accoid, narration,ordercode):
-
+            ordercode=ordercode+1
             if amount > 0:
                 entries.append(create_gledger_entry(data, amount, drcr, ac_code, accoid,new_Record_data.narration1,ordercode))
-
+    
         dono=new_Record_data.link_no
         ac_code = new_Record_data.ac_code
         accoid = get_accoid(ac_code, new_Record_data.Company_Code)
         add_gledger_entry(gledger_entries, new_Record_data, bill_amount, 'C', ac_code, accoid, new_Record_data.narration1,ordercode)
-        cgstamount=new_Record_data.cgst_amount
-        sgstamount=new_Record_data.sgst_amount
-        igstamount=new_Record_data.igst_amount
-        tcsamt=new_Record_data.TCS_Amt
-        tdsamt=new_Record_data.TDSAmount
-        tdsac=new_Record_data.TDS_Ac
-        resalecomm=new_Record_data.resale_commission
+        cgstamount=float(new_Record_data.cgst_amount)
+        sgstamount=float(new_Record_data.sgst_amount)
+        igstamount=float(new_Record_data.igst_amount)
+        tcsamt=float(new_Record_data.TCS_Amt)
+        tdsamt=float(new_Record_data.TDSAmount)
+        tdsac=float(new_Record_data.TDS_Ac)
+        resalecomm=float(new_Record_data.resale_commission)
        
 
         if dono==0:
-            frieght_amount=new_Record_data.Frieght_amt
+            frieght_amount=float(new_Record_data.Frieght_amt)
             if frieght_amount>0:
                 ordercode=ordercode+1
                 ac_code = company_parameters.SGSTAc
@@ -542,7 +555,7 @@ def update_CommissionBill():
                 ac_code = company_parameters.PurchaseIGSTAc
                 accoid = get_accoid(ac_code, new_Record_data.Company_Code)
                 add_gledger_entry(gledger_entries, new_Record_data, igstamount, 'D', ac_code, accoid, "",ordercode)
-            if tcsamt >0:    
+            if tcsamt > 0:    
                 ordercode=ordercode+1
                 ac_code = company_parameters.SaleTCSAc
                 accoid = get_accoid(ac_code, new_Record_data.Company_Code)
@@ -578,7 +591,7 @@ def update_CommissionBill():
             accoid = get_accoid(tdsac, new_Record_data.Company_Code)
             add_gledger_entry(gledger_entries, new_Record_data, resalecomm, drcr, ac_code, accoid, "",ordercode)    
         
-        commission_amount=new_Record_data.commission_amount
+        commission_amount=float(new_Record_data.commission_amount)
         if commission_amount !=0:
             if commission_amount>0:
                 ordercode=ordercode+1
@@ -594,6 +607,21 @@ def update_CommissionBill():
     
 
         db.session.commit()
+
+        query_params = {
+            'Company_Code': new_Record_data.Company_Code,
+            'DOC_NO': new_Record_data.doc_no,
+            'Year_Code': new_Record_data.Year_Code,
+            'TRAN_TYPE': tran_type
+        }
+
+        response = requests.post("http://localhost:8080/api/sugarian/create-Record-gLedger", params=query_params, json=gledger_entries)
+
+        if response.status_code == 201:
+            db.session.commit()
+        else:
+            db.session.rollback()
+            return jsonify({"error": "Failed to create gLedger record", "details": response.json()}), response.status_code
 
         return jsonify({
             'message': 'Record updated successfully',
