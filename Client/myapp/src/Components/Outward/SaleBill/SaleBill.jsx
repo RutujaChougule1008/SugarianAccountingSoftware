@@ -981,10 +981,7 @@ const SaleBill = () => {
           Brand_Code: detail.Brand_Code,
           brand_name: detail.brand_name,
           ic: detail.ic,
-          id:
-            users.length > 0
-              ? Math.max(...users.map((user) => user.id)) + 1
-              : 1,
+          id:detail.saledetailid,
           saledetailid: detail.saledetailid,
           narration: detail.narration,
           Quantal: detail.Quantal,
@@ -1005,7 +1002,7 @@ const SaleBill = () => {
       Brand_Code: detail.Brand_Code,
       brand_name: detail.brandname,
       ic: detail.ic,
-      id: users.length > 0 ? Math.max(...users.map((user) => user.id)) + 1 : 1,
+      id: detail.saledetailid,
       saledetailid: detail.saledetailid,
       narration: detail.narration,
       Quantal: detail.Quantal,

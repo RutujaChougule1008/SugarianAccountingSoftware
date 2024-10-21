@@ -1,14 +1,33 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import '../../Reports/Ledger/GledgerReport.css'
 
-const GLedgerReportPage = () => {
-  const [ledgerData, setLedgerData] = useState([]); // Store fetched report data
-  const [loading, setLoading] = useState(false); // Show loading state
-  const [error, setError] = useState(null); // Handle errors
+const GledgerReport = () => {
+  const companyCode = sessionStorage.getItem("Company_Code");
+  const Year_Code = sessionStorage.getItem("Year_Code");
+  const API_URL = process.env.REACT_APP_API;
+  const [ledgerData, setLedgerData] = useState([]); 
+  const [loading, setLoading] = useState(false); 
+  const [error, setError] = useState(null); 
 
-  const location = useLocation(); // Get state from previous page
-  const { acCode, fromDate, toDate } = location.state || {}; // Destructure passed data
+  const location = useLocation(); 
+  const { acCode, fromDate, toDate } = location.state || {};
+  const navigate = useNavigate();
+
+  const calculateTotals = (data) => {
+    const totals = data.reduce(
+      (acc, item) => {
+        acc.debit += parseFloat(item.debit || 0);
+        acc.credit += parseFloat(item.credit || 0);
+        return acc;
+      },
+      { debit: 0, credit: 0 }
+    );
+    return totals;
+  };
+
+  const [totals, setTotals] = useState({ debit: 0, credit: 0 });
 
   useEffect(() => {
     const fetchGLedgerReport = async () => {
@@ -16,33 +35,49 @@ const GLedgerReportPage = () => {
         setLoading(true);
         setError(null); // Clear any previous errors
         const response = await axios.get(
-          `${process.env.REACT_APP_API}/get_gLedgerReport_AcWise`, // Your API URL
+          `${process.env.REACT_APP_API}/get_gLedgerReport_AcWise`, 
           {
             params: {
-              ac_code: acCode,
               from_date: fromDate,
               to_date: toDate,
+              Company_Code:companyCode,
+              Year_Code:Year_Code,
             },
           }
         );
-        setLedgerData(response.data.all_data || []); // Store fetched data
+        const data = response.data.all_data || [];
+        setLedgerData(data);
+
+        // Calculate totals after data is fetched
+        const totals = calculateTotals(data);
+        setTotals(totals);
+
       } catch (err) {
-        setError("Error fetching report data."); // Handle errors
+        setError("Error fetching report data."); 
         console.error(err);
       } finally {
-        setLoading(false); // Stop loading spinner
+        setLoading(false);
       }
     };
 
-    fetchGLedgerReport(); // Fetch the data when the component mounts
+    fetchGLedgerReport(); 
   }, [acCode, fromDate, toDate]);
 
+
+  const handleRowClick = (doc_no, tran_type) => {
+    navigate(`/commission-bill`, {
+      state: {
+        selectedVoucherNo: doc_no,
+        selectedVoucherType: tran_type
+      }
+    });
+  };
   return (
-    <div>
+    <div className="ledger-report-container">
       <h2>gLedger Report</h2>
 
-      {loading && <p>Loading...</p>}
-      {error && <p>{error}</p>}
+      {loading && <p className="loading-message">Loading...</p>}
+      {error && <p className="error-message">{error}</p>}
 
       {/* Display fetched data in a table */}
       {ledgerData.length > 0 && (
@@ -50,7 +85,7 @@ const GLedgerReportPage = () => {
           <thead>
             <tr>
               <th>Transaction Type</th>
-              <th>Document No</th>
+              <th>Doc No</th>
               <th>Date</th>
               <th>Account Code</th>
               <th>Account Name</th>
@@ -61,7 +96,7 @@ const GLedgerReportPage = () => {
           </thead>
           <tbody>
             {ledgerData.map((item, index) => (
-              <tr key={index}>
+              <tr key={index} onClick={() => handleRowClick(item.DOC_NO, item.TRAN_TYPE)}>
                 <td>{item.TRAN_TYPE}</td>
                 <td>{item.DOC_NO}</td>
                 <td>{item.DOC_DATE}</td>
@@ -73,12 +108,19 @@ const GLedgerReportPage = () => {
               </tr>
             ))}
           </tbody>
+          <tfoot>
+              <tr>
+                <td colSpan="6"><strong>Total</strong></td>
+                <td><strong>{totals.debit.toFixed(2)}</strong></td>
+                <td><strong>{totals.credit.toFixed(2)}</strong></td>
+              </tr>
+            </tfoot>
         </table>
       )}
 
-      {ledgerData.length === 0 && !loading && <p>No data found for the given criteria.</p>}
+      {ledgerData.length === 0 && !loading && <p className="no-data-message">No data found for the given criteria.</p>}
     </div>
   );
 };
 
-export default GLedgerReportPage;
+export default GledgerReport;

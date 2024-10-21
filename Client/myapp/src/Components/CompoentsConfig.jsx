@@ -62,6 +62,7 @@ import SugarSaleReturnSaleUtility from './Outward/SugarSaleReturnSale/SugarSaleR
 import RecieptPaymentUtility from './Transactions/RecieptPayment/RecieptPaymentUtility';
 import JournalVoucher_Utility from './Transactions/JournalVoucher/JournalVoucher_Utility';
 import Ledger from './Reports/Ledger/Ledger.jsx';
+import GledgerReport from './Reports/Ledger/GledgerReport.jsx'
 
 
 const routes = [
@@ -367,6 +368,10 @@ const routes = [
 {
   path:'/ledger',
   element:Ledger
+},
+{
+  path:'/ledger-report',
+  element: GledgerReport
 },
 
 //eBuySugar

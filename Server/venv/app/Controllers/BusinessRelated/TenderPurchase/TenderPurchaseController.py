@@ -263,10 +263,10 @@ def insert_tender_head_detail():
 
             lvTcsRate = float(headData['TCS_Rate'])  
             lvTdsRate = float(headData['TDS_Rate'])  
-            lvTcsAmt = lvTcsRate * voucherAmt  
-            lvTdsAmt = lvTdsRate * voucherAmt  
+            lvTcsAmt = lvTcsRate * voucherAmt /100 
+            lvTdsAmt = lvTdsRate * voucherAmt /100
 
-            lvTcsNetPayable = voucherAmt + lvTcsAmt or 0
+            lvTcsNetPayable = voucherAmt + lvTcsAmt 
 
             lvNetPayable = 0
             lvNetPayable = lvNetPayable - lvTdsAmt
@@ -314,7 +314,7 @@ def insert_tender_head_detail():
                 "bc": headData['bk'],
                 "TCS_Rate": lvTcsRate,
                 "TCS_Amt": lvTcsAmt,
-                "TCS_Net_Payable": lvNetPayable,
+                "TCS_Net_Payable": lvTcsNetPayable,
                 "TDS": lvTdsRate,
                 "TDS_Per": lvTdsRate,
                 "Tran_Type": tran_type,
@@ -442,8 +442,8 @@ def update_tender_purchase():
             commissionAmt = diffAmt * qntl
             lvTcsRate = float(headData['TCS_Rate'])
             lvTdsRate = float(headData['TDS_Rate'])
-            lvTcsAmt = lvTcsRate * voucherAmt
-            lvTdsAmt = lvTdsRate * voucherAmt
+            lvTcsAmt = lvTcsRate * voucherAmt /100
+            lvTdsAmt = lvTdsRate * voucherAmt /100
 
             lvTcsNetPayable = voucherAmt + lvTcsAmt
             lvNetPayable = lvTcsNetPayable - lvTdsAmt

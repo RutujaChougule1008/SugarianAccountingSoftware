@@ -1,0 +1,83 @@
+/* Container for the form */
+.ledger-form-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Heading for the report form */
+  .ledger-form-container h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+  }
+  
+  /* Label styling */
+  .ledger-form-container label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #555;
+  }
+  
+  /* Input fields styling */
+  .ledger-form-container input[type="date"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #333;
+    transition: border-color 0.3s ease-in-out;
+  }
+  
+  .ledger-form-container input[type="date"]:focus {
+    border-color: #5c9ded;
+    outline: none;
+  }
+  
+  /* Button styling */
+  .ledger-form-container button {
+    width: 100%;
+    padding: 10px;
+    background-color: #5c9ded;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s ease-in-out;
+  }
+  
+  .ledger-form-container button:hover {
+    background-color: #3577d4;
+  }
+  
+  /* Form row styling */
+  .ledger-form-container .form-row {
+    margin-bottom: 15px;
+  }
+  
+  /* AccountMasterHelp component container */
+  .account-help-container {
+    margin-bottom: 20px;
+  }
+  
+  /* Mobile responsiveness */
+  @media (max-width: 600px) {
+    .ledger-form-container {
+      padding: 10px;
+    }
+  
+    .ledger-form-container button {
+      padding: 12px;
+      font-size: 14px;
+    }
+  }
+  

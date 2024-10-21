@@ -167,7 +167,6 @@ def get_gLedgerReport_AcWise():
         # Get query parameters
         company_code = request.args.get('Company_Code')
         year_code = request.args.get('Year_Code')
-        ac_code = request.args.get('ac_code')
         from_date = request.args.get('from_date')
         to_date = request.args.get('to_date')
 
@@ -187,15 +186,13 @@ def get_gLedgerReport_AcWise():
             WHERE dbo.nt_1_gledger.Company_Code = :company_code 
             AND dbo.nt_1_gledger.Year_Code = :year_code
         '''
-        if ac_code:
-            query += " AND dbo.nt_1_gledger.AC_CODE = :ac_code"
         if from_date and to_date:
             query += " AND dbo.nt_1_gledger.DOC_DATE BETWEEN :from_date AND :to_date"
 
         # Execute the query with parameters
         additional_data = db.session.execute(
             text(query), 
-            {"company_code": company_code, "year_code": year_code, "ac_code": ac_code, "from_date": from_date, "to_date": to_date}
+            {"company_code": company_code, "year_code": year_code, "from_date": from_date, "to_date": to_date}
         )
 
         # Fetch results

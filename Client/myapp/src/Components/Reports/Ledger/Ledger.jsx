@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import AccountMasterHelp from "../../../Helper/AccountMasterHelp"; // Assuming you have this component imported
+import AccountMasterHelp from "../../../Helper/AccountMasterHelp"; 
+import './Ledger.css'; 
 
-var ac_Name = ""; // This should come from your AccountMasterHelp when selected
+var ac_Name = ""; 
 
 const Ledger = () => {
   const [acCode, setAcCode] = useState(""); 
@@ -12,41 +13,36 @@ const Ledger = () => {
 
   const navigate = useNavigate();
 
-  // Handle account code selection from AccountMasterHelp
   const handleAc_Code = (code, accoid) => {
     setAcCode(code);
-    setAccoid(accoid) // Update ac_Name if needed, based on your logic
+    setAccoid(accoid);
   };
 
-  // Handle form submission
   const handleGetReportClick = (e) => {
-    e.preventDefault(); // Prevent form submission behavior
-
-    // Navigate to the report page with the query parameters
+    e.preventDefault(); 
     navigate(`/ledger-report`, {
       state: { acCode, fromDate, toDate },
     });
   };
 
   return (
-    <div>
+    <div className="ledger-form-container">
       <h2>gLedger Report</h2>
-
       <form onSubmit={handleGetReportClick}>
-        <div>
-          <label htmlFor="AC_CODE">
-            Account Code:
-          </label>
-          <AccountMasterHelp
-            name="AC_CODE"
-            onAcCodeClick={handleAc_Code}
-            CategoryName={ac_Name}
-            CategoryCode={acCode}
-            tabIndexHelp={10}
-          />
+        <div className="form-row">
+          <label htmlFor="AC_CODE">Account Code:</label>
+          <div className="account-help-container">
+            <AccountMasterHelp
+              name="AC_CODE"
+              onAcCodeClick={handleAc_Code}
+              CategoryName={ac_Name}
+              CategoryCode={acCode}
+              tabIndexHelp={10}
+            />
+          </div>
         </div>
-        <div>
-          <label>From Date: </label>
+        <div className="form-row">
+          <label>From Date:</label>
           <input
             type="date"
             value={fromDate}
@@ -54,8 +50,8 @@ const Ledger = () => {
             required
           />
         </div>
-        <div>
-          <label>To Date: </label>
+        <div className="form-row">
+          <label>To Date:</label>
           <input
             type="date"
             value={toDate}
