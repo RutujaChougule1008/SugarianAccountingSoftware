@@ -14,6 +14,7 @@ import "./SaleBill.css";
 import { HashLoader } from "react-spinners";
 import { z } from "zod";
 import SaleBillReport from './SaleBillReport'
+import EWayBillReport from "./EWayBillReport/EWayBillReport";
 // Validation Part Using Zod Library
 const stringToNumber = z
   .string()
@@ -544,6 +545,7 @@ const SaleBill = () => {
     navigate("/SaleBill-utility");
   };
 
+
   const handleFirstButtonClick = async () => {
     try {
       const response = await axios.get(
@@ -979,10 +981,7 @@ const SaleBill = () => {
           Brand_Code: detail.Brand_Code,
           brand_name: detail.brand_name,
           ic: detail.ic,
-          id:
-            users.length > 0
-              ? Math.max(...users.map((user) => user.id)) + 1
-              : 1,
+          id:detail.saledetailid,
           saledetailid: detail.saledetailid,
           narration: detail.narration,
           Quantal: detail.Quantal,
@@ -1003,7 +1002,7 @@ const SaleBill = () => {
       Brand_Code: detail.Brand_Code,
       brand_name: detail.brandname,
       ic: detail.ic,
-      id: users.length > 0 ? Math.max(...users.map((user) => user.id)) + 1 : 1,
+      id: detail.saledetailid,
       saledetailid: detail.saledetailid,
       narration: detail.narration,
       Quantal: detail.Quantal,
@@ -1495,6 +1494,7 @@ const SaleBill = () => {
         </div>
 
         <SaleBillReport doc_no = {formData.doc_no}/>
+        <EWayBillReport doc_no={formData.doc_no}/>
 
         <div className="SaleBill-row">
           <label className="SaleBill-form-label">Change No:</label>

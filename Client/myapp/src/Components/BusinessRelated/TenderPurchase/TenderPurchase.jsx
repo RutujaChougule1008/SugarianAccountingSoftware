@@ -13,9 +13,6 @@ import GSTRateMasterHelp from "../../../Helper/GSTRateMasterHelp";
 import SystemHelpMaster from "../../../Helper/SystemmasterHelp";
 import GradeMasterHelp from "../../../Helper/GradeMasterHelp";
 
-const companyCode = sessionStorage.getItem("Company_Code");
-const Year_Code = sessionStorage.getItem("Year_Code");
-const API_URL = process.env.REACT_APP_API;
 
 // Validation Part Using Zod Library
 const stringToNumber = z
@@ -25,60 +22,90 @@ const stringToNumber = z
   })
   .transform((value) => Number(value));
 
-  const SugarTenderPurchaseSchema = z.object({
-    Tender_No: z.preprocess(val => Number(val), z.number().int().nonnegative()),
-    Company_Code: z.string().optional(),
-    Tender_Date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"), 
-    Lifting_Date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"), 
-    Mill_Code: z.preprocess(val => Number(val), z.number().int().nonnegative()),
-    Grade: z.string().optional(),
-    Quantal: z.preprocess(val => Number(val), z.number().nonnegative()), 
-    Packing: z.preprocess(val => Number(val), z.number().nonnegative()), 
-    Bags: z.preprocess(val => Number(val), z.number().int().nonnegative()),
-    Payment_To: z.preprocess(val => Number(val), z.number().int().nonnegative()),
-    Tender_From: z.preprocess(val => Number(val), z.number().int().nonnegative()),
-    Tender_DO: z.preprocess(val => Number(val), z.number().int().nonnegative()),
-    Voucher_By: z.preprocess(val => Number(val), z.number().int().nonnegative()),
-    Broker: z.string().optional(), 
-    Excise_Rate: z.preprocess(val => Number(val), z.number().nonnegative()), 
-    Narration: z.string().optional(),
-    Mill_Rate: z.preprocess(val => Number(val), z.number().nonnegative()), // Convert to number if necessary
-    Created_By: z.string().optional(),
-    Modified_By: z.string().optional(),
-    Year_Code: z.string().optional(),
-    Purc_Rate: z.preprocess(val => Number(val), z.number().nonnegative()), // Convert to number if necessary
-    type: z.string().default("M"),
-    Branch_Id: z.preprocess(val => Number(val), z.number().int().nonnegative()),
-    Voucher_No: z.preprocess(val => Number(val), z.number().int().nonnegative()),
-    Sell_Note_No: z.string().optional(),
-    Brokrage: z.preprocess(val => Number(val), z.number().nonnegative()), // Convert to number if necessary
-    mc: z.preprocess(val => Number(val), z.number().int().nonnegative()),
-    itemcode: z.preprocess(val => Number(val), z.number().int().nonnegative()),
-    season: z.string().optional(),
-    pt: z.preprocess(val => Number(val), z.number().int().nonnegative()),
-    tf: z.preprocess(val => Number(val), z.number().int().nonnegative()),
-    td: z.preprocess(val => Number(val), z.number().int().nonnegative()),
-    vb: z.preprocess(val => Number(val), z.number().int().nonnegative()),
-    bk: z.preprocess(val => Number(val), z.number().int().nonnegative()),
-    ic: z.preprocess(val => Number(val), z.number().int().nonnegative()),
-    gstratecode: z.preprocess(val => Number(val), z.number().int().nonnegative()),
-    CashDiff: z.preprocess(val => Number(val), z.number().nonnegative()), // Convert to number if necessary
-    TCS_Rate: z.preprocess(val => Number(val), z.number().nonnegative()), // Convert to number if necessary
-    TCS_Amt: z.preprocess(val => Number(val), z.number().nonnegative()), // Convert to number if necessary
-    commissionid: z.preprocess(val => Number(val), z.number().int().nonnegative()),
-    Voucher_Type: z.string().optional(),
-    Party_Bill_Rate: z.preprocess(val => Number(val), z.number().nonnegative()), // Convert to number if necessary
-    TDS_Rate: z.preprocess(val => Number(val), z.number().nonnegative()), // Convert to number if necessary
-    TDS_Amt: z.preprocess(val => Number(val), z.number().nonnegative()), // Convert to number if necessary
-    Temptender: z.enum(["Y", "N"]).default("N"), // Limited to 'Y' or 'N'
-    AutoPurchaseBill: z.enum(["Y", "N"]).default("Y"), // Limited to 'Y' or 'N'
-    Bp_Account: z.preprocess(val => Number(val), z.number().int().nonnegative()),
-    bp: z.preprocess(val => Number(val), z.number().int().nonnegative()),
-    groupTenderNo: z.preprocess(val => Number(val), z.number().int().nonnegative()),
-    groupTenderId: z.preprocess(val => Number(val), z.number().int().nonnegative()),
-    tenderid: z.preprocess(val => Number(val), z.number().int().nonnegative().nullable()), // Nullable for tenderid
-  });
-  
+const SugarTenderPurchaseSchema = z.object({
+  Tender_No: z.preprocess((val) => Number(val), z.number().int().nonnegative()),
+  Company_Code: z.string().optional(),
+  Tender_Date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
+  Lifting_Date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
+  Mill_Code: z.preprocess((val) => Number(val), z.number().int().nonnegative()),
+  Grade: z.string().optional(),
+  Quantal: z.preprocess((val) => Number(val), z.number().nonnegative()),
+  Packing: z.preprocess((val) => Number(val), z.number().nonnegative()),
+  Bags: z.preprocess((val) => Number(val), z.number().int().nonnegative()),
+  Payment_To: z.preprocess(
+    (val) => Number(val),
+    z.number().int().nonnegative()
+  ),
+  Tender_From: z.preprocess(
+    (val) => Number(val),
+    z.number().int().nonnegative()
+  ),
+  Tender_DO: z.preprocess((val) => Number(val), z.number().int().nonnegative()),
+  Voucher_By: z.preprocess(
+    (val) => Number(val),
+    z.number().int().nonnegative()
+  ),
+  Broker: z.string().optional(),
+  Excise_Rate: z.preprocess((val) => Number(val), z.number().nonnegative()),
+  Narration: z.string().optional(),
+  Mill_Rate: z.preprocess((val) => Number(val), z.number().nonnegative()), // Convert to number if necessary
+  Created_By: z.string().optional(),
+  Modified_By: z.string().optional(),
+  Year_Code: z.string().optional(),
+  Purc_Rate: z.preprocess((val) => Number(val), z.number().nonnegative()), // Convert to number if necessary
+  type: z.string().default("M"),
+  Branch_Id: z.preprocess((val) => Number(val), z.number().int().nonnegative()),
+  Voucher_No: z.preprocess(
+    (val) => Number(val),
+    z.number().int().nonnegative()
+  ),
+  Sell_Note_No: z.string().optional(),
+  Brokrage: z.preprocess((val) => Number(val), z.number().nonnegative()), // Convert to number if necessary
+  mc: z.preprocess((val) => Number(val), z.number().int().nonnegative()),
+  itemcode: z.preprocess((val) => Number(val), z.number().int().nonnegative()),
+  season: z.string().optional(),
+  pt: z.preprocess((val) => Number(val), z.number().int().nonnegative()),
+  tf: z.preprocess((val) => Number(val), z.number().int().nonnegative()),
+  td: z.preprocess((val) => Number(val), z.number().int().nonnegative()),
+  vb: z.preprocess((val) => Number(val), z.number().int().nonnegative()),
+  bk: z.preprocess((val) => Number(val), z.number().int().nonnegative()),
+  ic: z.preprocess((val) => Number(val), z.number().int().nonnegative()),
+  gstratecode: z.preprocess(
+    (val) => Number(val),
+    z.number().int().nonnegative()
+  ),
+  CashDiff: z.preprocess((val) => Number(val), z.number().nonnegative()), // Convert to number if necessary
+  TCS_Rate: z.preprocess((val) => Number(val), z.number().nonnegative()), // Convert to number if necessary
+  TCS_Amt: z.preprocess((val) => Number(val), z.number().nonnegative()), // Convert to number if necessary
+  commissionid: z.preprocess(
+    (val) => Number(val),
+    z.number().int().nonnegative()
+  ),
+  Voucher_Type: z.string().optional(),
+  Party_Bill_Rate: z.preprocess((val) => Number(val), z.number().nonnegative()), // Convert to number if necessary
+  TDS_Rate: z.preprocess((val) => Number(val), z.number().nonnegative()), // Convert to number if necessary
+  TDS_Amt: z.preprocess((val) => Number(val), z.number().nonnegative()), // Convert to number if necessary
+  Temptender: z.enum(["Y", "N"]).default("N"), // Limited to 'Y' or 'N'
+  AutoPurchaseBill: z.enum(["Y", "N"]).default("Y"), // Limited to 'Y' or 'N'
+  Bp_Account: z.preprocess(
+    (val) => Number(val),
+    z.number().int().nonnegative()
+  ),
+  bp: z.preprocess((val) => Number(val), z.number().int().nonnegative()),
+  groupTenderNo: z.preprocess(
+    (val) => Number(val),
+    z.number().int().nonnegative()
+  ),
+  groupTenderId: z.preprocess(
+    (val) => Number(val),
+    z.number().int().nonnegative()
+  ),
+  tenderid: z.preprocess(
+    (val) => Number(val),
+    z.number().int().nonnegative().nullable()
+  ), // Nullable for tenderid
+});
+
 var millCodeName;
 var newMill_Code;
 var gradeName;
@@ -144,14 +171,17 @@ const TenderPurchase = () => {
   const [shiptoName, setShipToName] = useState("");
   const [isGstRateChanged, setIsGstRateChanged] = useState(false);
   const [tenderFrName, setTenderFrName] = useState("");
-  const [tenderDONm,setTenderDOName] = useState("");
-  const [voucherbyName, setVoucherByName] = useState(""); 
+  const [tenderDONm, setTenderDOName] = useState("");
+  const [voucherbyName, setVoucherByName] = useState("");
   const [dispatchType, setDispatchType] = useState(null);
   const [buyerParty, setBuyerParty] = useState(selfAcCode);
   const [buyerPartyAccoid, setBuyerPartyAccoid] = useState(selfAccoid);
   const [buyerPartyName, setBuyerPartyName] = useState(selfAcName);
   const [errors, setErrors] = useState({});
 
+  const companyCode = sessionStorage.getItem("Company_Code");
+  const Year_Code = sessionStorage.getItem("Year_Code");
+  const API_URL = process.env.REACT_APP_API;
 
   const type = useRef(null);
 
@@ -159,6 +189,8 @@ const TenderPurchase = () => {
   //In utility page record doubleClicked that recod show for edit functionality
   const location = useLocation();
   const selectedRecord = location.state?.selectedRecord;
+
+  const selectedTenderNo = location.state?.selectedTenderNo;
   const initialFormData = {
     Tender_No: 0,
     Company_Code: companyCode,
@@ -215,7 +247,6 @@ const TenderPurchase = () => {
 
   const [formData, setFormData] = useState(initialFormData);
 
-
   const setFocusTaskdate = useRef(null);
   const [isHandleChange, setIsHandleChange] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -236,9 +267,6 @@ const TenderPurchase = () => {
   const [self_ac_Code, setSelf_ac_code] = useState("");
   const [self_accoid, set_self_accoid] = useState("");
   const [self_acName, set_self_acName] = useState("");
- 
-
- 
 
   const [formDataDetail, setFormDataDetail] = useState({
     Buyer_Quantal: 0.0,
@@ -260,32 +288,36 @@ const TenderPurchase = () => {
     DetailBrokrage: 0.0,
   });
 
-
   useEffect(() => {
     const fetchDispatchType = async () => {
       try {
-        const response = await fetch(`${API_URL}/get_dispatch_type/${companyCode}`);
+        const response = await fetch(
+          `${API_URL}/get_dispatch_type/${companyCode}`
+        );
         const data = await response.json();
         setDispatchType(data.dispatchType);
       } catch (error) {
-        console.error('Error fetching dispatch type:', error);
+        console.error("Error fetching dispatch type:", error);
       }
     };
 
     fetchDispatchType();
   }, [companyCode]);
 
-
-
-  const calculateValues = (updatedFormData, updatedFormDataDetail, tdsApplicable, gstCode) => {
+  const calculateValues = (
+    updatedFormData,
+    updatedFormDataDetail,
+    tdsApplicable,
+    gstCode
+  ) => {
     const {
-        Quantal = 0,
-        Packing = 50,
-        Mill_Rate = 0,
-        Purc_Rate = 0,
-        Excise_Rate = 0,
-        TCS_Rate = 0,
-        TDS_Rate = 0,
+      Quantal = 0,
+      Packing = 50,
+      Mill_Rate = 0,
+      Purc_Rate = 0,
+      Excise_Rate = 0,
+      TCS_Rate = 0,
+      TDS_Rate = 0,
     } = updatedFormData;
 
     const quantal = parseFloat(Quantal) || 0;
@@ -296,35 +328,33 @@ const TenderPurchase = () => {
     const tcsRate = parseFloat(TCS_Rate) || 0;
     const tdsRate = parseFloat(TDS_Rate) || 0;
 
-   
-
     const bags = (quantal / packing) * 100;
     const diff = millRate - purchaseRate;
     const exciseAmount = exciseRate;
     const gstAmt = exciseAmount + millRate;
-    const amount = quantal * (formData.type === "M" ? (millRate + exciseAmount) : diff);
+    const amount =
+      quantal * (formData.type === "M" ? millRate + exciseAmount : diff);
 
-
-    console.log("Excise Rate", exciseAmount)
+    console.log("Excise Rate", exciseAmount);
 
     let tcsAmt = 0;
     let tdsAmt = 0;
 
-    if (tdsApplicable === 'Y') {
-        tdsAmt = (quantal * millRate) * (tdsRate / 100);
+    if (tdsApplicable === "Y") {
+      tdsAmt = quantal * millRate * (tdsRate / 100);
     } else {
-        tcsAmt = amount * (tcsRate / 100);
+      tcsAmt = amount * (tcsRate / 100);
     }
 
     // Calculate both regardless of TDS applicability
     const calculatedTcsAmt = amount * (tcsRate / 100);
-    const calculatedTdsAmt = (quantal * millRate) * (tdsRate / 100);
+    const calculatedTdsAmt = quantal * millRate * (tdsRate / 100);
     const {
-        Buyer_Quantal = 0,
-        Sale_Rate = 0,
-        BP_Detail = 0,
-        tcs_rate = 0,
-        gst_rate = 0,
+      Buyer_Quantal = 0,
+      Sale_Rate = 0,
+      BP_Detail = 0,
+      tcs_rate = 0,
+      gst_rate = 0,
     } = updatedFormDataDetail;
 
     const buyerQuantalNum = parseFloat(Buyer_Quantal) || 0;
@@ -337,47 +367,41 @@ const TenderPurchase = () => {
     const gstAmtDetail = lblRate * (gstRateNum / 100);
     const tcsAmtDetail = lblRate * (tcsRateNum / 100);
     const lblNetAmount = lblRate + gstAmtDetail + tcsAmtDetail;
+    const lblValue = quantal * millRate;
 
     return {
-        bags,
-        diff,
-        exciseAmount: exciseRate,
-        gstAmt,
-        amount,
-        lblValue: amount,
-        tcsAmt,
-        tdsAmt,
-        calculatedTcsAmt,
-        calculatedTdsAmt,
-        lblRate,
-        gstAmtDetail,
-        TCSAmt: tcsAmtDetail,
-        lblNetAmount,
+      bags,
+      diff,
+      exciseAmount: exciseRate,
+      gstAmt,
+      amount,
+      lblValue,
+      tcsAmt,
+      tdsAmt,
+      calculatedTcsAmt,
+      calculatedTdsAmt,
+      lblRate,
+      gstAmtDetail,
+      TCSAmt: tcsAmtDetail,
+      lblNetAmount,
     };
   };
 
-  
   useEffect(() => {
-    console.log("Re-rendering due to gstCode or gstRateCode change:", gstCode, gstRateCode);
-    const effectiveGstCode = gstCode || gstRateCode; // Use gstCode if it exists, otherwise use gstRateCode
-    const calculated = calculateValues(formData, formDataDetail, tdsApplicable, effectiveGstCode);
+    console.log(
+      "Re-rendering due to gstCode or gstRateCode change:",
+      gstCode,
+      gstRateCode
+    );
+    const effectiveGstCode = gstCode || gstRateCode; 
+    const calculated = calculateValues(
+      formData,
+      formDataDetail,
+      tdsApplicable,
+      effectiveGstCode
+    );
     setCalculatedValues(calculated);
-}, [formData, formDataDetail, tdsApplicable, gstCode, gstRateCode]);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
+  }, [formData, formDataDetail, tdsApplicable, gstCode, gstRateCode]);
 
   const calculateNetQuantal = (users) => {
     return users
@@ -432,51 +456,63 @@ const TenderPurchase = () => {
       Grade: name,
     });
   };
-  const handlePayment_To = (code, accoid, name, mobileNo, gstNo, TdsApplicable) => {
+  const handlePayment_To = (
+    code,
+    accoid,
+    name,
+    mobileNo,
+    gstNo,
+    TdsApplicable
+  ) => {
     // Update the state for Payment_To and TdsApplicable
     setPaymentTo(code);
     setTenderFrName(name); // Update Tender_From name
-    setVoucherByName(name);  // Update Voucher_By name
-    setTenderDOName(name);   // Update Tender_DO name
+    setVoucherByName(name); // Update Voucher_By name
+    setTenderDOName(name); // Update Tender_DO name
 
     setFormData((prevFormData) => {
-        const shouldUpdateTenderFrom = prevFormData.Tender_From === prevFormData.Payment_To;
-        const shouldUpdateVoucherBy = prevFormData.Voucher_By === prevFormData.Payment_To;
-        const shouldUpdateTenderDO = prevFormData.Tender_DO === prevFormData.Payment_To;
+      const shouldUpdateTenderFrom =
+        prevFormData.Tender_From === prevFormData.Payment_To;
+      const shouldUpdateVoucherBy =
+        prevFormData.Voucher_By === prevFormData.Payment_To;
+      const shouldUpdateTenderDO =
+        prevFormData.Tender_DO === prevFormData.Payment_To;
 
-        console.log("Should update Tender_From:", shouldUpdateTenderFrom);
-        console.log("Should update Voucher_By:", shouldUpdateVoucherBy);
-        console.log("Should update Tender_DO:", shouldUpdateTenderDO);
+  
 
-        const updatedFormData = {
-            ...prevFormData,
-            Payment_To: code,
-            pt: accoid,
-            Tender_From: shouldUpdateTenderFrom ? code : prevFormData.Tender_From,
-            tf: shouldUpdateTenderFrom ? accoid : prevFormData.tf,
-            Voucher_By: shouldUpdateVoucherBy ? code : prevFormData.Voucher_By,
-            vb: shouldUpdateVoucherBy ? accoid : prevFormData.vb,
-            Tender_DO: shouldUpdateTenderDO ? code : prevFormData.Tender_DO,
-            td: shouldUpdateTenderDO ? accoid : prevFormData.td,
-        };
+      const updatedFormData = {
+        ...prevFormData,
+        Payment_To: code,
+        pt: accoid,
+        Tender_From: shouldUpdateTenderFrom ? code : prevFormData.Tender_From,
+        tf: shouldUpdateTenderFrom ? accoid : prevFormData.tf,
+        Voucher_By: shouldUpdateVoucherBy ? code : prevFormData.Voucher_By,
+        vb: shouldUpdateVoucherBy ? accoid : prevFormData.vb,
+        Tender_DO: shouldUpdateTenderDO ? code : prevFormData.Tender_DO,
+        td: shouldUpdateTenderDO ? accoid : prevFormData.td,
+      };
 
-        console.log("Updated Form Data:", updatedFormData);
+      console.log("Updated Form Data:", updatedFormData);
 
-        const calculated = calculateValues(updatedFormData, formDataDetail, TdsApplicable, gstCode);
+      const calculated = calculateValues(
+        updatedFormData,
+        formDataDetail,
+        TdsApplicable,
+        gstCode
+      );
 
-        setCalculatedValues(calculated);
-        return updatedFormData;
+      setCalculatedValues(calculated);
+      return updatedFormData;
     });
 
     // Update any other related state
     setTenderFrom(code);
     setVoucherBy(code);
     setTenderDO(code);
-};
-
+  };
 
   const handleTender_From = (code, accoid) => {
-    setTenderFrName("")
+    setTenderFrName("");
     setTenderFrom(code);
     setFormData({
       ...formData,
@@ -520,28 +556,31 @@ const TenderPurchase = () => {
   };
   const handlegstratecode = (code, Rate) => {
     const rate = parseFloat(Rate);
-    
+
     // Update the GST rate code and form data
     setGSTRate(code);
     setGstCode(rate);
 
     setFormData((prevFormData) => {
-        const updatedFormData = {
-            ...prevFormData,
-            gstratecode: code,
-        };
+      const updatedFormData = {
+        ...prevFormData,
+        gstratecode: code,
+      };
 
-        // Perform the calculation with the updated formData
-        const calculatedValues = calculateValues(updatedFormData, formDataDetail, tdsApplicable, rate);
-        
-        // Update the state with the calculated values
-        setCalculatedValues(calculatedValues);
-        
-        return updatedFormData;
+      // Perform the calculation with the updated formData
+      const calculatedValues = calculateValues(
+        updatedFormData,
+        formDataDetail,
+        tdsApplicable,
+        rate
+      );
+
+      // Update the state with the calculated values
+      setCalculatedValues(calculatedValues);
+
+      return updatedFormData;
     });
-};
-
-
+  };
 
   const handleBp_Account = (code, accoid) => {
     setBpAcCode(code);
@@ -585,14 +624,13 @@ const TenderPurchase = () => {
     });
   };
 
-
   const handleDetailSubBroker = (code, accoid, name) => {
     setSubBroker(code);
     setBrokerDetail(name);
     setSubBrokerAccoid(accoid);
     setFormDataDetail({
       ...formDataDetail,
-      sub_broker: code ,
+      sub_broker: code,
       sbr: accoid,
     });
   };
@@ -605,74 +643,86 @@ const TenderPurchase = () => {
     const { name, value } = e.target;
 
     setFormData((prevFormData) => {
-        const updatedFormData = {
-            ...prevFormData,
-            [name]: value,
-        };
+      const updatedFormData = {
+        ...prevFormData,
+        [name]: value,
+      };
 
-
-        try {
-          SugarTenderPurchaseSchema.shape[name].parse(value);
-          // Clear error if validation passes
+      try {
+        SugarTenderPurchaseSchema.shape[name].parse(value);
+        // Clear error if validation passes
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          [name]: "",
+        }));
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          // Set error message if validation fails
           setErrors((prevErrors) => ({
             ...prevErrors,
-            [name]: "",
+            [name]: error.errors[0].message,
           }));
-        } catch (error) {
-          if (error instanceof z.ZodError) {
-            // Set error message if validation fails
-            setErrors((prevErrors) => ({
-              ...prevErrors,
-              [name]: error.errors[0].message,
-            }));
-          }
         }
+      }
 
+      // Determine new GST Rate and TCS Rate based on the field being updated
+      const newGstRate = name === "gstratecode" ? parseFloat(value) : gstCode;
+      const newTcsRate =
+        name === "TCS_Rate" ? parseFloat(value) : formData.TCS_Rate;
 
-        // Determine new GST Rate and TCS Rate based on the field being updated
-        const newGstRate = name === "gstratecode" ? parseFloat(value) : gstCode;
-        const newTcsRate = name === "TCS_Rate" ? parseFloat(value) : formData.TCS_Rate;
+      // Update the `users` state based on the changes
+      setUsers((prevUsers) =>
+        prevUsers.map((user) => ({
+          ...user,
+          tcs_rate: name === "TCS_Rate" ? newTcsRate : user.tcs_rate,
+          tcs_amt:
+            name === "TCS_Rate"
+              ? (user.Buyer_Quantal * user.Sale_Rate * newTcsRate) / 100
+              : user.tcs_amt,
+          gst_rate: name === "gstratecode" ? newGstRate : gstCode,
+          gst_amt:
+            name === "gstratecode"
+              ? (user.Buyer_Quantal * user.Sale_Rate * newGstRate) / 100
+              : user.gst_amt,
+        }))
+      );
 
-        // Update the `users` state based on the changes
-        setUsers((prevUsers) =>
-            prevUsers.map((user) => ({
-                ...user,
-                tcs_rate: name === "TCS_Rate" ? newTcsRate : user.tcs_rate,
-                tcs_amt: name === "TCS_Rate" ? (user.Buyer_Quantal * user.Sale_Rate * newTcsRate) / 100 : user.tcs_amt,
-                gst_rate: name === "gstratecode" ? newGstRate : gstCode,
-                gst_amt: name === "gstratecode" ? (user.Buyer_Quantal * user.Sale_Rate * newGstRate) / 100 : user.gst_amt,
-            }))
-        );
+      // Perform any additional calculations as required
+      const calculatedValues = calculateValues(
+        updatedFormData,
+        formDataDetail,
+        tdsApplicable,
+        newGstRate
+      );
 
-        // Perform any additional calculations as required
-        const calculatedValues = calculateValues(updatedFormData, formDataDetail, tdsApplicable, newGstRate);
-
-        return {
-            ...updatedFormData,
-            Excise_Rate: calculatedValues.exciseAmount,
-        };
+      return {
+        ...updatedFormData,
+        Excise_Rate: calculatedValues.exciseAmount,
+      };
     });
-};
-
+  };
 
   const handleChangeDetail = (e) => {
     const { name, value } = e.target;
     setFormDataDetail((prevFormDataDetail) => {
       const updatedFormDataDetail = {
-      ...prevFormDataDetail,
-      [name]: value,
-      }
-    
+        ...prevFormDataDetail,
+        [name]: value,
+      };
 
-    const calculatedValues = calculateValues(formData, updatedFormDataDetail, tdsApplicable, gstCode);
+      const calculatedValues = calculateValues(
+        formData,
+        updatedFormDataDetail,
+        tdsApplicable,
+        gstCode
+      );
 
-    return {
-      ...updatedFormDataDetail,
-      tcs_amt: calculatedValues.TCSAmt
+      return {
+        ...updatedFormDataDetail,
+        tcs_amt: calculatedValues.TCSAmt,
+      };
+    });
   };
-  });
-  };
-  
 
   const handleDateChange = (event, fieldName) => {
     setFormData((prevFormData) => ({
@@ -704,7 +754,6 @@ const TenderPurchase = () => {
   const addUser = async (e) => {
     e.preventDefault();
 
-
     // Create the new user object with the latest calculations
     const newUser = {
       ...formDataDetail,
@@ -720,14 +769,14 @@ const TenderPurchase = () => {
       sbr: subBrokerAccoid || selfAccoid || self_accoid,
       Buyer_Party: buyerParty || self_ac_Code || selfAcCode,
       buyerPartyName: buyerPartyName || selfAcName || self_acName,
-      buyerpartyid: buyerPartyAccoid || selfAccoid || self_accoid ,
+      buyerpartyid: buyerPartyAccoid || selfAccoid || self_accoid,
       gst_rate: gstCode || formDataDetail.gst_rate,
       gst_amt:
         calculatedValues.gstAmtDetail ||
         (formDataDetail.Buyer_Quantal * formDataDetail.Sale_Rate * gstCode) /
           100 ||
         0.0,
-        tcs_rate: formData.TCS_Rate,
+      tcs_rate: formData.TCS_Rate,
       tcs_amt:
         calculatedValues.TCSAmt ||
         calculatedValues.gstAmtDetail * (formDataDetail.tcs_rate / 100) ||
@@ -800,9 +849,10 @@ const TenderPurchase = () => {
           gst_rate: formDataDetail.gst_rate || 0.0,
           loding_by_us: formDataDetail.loding_by_us,
           Delivery_Type: formDataDetail.Delivery_Type,
-          tcs_amt: calculatedValues.TCSAmt ||
-          calculatedValues.gstAmtDetail * (formDataDetail.tcs_rate / 100) ||
-          0.0,
+          tcs_amt:
+            calculatedValues.TCSAmt ||
+            calculatedValues.gstAmtDetail * (formDataDetail.tcs_rate / 100) ||
+            0.0,
           tcs_rate: formDataDetail.tcs_rate || 0.0,
           Broker: newBroker || selfAcCode,
           brokerName: brokerName || selfAcName,
@@ -832,91 +882,91 @@ const TenderPurchase = () => {
     const userQuantal = parseFloat(user.Buyer_Quantal) || 0;
 
     if (isEditMode && user.rowaction === "add") {
-        setDeleteMode(true);
-        setSelectedUser(user);
+      setDeleteMode(true);
+      setSelectedUser(user);
 
-        // Add the quantal to the first user's Buyer_Quantal
-        if (updatedUsers.length > 0) {
-            updatedUsers[0] = {
-                ...updatedUsers[0],
-                Buyer_Quantal: updatedUsers[0].Buyer_Quantal + userQuantal,
-            };
-        }
+      // Add the quantal to the first user's Buyer_Quantal
+      if (updatedUsers.length > 0) {
+        updatedUsers[0] = {
+          ...updatedUsers[0],
+          Buyer_Quantal: updatedUsers[0].Buyer_Quantal + userQuantal,
+        };
+      }
 
-        updatedUsers = updatedUsers.map((u) =>
-            u.id === user.id ? { ...u, rowaction: "DNU" } : u
-        );
+      updatedUsers = updatedUsers.map((u) =>
+        u.id === user.id ? { ...u, rowaction: "DNU" } : u
+      );
     } else if (isEditMode) {
-        setDeleteMode(true);
-        setSelectedUser(user);
+      setDeleteMode(true);
+      setSelectedUser(user);
 
-        // Add the quantal to the first user's Buyer_Quantal
-        if (updatedUsers.length > 0) {
-            updatedUsers[0] = {
-                ...updatedUsers[0],
-                Buyer_Quantal: updatedUsers[0].Buyer_Quantal + userQuantal,
-            };
-        }
+      // Add the quantal to the first user's Buyer_Quantal
+      if (updatedUsers.length > 0) {
+        updatedUsers[0] = {
+          ...updatedUsers[0],
+          Buyer_Quantal: updatedUsers[0].Buyer_Quantal + userQuantal,
+        };
+      }
 
-        updatedUsers = updatedUsers.map((u) =>
-            u.id === user.id ? { ...u, rowaction: "delete" } : u
-        );
+      updatedUsers = updatedUsers.map((u) =>
+        u.id === user.id ? { ...u, rowaction: "delete" } : u
+      );
     } else {
-        setDeleteMode(true);
-        setSelectedUser(user);
+      setDeleteMode(true);
+      setSelectedUser(user);
 
-        // Add the quantal to the first user's Buyer_Quantal
-        if (updatedUsers.length > 0) {
-            updatedUsers[0] = {
-                ...updatedUsers[0],
-                Buyer_Quantal: updatedUsers[0].Buyer_Quantal + userQuantal,
-            };
-        }
+      // Add the quantal to the first user's Buyer_Quantal
+      if (updatedUsers.length > 0) {
+        updatedUsers[0] = {
+          ...updatedUsers[0],
+          Buyer_Quantal: updatedUsers[0].Buyer_Quantal + userQuantal,
+        };
+      }
 
-        updatedUsers = updatedUsers.map((u) =>
-            u.id === user.id ? { ...u, rowaction: "DNU" } : u
-        );
+      updatedUsers = updatedUsers.map((u) =>
+        u.id === user.id ? { ...u, rowaction: "DNU" } : u
+      );
     }
 
     setUsers(updatedUsers);
     setSelectedUser({});
-};
+  };
 
-const openDelete = async (user) => {
-  setDeleteMode(true);
-  setSelectedUser(user);
-  let updatedUsers = [...users];
-  const userQuantal = parseFloat(user.Buyer_Quantal) || 0;
+  const openDelete = async (user) => {
+    setDeleteMode(true);
+    setSelectedUser(user);
+    let updatedUsers = [...users];
+    const userQuantal = parseFloat(user.Buyer_Quantal) || 0;
 
-  if (isEditMode && user.rowaction === "delete") {
+    if (isEditMode && user.rowaction === "delete") {
       // Deduct the quantal from the first user's Buyer_Quantal
       if (updatedUsers.length > 0) {
-          updatedUsers[0] = {
-              ...updatedUsers[0],
-              Buyer_Quantal: updatedUsers[0].Buyer_Quantal - userQuantal,
-          };
+        updatedUsers[0] = {
+          ...updatedUsers[0],
+          Buyer_Quantal: updatedUsers[0].Buyer_Quantal - userQuantal,
+        };
       }
 
       updatedUsers = updatedUsers.map((u) =>
-          u.id === user.id ? { ...u, rowaction: "Normal" } : u
+        u.id === user.id ? { ...u, rowaction: "Normal" } : u
       );
-  } else {
+    } else {
       // Deduct the quantal from the first user's Buyer_Quantal
       if (updatedUsers.length > 0) {
-          updatedUsers[0] = {
-              ...updatedUsers[0],
-              Buyer_Quantal: updatedUsers[0].Buyer_Quantal - userQuantal,
-          };
+        updatedUsers[0] = {
+          ...updatedUsers[0],
+          Buyer_Quantal: updatedUsers[0].Buyer_Quantal - userQuantal,
+        };
       }
 
       updatedUsers = updatedUsers.map((u) =>
-          u.id === user.id ? { ...u, rowaction: "add" } : u
+        u.id === user.id ? { ...u, rowaction: "add" } : u
       );
-  }
+    }
 
-  setUsers(updatedUsers);
-  setSelectedUser({});
-};
+    setUsers(updatedUsers);
+    setSelectedUser({});
+  };
 
   const openPopup = (mode) => {
     debugger;
@@ -961,11 +1011,10 @@ const openDelete = async (user) => {
     setShipToName("");
     setBrokerDetail("");
     setDetailBroker("");
-    setBuyerParty("")
+    setBuyerParty("");
     setBuyerPartyAccoid("");
     setBuyerPartyName("");
 
-   
     selfAcCode = "";
     selfAcName = "";
     selfAccoid = "";
@@ -1011,7 +1060,7 @@ const openDelete = async (user) => {
           ShipTo: detail.ShipTo,
           shiptoName: detail.shiptoName,
           Buyer_Party: detail.Buyer_Party,
-          buyerPartyName:detail.buyerPartyName,
+          buyerPartyName: detail.buyerPartyName,
           sub_broker: detail.sub_broker,
           brokerDetail: detail.brokerDetail,
           BP_Detail: detail.BP_Detail,
@@ -1049,7 +1098,7 @@ const openDelete = async (user) => {
       ShipTo: detail.ShipTo,
       shiptoName: detail.ShipToname,
       Buyer_Party: detail.Buyer_Party,
-      buyerPartyName:detail.buyerpartyname,
+      buyerPartyName: detail.buyerpartyname,
       sub_broker: detail.sub_broker,
       brokerDetail: detail.subbrokername,
       BP_Detail: detail.BP_Detail,
@@ -1103,7 +1152,7 @@ const openDelete = async (user) => {
   useEffect(() => {
     if (users.length > 0) {
       const updatedUsers = [...users];
-  
+
       // Update the first user's Buyer_Quantal with formData.Quantal
       if (formData.Quantal !== undefined) {
         const firstUser = updatedUsers[0];
@@ -1112,38 +1161,37 @@ const openDelete = async (user) => {
         const newGstAmt =
           (newBuyerQuantal * newGstRate * (firstUser.Sale_Rate || 0)) / 100 ||
           0.0;
-  
+
         updatedUsers[0] = {
           ...firstUser,
           Buyer_Quantal: newBuyerQuantal,
           gst_rate: newGstRate,
           gst_amt: newGstAmt,
-          rowaction: firstUser.rowaction === "add" ? "add" : "update"
+          rowaction: firstUser.rowaction === "add" ? "add" : "update",
         };
       }
-  
+
       // Adjust the first user's Buyer_Quantal if there's a second user
       if (updatedUsers.length > 1) {
         let remainingQuantal = updatedUsers[0].Buyer_Quantal;
-  
+
         for (let i = 1; i < updatedUsers.length; i++) {
           const currentUser = updatedUsers[i];
           const userQuantal = currentUser.Buyer_Quantal || 0;
-  
+
           remainingQuantal -= userQuantal;
-  
+
           if (remainingQuantal < 0) {
             remainingQuantal = 0;
           }
-  
+
           updatedUsers[0].Buyer_Quantal = remainingQuantal;
         }
       }
-  
+
       setUsers(updatedUsers);
     }
   }, [formData.Quantal, gstCode]);
-  
 
   let isProcessing = false; // Module-level flag to track processing state
 
@@ -1191,8 +1239,8 @@ const openDelete = async (user) => {
     selfAcCode = "";
     selfAcName = "";
     selfAccoid = "";
-    buyerPartyCode="";
-    buyer_party_name="";
+    buyerPartyCode = "";
+    buyer_party_name = "";
 
     if (isProcessing) return; // Prevent further execution if already processing
 
@@ -1220,99 +1268,104 @@ const openDelete = async (user) => {
     bags: 0,
     gstAmt: 0,
     tcsAmt: 0,
-});
-
-const cleanFormData = (data) => {
-  const {
-    lblRate,
-    amount,
-    tdsAmt,
-    diff,
-    gstAmtDetail,
-    exciseAmount,
-    lblValue,
-    TCSAmt,
-    lblNetAmount,
-    bags,
-    gstAmt,
-    tcsAmt,
-    ...cleanedData
-  } = data;
-  return cleanedData;
-};
-
-const handleSaveOrUpdate = async (event) => {
-  event.preventDefault();
-
-  setIsEditing(true);
-  setIsLoading(true);
-
-  // Perform calculations
-  const calculated = calculateValues(formData, formDataDetail, tdsApplicable, gstCode);
-
-  // Merge calculated values into formData
-  const updatedFormData = {
-    ...formData,
-    Bags: calculated.bags,
-    CashDiff: calculated.diff,
-    // GST_Amt: calculated.gstAmt,
-    TCS_Amt: calculated.tcsAmt,
-    TDS_Amt: calculated.tdsAmt,
-    Excise_Rate: calculated.exciseAmount,
-  };
-
-  // Clean form data by removing unnecessary calculated fields
-  const cleanedHeadData = cleanFormData(updatedFormData);
-
-  // Remove tenderid from cleanedHeadData if in edit mode
-  if (isEditMode) {
-    delete cleanedHeadData.tenderid;
-  }
-
-  // Prepare detail data
-  const detailData = users.map((user) => {
-    return {
-      rowaction: user.rowaction,
-      Buyer: user.Buyer || 0,
-      Buyer_Quantal: user.Buyer_Quantal || 0.0,
-      Sale_Rate: user.Sale_Rate || 0.0,
-      Commission_Rate: user.Commission_Rate || 0.0,
-      Sauda_Date: user.Sauda_Date || "",
-      Lifting_Date: user.Lifting_Date || "",
-      Narration: user.Narration || "",
-      ID: user.ID || 0,
-      ShipTo: user.ShipTo || 0,
-      AutoID: user.AutoID || 0,
-      IsActive: user.IsActive || "",
-      year_code: Year_Code,
-      Branch_Id: user.Branch_Id || 0,
-      Delivery_Type: user.Delivery_Type || "",
-      tenderdetailid: user.tenderdetailid,
-      buyerid: user.buyerid,
-      buyerpartyid: user.buyerpartyid,
-      sub_broker: user.sub_broker,
-      sbr: user.sbr || 0,
-      tcs_rate: user.tcs_rate || 0.0,
-      gst_rate: user.gst_rate || 0.0,
-      tcs_amt: user.tcs_amt || 0.0,
-      gst_amt: user.gst_amt || 0.0,
-      ShipTo: user.ShipTo || 0,
-      CashDiff: user.CashDiff || 0.0,
-      shiptoid: user.shiptoid,
-      BP_Detail: user.BP_Detail || 0,
-      bpid: user.bpid || 0,
-      loding_by_us: user.loding_by_us || "",
-      DetailBrokrage: user.DetailBrokrage || 0.0,
-      Company_Code: companyCode,
-      Buyer_Party: user.Buyer_Party,
-    };
   });
 
-  // Structure the request data
-  const requestData = {
-    headData: cleanedHeadData,
-    detailData,
+  const cleanFormData = (data) => {
+    const {
+      lblRate,
+      amount,
+      tdsAmt,
+      diff,
+      gstAmtDetail,
+      exciseAmount,
+      lblValue,
+      TCSAmt,
+      lblNetAmount,
+      bags,
+      gstAmt,
+      tcsAmt,
+      ...cleanedData
+    } = data;
+    return cleanedData;
   };
+
+  const handleSaveOrUpdate = async (event) => {
+    event.preventDefault();
+
+    setIsEditing(true);
+    setIsLoading(true);
+
+    // Perform calculations
+    const calculated = calculateValues(
+      formData,
+      formDataDetail,
+      tdsApplicable,
+      gstCode
+    );
+
+    // Merge calculated values into formData
+    const updatedFormData = {
+      ...formData,
+      Bags: calculated.bags,
+      CashDiff: calculated.diff,
+      // GST_Amt: calculated.gstAmt,
+      TCS_Amt: calculated.tcsAmt,
+      TDS_Amt: calculated.tdsAmt,
+      Excise_Rate: calculated.exciseAmount,
+    };
+
+    // Clean form data by removing unnecessary calculated fields
+    const cleanedHeadData = cleanFormData(updatedFormData);
+
+    // Remove tenderid from cleanedHeadData if in edit mode
+    if (isEditMode) {
+      delete cleanedHeadData.tenderid;
+    }
+
+    // Prepare detail data
+    const detailData = users.map((user) => {
+      return {
+        rowaction: user.rowaction,
+        Buyer: user.Buyer || 0,
+        Buyer_Quantal: user.Buyer_Quantal || 0.0,
+        Sale_Rate: user.Sale_Rate || 0.0,
+        Commission_Rate: user.Commission_Rate || 0.0,
+        Sauda_Date: user.Sauda_Date || "",
+        Lifting_Date: user.Lifting_Date || "",
+        Narration: user.Narration || "",
+        ID: user.ID || 0,
+        ShipTo: user.ShipTo || 0,
+        AutoID: user.AutoID || 0,
+        IsActive: user.IsActive || "",
+        year_code: Year_Code,
+        Branch_Id: user.Branch_Id || 0,
+        Delivery_Type: user.Delivery_Type || "",
+        tenderdetailid: user.tenderdetailid,
+        buyerid: user.buyerid,
+        buyerpartyid: user.buyerpartyid,
+        sub_broker: user.sub_broker,
+        sbr: user.sbr || 0,
+        tcs_rate: user.tcs_rate || 0.0,
+        gst_rate: user.gst_rate || 0.0,
+        tcs_amt: user.tcs_amt || 0.0,
+        gst_amt: user.gst_amt || 0.0,
+        ShipTo: user.ShipTo || 0,
+        CashDiff: user.CashDiff || 0.0,
+        shiptoid: user.shiptoid,
+        BP_Detail: user.BP_Detail || 0,
+        bpid: user.bpid || 0,
+        loding_by_us: user.loding_by_us || "",
+        DetailBrokrage: user.DetailBrokrage || 0.0,
+        Company_Code: companyCode,
+        Buyer_Party: user.Buyer_Party,
+      };
+    });
+
+    // Structure the request data
+    const requestData = {
+      headData: cleanedHeadData,
+      detailData,
+    };
     try {
       if (isEditMode) {
         const updateApiUrl = `${API_URL}/update_tender_purchase?tenderid=${newTenderId}`;
@@ -1336,9 +1389,9 @@ const handleSaveOrUpdate = async (event) => {
       setCancelButtonEnabled(false);
       setIsEditing(false);
       setIsLoading(false);
-      // setTimeout(() => {
-      //   window.location.reload();
-      // }, 1000);
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (error) {
       console.error("Error during API call:", error.response || error);
       toast.error("Error occurred while saving data");
@@ -1378,8 +1431,12 @@ const handleSaveOrUpdate = async (event) => {
         const response = await axios.delete(deleteApiUrl);
 
         if (response.status === 200) {
-          toast.success("Data delete successfully!!");
-          handleCancel();
+          const commissionDelete = `${API_URL}/delete-CommissionBill?doc_no=${formData.Voucher_No}&Company_Code=${companyCode}&Year_Code=${Year_Code}&Tran_Type=${formData.Voucher_Type}`;
+          const result = await axios.delete(commissionDelete);
+          if (result.status === 200 || result.status === 201) {
+            toast.success("Data delete successfully!!");
+            handleCancel();
+          }
         } else {
           console.error(
             "Failed to delete tender:",
@@ -1440,14 +1497,13 @@ const handleSaveOrUpdate = async (event) => {
         newBp_Account = data.last_tender_head_data.Bp_Account;
         billToName = data.last_tender_details_data[0].buyername;
         newBillToCode = data.last_tender_details_data[0].Buyer;
-        shipToName = data.last_tender_details_data[0].ShipToname;        ;
+        shipToName = data.last_tender_details_data[0].ShipToname;
         shipToCode = data.last_tender_details_data[0].ShipTo;
         subBrokerName = data.last_tender_details_data[0].subbrokername;
         subBrokerCode = data.last_tender_details_data[0].sub_broker;
         newGrade = data.last_tender_head_data.Grade;
         buyerPartyCode = data.last_tender_details_data[0].Buyer_Party;
-        buyer_party_name=data.last_tender_details_data[0].buyerpartyname
-
+        buyer_party_name = data.last_tender_details_data[0].buyerpartyname;
 
         // Update Buyer_Quantal only for the first entry
         const updatedTenderDetailsData = data.last_tender_details_data.map(
@@ -1478,8 +1534,8 @@ const handleSaveOrUpdate = async (event) => {
             billtoName: detail.buyername,
             ShipTo: detail.ShipTo,
             shiptoName: detail.ShipToname,
-            Buyer_Party:detail.Buyer_Party,
-            buyerPartyName:detail.buyerpartyname,
+            Buyer_Party: detail.Buyer_Party,
+            buyerPartyName: detail.buyerpartyname,
             sub_broker: detail.sub_broker,
             brokerDetail: detail.subbrokername,
             BP_Detail: detail.BP_Detail,
@@ -1523,8 +1579,14 @@ const handleSaveOrUpdate = async (event) => {
   //Handle Record DoubleCliked in Utility Page Show that record for Edit
   const handlerecordDoubleClicked = async () => {
     try {
+      const tenderNo = selectedTenderNo || selectedRecord?.Tender_No;
+
+      if (!tenderNo) {
+        console.error("No Tender No. provided.");
+        return;
+      }
       const response = await axios.get(
-        `${API_URL}/getTenderByTenderNo?Company_Code=${companyCode}&Tender_No=${selectedRecord.Tender_No}&Year_Code=${Year_Code}`
+        `${API_URL}/getTenderByTenderNo?Company_Code=${companyCode}&Tender_No=${tenderNo}&Year_Code=${Year_Code}`
       );
       const data = response.data;
       newTenderId = data.last_tender_head_data.tenderid;
@@ -1549,13 +1611,13 @@ const handleSaveOrUpdate = async (event) => {
       newBp_Account = data.last_tender_head_data.Bp_Account;
       billToName = data.last_tender_details_data[0].buyername;
       newBillToCode = data.last_tender_details_data[0].Buyer;
-      shipToName = data.last_tender_details_data[0].ShipToname;        ;
+      shipToName = data.last_tender_details_data[0].ShipToname;
       shipToCode = data.last_tender_details_data[0].ShipTo;
       subBrokerName = data.last_tender_details_data[0].subbrokername;
       subBrokerCode = data.last_tender_details_data[0].sub_broker;
       newGrade = data.last_tender_head_data.Grade;
       buyerPartyCode = data.last_tender_details_data[0].Buyer_Party;
-      buyer_party_name=data.last_tender_details_data[0].buyerpartyname
+      buyer_party_name = data.last_tender_details_data[0].buyerpartyname;
 
       // Update Buyer_Quantal only for the first entry
       const updatedTenderDetailsData = data.last_tender_details_data.map(
@@ -1586,8 +1648,8 @@ const handleSaveOrUpdate = async (event) => {
           billtoName: detail.buyername,
           ShipTo: detail.ShipTo,
           shiptoName: detail.ShipToname,
-          Buyer_Party:detail.Buyer_Party,
-          buyerPartyName:detail.buyerpartyname,
+          Buyer_Party: detail.Buyer_Party,
+          buyerPartyName: detail.buyerpartyname,
           sub_broker: detail.sub_broker,
           brokerDetail: detail.subbrokername,
           BP_Detail: detail.BP_Detail,
@@ -1630,13 +1692,13 @@ const handleSaveOrUpdate = async (event) => {
   };
 
   useEffect(() => {
-    if (selectedRecord) {
+    if (selectedRecord || selectedTenderNo) {
       handlerecordDoubleClicked();
     } else {
       handleAddOne();
     }
     document.getElementById("type").focus();
-  }, [selectedRecord]);
+  }, [selectedRecord, selectedTenderNo]);
 
   //change No functionality to get that particular record
   const handleKeyDown = async (event) => {
@@ -1669,13 +1731,13 @@ const handleSaveOrUpdate = async (event) => {
         newBp_Account = data.last_tender_head_data.Bp_Account;
         billToName = data.last_tender_details_data[0].buyername;
         newBillToCode = data.last_tender_details_data[0].Buyer;
-        shipToName = data.last_tender_details_data[0].ShipToname;        ;
+        shipToName = data.last_tender_details_data[0].ShipToname;
         shipToCode = data.last_tender_details_data[0].ShipTo;
         subBrokerName = data.last_tender_details_data[0].subbrokername;
         subBrokerCode = data.last_tender_details_data[0].sub_broker;
         newGrade = data.last_tender_head_data.Grade;
         buyerPartyCode = data.last_tender_details_data[0].Buyer_Party;
-        buyer_party_name=data.last_tender_details_data[0].buyerpartyname;
+        buyer_party_name = data.last_tender_details_data[0].buyerpartyname;
 
         // Update Buyer_Quantal only for the first entry
         const updatedTenderDetailsData = data.last_tender_details_data.map(
@@ -1706,8 +1768,8 @@ const handleSaveOrUpdate = async (event) => {
             billtoName: detail.buyername,
             ShipTo: detail.ShipTo,
             shiptoName: detail.ShipToname,
-            Buyer_Party:detail.Buyer_Party,
-            buyerPartyName:detail.buyerpartyname,
+            Buyer_Party: detail.Buyer_Party,
+            buyerPartyName: detail.buyerpartyname,
             sub_broker: detail.sub_broker,
             brokerDetail: detail.subbrokername,
             BP_Detail: detail.BP_Detail,
@@ -1777,7 +1839,7 @@ const handleSaveOrUpdate = async (event) => {
         subBrokerName = data.first_tender_details_data[0].subbrokername;
         subBrokerCode = data.first_tender_details_data[0].sub_broker;
         buyerPartyCode = data.first_tender_details_data[0].Buyer_Party;
-        buyer_party_name=data.first_tender_details_data[0].buyerpartyname;
+        buyer_party_name = data.first_tender_details_data[0].buyerpartyname;
 
         // Update Buyer_Quantal only for the first entry
         const updatedTenderDetailsData = data.first_tender_details_data.map(
@@ -1808,8 +1870,8 @@ const handleSaveOrUpdate = async (event) => {
             billtoName: detail.buyername,
             ShipTo: detail.ShipTo,
             shiptoName: detail.ShipToname,
-            Buyer_Party:detail.Buyer_Party,
-            buyerPartyName:detail.buyerpartyname,
+            Buyer_Party: detail.Buyer_Party,
+            buyerPartyName: detail.buyerpartyname,
             sub_broker: detail.sub_broker,
             brokerDetail: detail.subbrokername,
             BP_Detail: detail.BP_Detail,
@@ -1885,7 +1947,7 @@ const handleSaveOrUpdate = async (event) => {
         subBrokerName = data.previous_tender_details_data[0].subbrokername;
         subBrokerCode = data.previous_tender_details_data[0].sub_broker;
         buyerPartyCode = data.previous_tender_details_data[0].Buyer_Party;
-        buyer_party_name=data.previous_tender_details_data[0].buyerpartyname;
+        buyer_party_name = data.previous_tender_details_data[0].buyerpartyname;
 
         // Update Buyer_Quantal only for the first entry
         const updatedTenderDetailsData = data.previous_tender_details_data.map(
@@ -1916,8 +1978,8 @@ const handleSaveOrUpdate = async (event) => {
             billtoName: detail.buyername,
             ShipTo: detail.ShipTo,
             shiptoName: detail.ShipToname,
-            Buyer_Party:detail.Buyer_Party,
-            buyerPartyName:detail.buyerpartyname,
+            Buyer_Party: detail.Buyer_Party,
+            buyerPartyName: detail.buyerpartyname,
             sub_broker: detail.sub_broker,
             brokerDetail: detail.subbrokername,
             BP_Detail: detail.BP_Detail,
@@ -1991,7 +2053,7 @@ const handleSaveOrUpdate = async (event) => {
         subBrokerName = data.next_tender_details_data[0].subbrokername;
         subBrokerCode = data.next_tender_details_data[0].sub_broker;
         buyerPartyCode = data.next_tender_details_data[0].Buyer_Party;
-        buyer_party_name=data.next_tender_details_data[0].buyerpartyname;
+        buyer_party_name = data.next_tender_details_data[0].buyerpartyname;
 
         // Update Buyer_Quantal only for the first entry
         const updatedTenderDetailsData = data.next_tender_details_data.map(
@@ -2022,8 +2084,8 @@ const handleSaveOrUpdate = async (event) => {
             billtoName: detail.buyername,
             ShipTo: detail.ShipTo,
             shiptoName: detail.ShipToname,
-            Buyer_Party:detail.Buyer_Party,
-            buyerPartyName:detail.buyerpartyname,
+            Buyer_Party: detail.Buyer_Party,
+            buyerPartyName: detail.buyerpartyname,
             sub_broker: detail.sub_broker,
             brokerDetail: detail.subbrokername,
             BP_Detail: detail.BP_Detail,
@@ -2070,9 +2132,9 @@ const handleSaveOrUpdate = async (event) => {
       selfAcCode = response.data.SELF_AC;
       selfAccoid = response.data.Self_acid;
       selfAcName = response.data.Self_acName;
-      setSelf_ac_code(selfAcCode)
-      set_self_accoid(selfAccoid)
-      set_self_acName(selfAcName)
+      setSelf_ac_code(selfAcCode);
+      set_self_accoid(selfAccoid);
+      set_self_acName(selfAcName);
 
       setFormData((prevData) => ({
         ...prevData,
@@ -2099,19 +2161,29 @@ const handleSaveOrUpdate = async (event) => {
           brokerDetail: selfAcName,
           sbr: selfAccoid,
           Buyer_Party: selfAcCode,
-          buyerPartyName:selfAcName,
+          buyerPartyName: selfAcName,
           buyerpartyid: selfAccoid,
           Lifting_Date: formData.Lifting_Date,
           gst_rate: formData.gstratecode,
           tcs_rate: parseFloat(formData.TCS_Rate),
           Delivery_Type: dispatchType,
-          ID:1,
+          ID: 1,
         },
         ...prevUsers,
       ]);
     } catch (error) {
       console.log(error.response?.data?.error || "An error occurred");
     }
+  };
+
+  const handleVoucherClick = () => {
+    // When Voucher_No is clicked, navigate to CommissionBill and pass formData (or other data)
+    navigate("/commission-bill", {
+      state: {
+        selectedVoucherNo: formData.Voucher_No,
+        selectedVoucherType: formData.Voucher_Type, // Use a specific key for Voucher_Type
+      },
+    });
   };
 
   return (
@@ -2249,13 +2321,14 @@ const handleSaveOrUpdate = async (event) => {
               <option value="N">No</option>
             </select>
           </div>
-          <div className="SugarTenderPurchase-col">
+          <div className="SugarTenderPurchase-col" onClick={handleVoucherClick}>
             <label
               htmlFor="Voucher_No"
               className="SugarTenderPurchase-form-label"
             >
               Voucher No:
             </label>
+
             <input
               type="text"
               id="Voucher_No"
@@ -2266,6 +2339,7 @@ const handleSaveOrUpdate = async (event) => {
               disabled
               tabIndex={6}
             />
+            <label>{formData.Voucher_Type}</label>
           </div>
         </div>
 
@@ -2387,7 +2461,6 @@ const handleSaveOrUpdate = async (event) => {
               CategoryName={newGrade || formData.Grade}
               tabIndexHelp={13}
               disabledField={!isEditing && addOneButtonEnabled}
-              
             />
           </div>
           <div className="SugarTenderPurchase-col">
@@ -2449,13 +2522,17 @@ const handleSaveOrUpdate = async (event) => {
               type="text"
               id="Mill_Rate"
               name="Mill_Rate"
-             className={`SugarTenderPurchase-form-control ${errors.type ? 'error-border' : ''}`}
+              className={`SugarTenderPurchase-form-control ${
+                errors.type ? "error-border" : ""
+              }`}
               value={formData.Mill_Rate}
               onChange={handleChange}
               disabled={!isEditing && addOneButtonEnabled}
               tabIndex={17}
             />
-             {errors.Mill_Rate && <p className="error-message">{errors.Mill_Rate}</p>}
+            {errors.Mill_Rate && (
+              <p className="error-message">{errors.Mill_Rate}</p>
+            )}
           </div>
           <div className="SugarTenderPurchase-col">
             <label
@@ -2468,13 +2545,17 @@ const handleSaveOrUpdate = async (event) => {
               type="text"
               id="Purc_Rate"
               name="Purc_Rate"
-              className={`SugarTenderPurchase-form-control ${errors.type ? 'error-border' : ''}`}
+              className={`SugarTenderPurchase-form-control ${
+                errors.type ? "error-border" : ""
+              }`}
               value={formData.Purc_Rate}
               onChange={handleChange}
               disabled={!isEditing && addOneButtonEnabled}
               tabIndex={18}
             />
-            {errors.Purc_Rate && <p className="error-message">{errors.Purc_Rate}</p>}
+            {errors.Purc_Rate && (
+              <p className="error-message">{errors.Purc_Rate}</p>
+            )}
           </div>
           <div className="SugarTenderPurchase-col">
             <label
@@ -2487,13 +2568,17 @@ const handleSaveOrUpdate = async (event) => {
               type="text"
               id="Party_Bill_Rate"
               name="Party_Bill_Rate"
-              className={`SugarTenderPurchase-form-control ${errors.type ? 'error-border' : ''}`}
-              value={formData.Party_Bill_Rate}
+              className={`SugarTenderPurchase-form-control ${
+                errors.type ? "error-border" : ""
+              }`}
+              value={formData.Purc_Rate || formData.Party_Bill_Rate}
               onChange={handleChange}
               disabled={!isEditing && addOneButtonEnabled}
               tabIndex={19}
             />
-            {errors.Party_Bill_Rate && <p className="error-message">{errors.Party_Bill_Rate}</p>}
+            {errors.Party_Bill_Rate && (
+              <p className="error-message">{errors.Party_Bill_Rate}</p>
+            )}
           </div>
         </div>
 
@@ -2525,13 +2610,17 @@ const handleSaveOrUpdate = async (event) => {
               type="text"
               id="CashDiff"
               name="CashDiff"
-              className={`SugarTenderPurchase-form-control ${errors.type ? 'error-border' : ''}`}
+              className={`SugarTenderPurchase-form-control ${
+                errors.type ? "error-border" : ""
+              }`}
               value={calculatedValues.diff || formData.CashDiff}
               onChange={handleChange}
               disabled={!isEditing && addOneButtonEnabled}
               tabIndex={21}
             />
-             {errors.CashDiff && <p className="error-message">{errors.CashDiff}</p>}
+            {errors.CashDiff && (
+              <p className="error-message">{errors.CashDiff}</p>
+            )}
           </div>
           <div className="SugarTenderPurchase-col">
             <label>{calculatedValues.amount}</label>
@@ -2565,7 +2654,9 @@ const handleSaveOrUpdate = async (event) => {
               name="Tender_From"
               onAcCodeClick={handleTender_From}
               CategoryName={tenderFromName || paymentToName || tenderFrName}
-              CategoryCode={newTender_From || newPayment_To || formData.Tender_From}
+              CategoryCode={
+                newTender_From || newPayment_To || formData.Tender_From
+              }
               tabIndexHelp={23}
               disabledFeild={!isEditing && addOneButtonEnabled}
             />
@@ -2613,7 +2704,9 @@ const handleSaveOrUpdate = async (event) => {
             <AccountMasterHelp
               name="Broker"
               onAcCodeClick={handleBroker}
-              CategoryName={formData.Broker === self_ac_Code ? self_acName : brokerName}
+              CategoryName={
+                formData.Broker === self_ac_Code ? self_acName : brokerName
+              }
               CategoryCode={newBroker || self_ac_Code}
               tabIndexHelp={26}
               disabledFeild={!isEditing && addOneButtonEnabled}
@@ -2630,13 +2723,17 @@ const handleSaveOrUpdate = async (event) => {
               type="text"
               id="Brokrage"
               name="Brokrage"
-              className={`SugarTenderPurchase-form-control ${errors.type ? 'error-border' : ''}`}
+              className={`SugarTenderPurchase-form-control ${
+                errors.type ? "error-border" : ""
+              }`}
               value={formData.Brokrage}
               onChange={handleChange}
               disabled={!isEditing && addOneButtonEnabled}
               tabIndex={27}
             />
-            {errors.Brokrage && <p className="error-message">{errors.Brokrage}</p>}
+            {errors.Brokrage && (
+              <p className="error-message">{errors.Brokrage}</p>
+            )}
           </div>
           <div className="SugarTenderPurchase-col">
             <label
@@ -2673,23 +2770,23 @@ const handleSaveOrUpdate = async (event) => {
             />
           </div>
           <div className="SugarTenderPurchase-col">
-    <label htmlFor="GSTAmt" className="SugarTenderPurchase-form-label">
-        GST Amount
-    </label>
-    <input
-        type="text"
-        id="GSTAmt"
-        name="GSTAmt"
-        className="SugarTenderPurchase-form-control"
-        value={calculatedValues.gstAmt || ''}
-        onChange={(e) => {
-            console.log('GST Amount Input:', e.target.value); 
-            handleChange(e);
-        }}
-        disabled={!isEditing && addOneButtonEnabled}
-        tabIndex={30}
-    />
-</div>
+            <label htmlFor="GSTAmt" className="SugarTenderPurchase-form-label">
+              GST Amount
+            </label>
+            <input
+              type="text"
+              id="GSTAmt"
+              name="GSTAmt"
+              className="SugarTenderPurchase-form-control"
+              value={calculatedValues.gstAmt || ""}
+              onChange={(e) => {
+                console.log("GST Amount Input:", e.target.value);
+                handleChange(e);
+              }}
+              disabled={!isEditing && addOneButtonEnabled}
+              tabIndex={30}
+            />
+          </div>
 
           <div className="SugarTenderPurchase-col">
             <label>{calculatedValues.lblValue}</label>
@@ -2744,13 +2841,17 @@ const handleSaveOrUpdate = async (event) => {
               type="text"
               id="TCS_Rate"
               name="TCS_Rate"
-              className={`SugarTenderPurchase-form-control ${errors.type ? 'error-border' : ''}`}
+              className={`SugarTenderPurchase-form-control ${
+                errors.type ? "error-border" : ""
+              }`}
               value={formData.TCS_Rate}
               onChange={handleChange}
               disabled={!isEditing && addOneButtonEnabled}
               tabIndex={33}
             />
-            {errors.TCS_Rate && <p className="error-message">{errors.TCS_Rate}</p>}
+            {errors.TCS_Rate && (
+              <p className="error-message">{errors.TCS_Rate}</p>
+            )}
           </div>
           <div className="SugarTenderPurchase-col">
             <label htmlFor="TCS_Amt" className="SugarTenderPurchase-form-label">
@@ -2761,7 +2862,9 @@ const handleSaveOrUpdate = async (event) => {
               id="TCS_Amt"
               name="TCS_Amt"
               className="SugarTenderPurchase-form-control"
-              value={calculatedValues.tcsAmt || calculatedValues.calculatedTcsAmt}
+              value={
+                calculatedValues.tcsAmt || calculatedValues.calculatedTcsAmt
+              }
               onChange={handleChange}
               disabled={!isEditing && addOneButtonEnabled}
               tabIndex={34}
@@ -2779,13 +2882,17 @@ const handleSaveOrUpdate = async (event) => {
               type="text"
               id="TDS_Rate"
               name="TDS_Rate"
-              className={`SugarTenderPurchase-form-control ${errors.type ? 'error-border' : ''}`}
+              className={`SugarTenderPurchase-form-control ${
+                errors.type ? "error-border" : ""
+              }`}
               value={formData.TDS_Rate}
               onChange={handleChange}
               disabled={!isEditing && addOneButtonEnabled}
               tabIndex={35}
             />
-            {errors.TDS_Rate && <p className="error-message">{errors.TDS_Rate}</p>}
+            {errors.TDS_Rate && (
+              <p className="error-message">{errors.TDS_Rate}</p>
+            )}
           </div>
           <div className="SugarTenderPurchase-col">
             <label htmlFor="TDS_Amt" className="SugarTenderPurchase-form-label">
@@ -2796,7 +2903,11 @@ const handleSaveOrUpdate = async (event) => {
               id="TDS_Amt"
               name="TDS_Amt"
               className="SugarTenderPurchase-form-control"
-              value={ formData.TDS_Amt || calculatedValues.tdsAmt || calculatedValues.calculatedTdsAmt}
+              value={
+                formData.TDS_Amt ||
+                calculatedValues.tdsAmt ||
+                calculatedValues.calculatedTdsAmt
+              }
               onChange={handleChange}
               disabled={!isEditing && addOneButtonEnabled}
               tabIndex={36}
@@ -2829,9 +2940,9 @@ const handleSaveOrUpdate = async (event) => {
                         <label>Bill To</label>
                         <div className="form-element">
                           <AccountMasterHelp
-                            key={billTo} 
+                            key={billTo}
                             onAcCodeClick={handleBillTo}
-                            CategoryName={ selfAcCode ?  selfAcName : billtoName}
+                            CategoryName={selfAcCode ? selfAcName : billtoName}
                             CategoryCode={billTo || selfAcCode}
                             name="Buyer"
                             tabIndexHelp={38}
@@ -2842,9 +2953,9 @@ const handleSaveOrUpdate = async (event) => {
                         <label>Ship To</label>
                         <div className="form-element">
                           <AccountMasterHelp
-                          key={shipTo} 
+                            key={shipTo}
                             onAcCodeClick={handleShipTo}
-                            CategoryName={ selfAcCode ?  selfAcName : shiptoName}
+                            CategoryName={selfAcCode ? selfAcName : shiptoName}
                             CategoryCode={shipTo || selfAcCode}
                             name="ShipTo"
                             tabIndexHelp={39}
@@ -2855,7 +2966,6 @@ const handleSaveOrUpdate = async (event) => {
                       </div>
 
                       <div className="form-row">
-                      
                         <label htmlFor="Delivery_Type">Delivery Type:</label>
                         <select
                           id="Delivery_Type"
@@ -2875,21 +2985,24 @@ const handleSaveOrUpdate = async (event) => {
                         <label>Broker</label>
                         <div className="form-element">
                           <AccountMasterHelp
-                          key={buyerParty}
+                            key={buyerParty}
                             onAcCodeClick={handleBuyerParty}
-                            CategoryName={self_ac_Code ? self_acName : buyerPartyName}
-                            CategoryCode={buyerParty || selfAcCode || self_ac_Code || 2}
+                            CategoryName={
+                              self_ac_Code ? self_acName : buyerPartyName
+                            }
+                            CategoryCode={
+                              buyerParty || selfAcCode || self_ac_Code || 2
+                            }
                             name="Buyer_Party"
                             tabIndexHelp={39}
                             className="account-master-help"
                             disabledFeild={!isEditing && addOneButtonEnabled}
                           />
                         </div>
-                        
                       </div>
 
                       <div className="form-row">
-                      <label>Brokrage</label>
+                        <label>Brokrage</label>
                         <input
                           type="text"
                           tabIndex={43}
@@ -2903,8 +3016,16 @@ const handleSaveOrUpdate = async (event) => {
                         <label>Sub Broker:</label>
                         <AccountMasterHelp
                           onAcCodeClick={handleDetailSubBroker}
-                          CategoryName={self_ac_Code ? self_acName : brokerDetail}
-                          CategoryCode={formDataDetail.sub_broker||subBroker || selfAcCode || self_ac_Code || 2}
+                          CategoryName={
+                            self_ac_Code ? self_acName : brokerDetail
+                          }
+                          CategoryCode={
+                            formDataDetail.sub_broker ||
+                            subBroker ||
+                            selfAcCode ||
+                            self_ac_Code ||
+                            2
+                          }
                           name="sub_broker"
                           tabIndexHelp={42}
                           className="account-master-help"
@@ -3019,7 +3140,7 @@ const handleSaveOrUpdate = async (event) => {
                           className="form-control"
                           name="gst_rate"
                           autoComplete="off"
-                          value={formDataDetail.gst_rate || gstCode }
+                          value={formDataDetail.gst_rate || gstCode}
                           onChange={handleChangeDetail}
                           disabled={!isEditing && addOneButtonEnabled}
                         />
@@ -3059,8 +3180,11 @@ const handleSaveOrUpdate = async (event) => {
                           className="form-control"
                           name="tcs_amt"
                           autoComplete="off"
-                          value={calculatedValues.TCSAmt ||
-                            calculatedValues.gstAmtDetail * (formDataDetail.tcs_rate / 100)}
+                          value={
+                            calculatedValues.TCSAmt ||
+                            calculatedValues.gstAmtDetail *
+                              (formDataDetail.tcs_rate / 100)
+                          }
                           onChange={handleChangeDetail}
                           disabled={!isEditing && addOneButtonEnabled}
                         />
@@ -3145,8 +3269,8 @@ const handleSaveOrUpdate = async (event) => {
               <thead>
                 <tr>
                   <th>Actions</th>
-                   <th>ID</th>
-                {/*<th>RowAction</th> */}
+                  <th>ID</th>
+                  {/*<th>RowAction</th> */}
                   <th>Party</th>
                   <th>Party Name</th>
                   <th>Broker</th>
@@ -3213,8 +3337,8 @@ const handleSaveOrUpdate = async (event) => {
                         </button>
                       ) : null}
                     </td>
-                     <td>{user.id}</td>
-                 {/* <td>{user.rowaction}</td> */}
+                    <td>{user.id}</td>
+                    {/* <td>{user.rowaction}</td> */}
                     <td>{user.Buyer}</td>
                     <td>{user.billtoName}</td>
                     <td>{user.Buyer_Party}</td>

@@ -3,6 +3,8 @@ from flask import jsonify, request
 from app import app, db
 from app.models.Reports.GLedeger.GLedgerModels import Gledger
 import os
+from sqlalchemy import text
+
 # Get the base URL from environment variables
 API_URL = os.getenv('API_URL')
 
@@ -154,3 +156,64 @@ def delete_Record_Gledger():
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': 'Internal server error', 'message': str(e)}), 500
+
+@app.route(API_URL + "/get_gLedgerReport_AcWise", methods=["GET"])
+def get_gLedgerReport_AcWise():
+    def format_date(date):
+        if date:
+            return date.strftime('%d/%m/%Y')
+        return None
+    try:
+        # Get query parameters
+        company_code = request.args.get('Company_Code')
+        year_code = request.args.get('Year_Code')
+        from_date = request.args.get('from_date')
+        to_date = request.args.get('to_date')
+
+        # Ensure required parameters are present
+        if not company_code or not year_code:
+            return jsonify({"error": "Missing 'Company_Code' or 'Year_Code' parameter"}), 400
+
+        # Base SQL query
+        query = '''
+            SELECT dbo.nt_1_gledger.TRAN_TYPE, dbo.nt_1_gledger.DOC_NO, dbo.nt_1_gledger.DOC_DATE, dbo.nt_1_gledger.AC_CODE, dbo.nt_1_accountmaster.Ac_Name_E, 
+                   dbo.nt_1_gledger.NARRATION, 
+                   CASE WHEN dbo.nt_1_gledger.drcr = 'D' THEN dbo.nt_1_gledger.AMOUNT ELSE 0 END AS debit, 
+                   CASE WHEN dbo.nt_1_gledger.drcr = 'C' THEN dbo.nt_1_gledger.AMOUNT ELSE 0 END AS credit
+            FROM dbo.nt_1_gledger 
+            LEFT OUTER JOIN dbo.nt_1_accountmaster 
+            ON dbo.nt_1_gledger.ac = dbo.nt_1_accountmaster.accoid
+            WHERE dbo.nt_1_gledger.Company_Code = :company_code 
+            AND dbo.nt_1_gledger.Year_Code = :year_code
+        '''
+        if from_date and to_date:
+            query += " AND dbo.nt_1_gledger.DOC_DATE BETWEEN :from_date AND :to_date"
+
+        # Execute the query with parameters
+        additional_data = db.session.execute(
+            text(query), 
+            {"company_code": company_code, "year_code": year_code, "from_date": from_date, "to_date": to_date}
+        )
+
+        # Fetch results
+        additional_data_rows = additional_data.fetchall()
+
+        # Convert rows to dictionaries
+        all_data = [dict(row._mapping) for row in additional_data_rows]
+
+        # Format date fields
+        for data in all_data:
+            if 'DOC_DATE' in data:
+                data['DOC_DATE'] = format_date(data['DOC_DATE'])
+
+        # Prepare response
+        response = {
+            "all_data": all_data
+        }
+
+        # Return response
+        return jsonify(response), 200
+
+    except Exception as e:
+        print(e)
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500

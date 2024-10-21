@@ -75,6 +75,14 @@ def get_acShort_Name(ac_code,company_code):
         return result.Short_Name if result else None
 
 
+def fetch_auto_voucher_value(company_code, year_code):
+        query = """
+        SELECT        AutoVoucher
+FROM            dbo.nt_1_companyparameters 
+          WHERE Company_Code = :company_code AND Year_Code = :year_code
+        """
+        result = db.session.execute(text(query), {'company_code': company_code, 'year_code': year_code}).fetchone()
+        return result
 
 
       

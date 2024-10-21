@@ -108,14 +108,25 @@ function CommissionBillUtility() {
     
   };
 
-  const handleRowClick = (doc_no) => {
+  const handleRowClick = (doc_no, tranType) => {
+    // Find the selected record based on doc_no and tranType
     const selectedRecord = fetchedData.find(
       (commission_bill) => commission_bill.doc_no === doc_no
     );
-    navigate("/commission-bill", {
-      state: { selectedRecord, tranType },
-    });
+  
+    if (selectedRecord) {
+      // Navigate to the commission-bill page and pass the tranType and selectedRecord
+      navigate("/commission-bill", {
+        state: {
+          selectedRecord,
+          tranType: selectedRecord.Tran_Type || tranType,
+        },
+      });
+    } else {
+      console.error("Record not found for the provided doc_no and tranType.");
+    }
   };
+  
 
   const handleBackButton = () => {
     navigate("/DashBoard");

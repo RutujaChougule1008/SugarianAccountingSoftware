@@ -220,83 +220,294 @@ const AccountMaster = () => {
     }));
   };
 
-  const validateForm = () => {
-    if (!formData.Ac_Name_E.trim()) {
-      toast.error("Account Name is required.");
-      return false;
+  const fetchGstStateCode = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:8080/get-GSTStateCode?Company_Code=${companyCode}&Year_Code=${Year_Code}`
+      );
+      return response.data.GSTStateCode;
+    } catch (error) {
+      console.error("Error fetching GST State Code:", error);
+      return null;
     }
-
-    if (!formData.City_Code) {
-      toast.error("City Code is required.");
-      return false;
-    }
-
-    if (!formData.Group_Code) {
-      toast.error("Group Code is required.");
-      return false;
-    }
-
-    if (formData.Ac_type === "BR" && !formData.Short_Name.trim()) {
-      toast.error("Short Name is required for Brokers.");
-      return false;
-    }
-
-    if (
-      (formData.Ac_type === "P" || formData.Ac_type === "S") &&
-      formData.Bank_Opening > 0
-    ) {
-      toast.error("Bank Opening must be zero for Party or Supplier.");
-      return false;
-    }
-
-    if (
-      formData.Ac_type === "B" &&
-      (!formData.Bank_Ac_No.trim() || !formData.IFSC.trim())
-    ) {
-      toast.error("Bank Account Number and IFSC Code are required for Banks.");
-      return false;
-    }
-
-    return true;
   };
+
+  useEffect(()=>{
+    fetchGstStateCode();
+  })
+
+//   const validateForm = () => {
+//     if (!formData.Ac_Name_E.trim()) {
+//       toast.error("Account Name is required.");
+//       return false;
+//     }
+
+//     if (!formData.City_Code) {
+//       toast.error("City Code is required.");
+//       return false;
+//     }
+
+//     if (!formData.Group_Code) {
+//       toast.error("Group Code is required.");
+//       return false;
+//     }
+
+//     if (!formData.Address_E) {
+//       toast.error("Address Is Required...");
+//       return false;
+//     }
+
+//     if (formData.Ac_type === "BR" && !formData.Short_Name.trim()) {
+//       toast.error("Short Name is required for Brokers.");
+//       return false;
+//     }
+
+//     if (
+//       (formData.Ac_type === "P" || formData.Ac_type === "S") &&
+//       formData.Bank_Opening > 0
+//     ) {
+//       toast.error("Bank Opening must be zero for Party or Supplier.");
+//       return false;
+//     }
+
+//   if ((formData.Ac_type === "P" || formData.Ac_type === "S") && formData.UnregisterGST !== 1) {
+//     if(!formData.Gst_No) {
+//       toast.error("GST Number is required");
+//       return false;
+//     }
+//     if(!formData.CompanyPan) {
+//       toast.error("Company Pan is required");
+//       return false;
+//     }
+// }
+
+//     if (
+//       formData.Ac_type === "B" &&
+//       (!formData.Bank_Ac_No.trim() || !formData.IFSC.trim())
+//     ) {
+//       toast.error("Bank Account Number and IFSC Code are required for Banks.");
+//       return false;
+//     }
+
+//     return true;
+//   };
+
+
+const validateForm = () => {
+  // Common required fields
+  if (!formData.Ac_Name_E.trim()) {
+    toast.error("Account Name is required.");
+    return false;
+  }
+
+  if (!formData.City_Code) {
+    toast.error("City Code is required.");
+    return false;
+  }
+
+  if (!formData.Group_Code) {
+    toast.error("Group Code is required.");
+    return false;
+  }
+
+  if (!formData.Address_E.trim()) {
+    toast.error("Address is required.");
+    return false;
+  }
+
+  // Specific validation for Brokers
+  if (formData.Ac_type === "BR" && !formData.Short_Name.trim()) {
+    toast.error("Short Name is required for Brokers.");
+    return false;
+  }
+
+  // Validation for Party and Supplier
+  if ((formData.Ac_type === "P" || formData.Ac_type === "S") && formData.Bank_Opening > 0) {
+    toast.error("Bank Opening must be zero for Party or Supplier.");
+    return false;
+  }
+
+  // Conditional validation for GST and Company PAN if not unregistered
+  if ((formData.Ac_type === "P" || formData.Ac_type === "S") && formData.UnregisterGST !== 1) {
+    if (!formData.Gst_No) {
+      toast.error("GST Number is required");
+      return false;
+    }
+    if (!formData.CompanyPan) {
+      toast.error("Company Pan is required");
+      return false;
+    }
+  }
+
+  // Validation for Banks
+  if (formData.Ac_type === "B" && (!formData.Bank_Ac_No.trim() || !formData.IFSC.trim())) {
+    toast.error("Bank Account Number and IFSC Code are required for Banks.");
+    return false;
+  }
+
+  // Specific requirements for Fixed Assets, Interest Party, and Transport
+  if (["F", "I", "T"].includes(formData.Ac_type)) {
+    if (!formData.Short_Name.trim()) {
+      toast.error("Short Name is required for Fixed Assets, Interest Party, and Transport.");
+      return false;
+    }
+    if (formData.Ac_rate <= 0) {
+      toast.error("Interest Rate must be greater than zero for Fixed Assets, Interest Party, and Transport.");
+      return false;
+    }
+    if (!formData.Ac_Name_R.trim()) {
+      toast.error("Regional Name is required for Fixed Assets, Interest Party, and Transport.");
+      return false;
+    }
+  }
+
+  return true;
+};
+
 
   console.log(cityMasterData, city_data, cityName);
 
 
-  const isFieldEnabled = (fieldType) => {
-    switch (fieldType) {
+  // const isFieldEnabled = (fieldType) => {
+  //   // For account types 'F' (Fixed Assets), 'I' (Interest Party), and 'T' (Transport)
+  //   const fixedInterestTransport = ["F", "I", "T"];
+    
+  //   switch (fieldType) {
+  //     case "Ac_rate":
+  //       // Enable Interest Rate for Interest Party, Fixed Assets, Party, and Supplier
+  //       return ["I", "F", "P", "S"].includes(formData.Ac_type);
+  //     case "Ac_Name_E":
+  //     case "Group_Code":
+  //     case "Ac_Name_R":
+  //     case "Short_Name":
+  //       // Always enabled, but specifically required for 'F', 'I', 'T'
+  //       return true;
+  //     case "Bank_Opening":
+  //     case "bank_Op_Drcr":
+  //     case "Opening_Balance":
+  //     case "Drcr":
+  //       // Disable for Party and Supplier
+  //       return !["P", "S"].includes(formData.Ac_type);
+  //     case "Limit_By":
+  //     case "Local_Lic_No":
+  //     case "Tan_no":
+  //     case "FSSAI":
+  //       // Enable based on specific account types
+  //       return !["B", "C", "R", "F", "I", "E", "O", "M", "T", "BR", "RP", "CR"].includes(formData.Ac_type);
+  //     default:
+  //       return true;
+  //   }
+  // };
+
+//   const isFieldEnabled = (fieldType) => {
+//     // Define types for exclusion in various scenarios
+//     const excludeForPartyAndSupplier = ["P", "S"]; // Exclude certain fields for Party and Supplier
+//     const excludeForBank = ["B"]; // Fields to disable specifically for Banks
+    
+//     switch (fieldType) {
+//         case "Ac_rate":
+//             // Enable Interest Rate only for Interest Party and Fixed Assets
+//             return ["I", "F"].includes(formData.Ac_type);
+//         case "Ac_Name_E":
+//         case "Group_Code":
+//         case "Ac_Name_R":
+//         case "Short_Name":
+//             // Always enabled but with specific required conditions in validation
+//             return true;
+//         case "Bank_Opening":
+//         case "bank_Op_Drcr":
+//             // Only enable for Banks
+//             return excludeForBank.includes(formData.Ac_type);
+//         case "Opening_Balance":
+//         case "Drcr":
+//             // Disable for Party, Supplier, and enable specifically for Bank
+//             return !excludeForPartyAndSupplier.includes(formData.Ac_type) && excludeForBank.includes(formData.Ac_type);
+//         case "Limit_By":
+//         case "Local_Lic_No":
+//         case "Tan_no":
+//         case "FSSAI":
+//         case "carporate_party":
+//             // Disable these fields specifically for Bank type
+//             return !excludeForBank.includes(formData.Ac_type);
+//         default:
+//             return true;
+//     }
+// };
+const isFieldEnabled = (fieldType) => {
+  const yearCode = sessionStorage.getItem("Year_Code"); // Assuming you store Year_Code in sessionStorage
+
+  switch (fieldType) {
       case "Ac_rate":
-        return formData.Ac_type === "I" || formData.Ac_type === "F";
+          // Enable Interest Rate only for Interest Party and Fixed Assets
+          return ["I", "F"].includes(formData.Ac_type);
+      case "Ac_Name_E":
+      case "Ac_Name_R":
+      case "Short_Name":
+      case "Group_Code":
+          // Enable for all types, but with specific additional logic for 'C'
+          return formData.Ac_type !== "B";
       case "Bank_Opening":
       case "bank_Op_Drcr":
+          // Enable for Banks
+          return formData.Ac_type === "B";
       case "Opening_Balance":
       case "Drcr":
-        return formData.Ac_type !== "P" && formData.Ac_type !== "S";
+          // Enable only for Party (P) when Year_Code is 1
+          return formData.Ac_type === "P" && yearCode === "1";
       case "Limit_By":
-      case "Opening_Balance":
-      case "Drcr":
-      case "carporate_party":
       case "Local_Lic_No":
       case "Tan_no":
       case "FSSAI":
-        return (
-          formData.Ac_type !== "B" &&
-          formData.Ac_type !== "C" &&
-          formData.Ac_type !== "R" &&
-          formData.Ac_type !== "F" &&
-          formData.Ac_type !== "I" &&
-          formData.Ac_type !== "E" &&
-          formData.Ac_type !== "O" &&
-          formData.Ac_type !== "M" &&
-          formData.Ac_type !== "T" &&
-          formData.Ac_type !== "BR" &&
-          formData.Ac_type !== "RP" &&
-          formData.Ac_type !== "CR"
-        );
+      case "carporate_party":
+          // Disable these fields for Banks
+          return formData.Ac_type !== "B" && formData.Ac_type !== "C";
+      case "Limit_By":
+      case "Local_Lic_No":
+      case "Tan_no":
+      case "FSSAI":
+      case "carporate_party":
+      case "Tin_No":
+      case "Cst_no":
+      case "Gst_No":
+      case "Email_Id":
+      case "Email_Id_cc":
+      case "Other_Narration":
+      case "ECC_No":
+      case "Bank_Name":
+      case "Bank_Ac_No":
+      case "IFSC":
+      case "Mobile_No":
+      case "OffPhone":
+      case "Fax":
+      case "CompanyPan":
+      case "AC_Pan":
+      case "whatsup_no":
+      case "adhar_no":
+      case "PanLink":
+      case "Insurance":
+      case "MsOms":
+      case "loadingbyus":
+      case "payBankAc":
+      case "payIfsc":
+      case "PayBankName":
+      case "FrieghtOrMill":
+      case "Locked":
+      case "GSTStateCode":
+      case "UnregisterGST":
+      case "Distance":
+      case "Bal_Limit":
+      case "Insurance":
+      case "referBy":
+      case "Pincode":
+      case "TransporterId":
+                // Disable these fields for Cash
+          return formData.Ac_type !== "C";
       default:
-        return true;
-    }
-  };
+          return true;
+  }
+};
+
+  
   const handleCheckboxAcGroups = (e, group) => {
     const { checked } = e.target;
 
@@ -988,7 +1199,9 @@ const AccountMaster = () => {
         await axios.post(`${API_URL}/create-multiple-acgroups`, groupUpdateData);
         toast.success("Groups updated successfully!");
       }
-
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
 
       setIsEditMode(false);
       setAddOneButtonEnabled(true);
@@ -999,9 +1212,7 @@ const AccountMaster = () => {
       setCancelButtonEnabled(false);
       setIsEditing(false);
       setIsLoading(false);
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      
     } catch (error) {
       console.error("Error during API call:", error);
       toast.error(`Error occurred while saving data: ${error.message}`);
@@ -1468,16 +1679,23 @@ const AccountMaster = () => {
               Name="Address_E"
               value={formData.Address_E}
               onChange={handleChange}
-              disabled={!isEditing && addOneButtonEnabled}
+              disabled={
+                !isFieldEnabled("Address_E") ||
+                (!isEditing && addOneButtonEnabled)
+              }
+              minLength={10}
             />
             <label htmlFor="Address_R">Address2::</label>
             <input
               type="text"
               id="Address_R"
-              Name="Address_R"
+              name="Address_R"
               value={formData.Address_R}
               onChange={handleChange}
-              disabled={!isEditing && addOneButtonEnabled}
+              disabled={
+                !isFieldEnabled("Address_R") ||
+                (!isEditing && addOneButtonEnabled)
+              }
             />
             <label htmlFor="City_Code">City Code:</label>
             <CityMasterHelp
@@ -1541,12 +1759,15 @@ const AccountMaster = () => {
             <input
               type="text"
               id="Pincode"
-              Name="Pincode"
+              name="Pincode"
               value={
                 cityMasterData ? cityMasterData.city.pincode : formData.Pincode
               }
               onChange={handleChange}
-              disabled={!isEditing && addOneButtonEnabled}
+              disabled={
+                !isFieldEnabled("Pincode") ||
+                (!isEditing && addOneButtonEnabled)
+              }
             />
           </div>
           <div className="ac-master-form-group ">
@@ -1554,7 +1775,7 @@ const AccountMaster = () => {
             <input
               type="text"
               id="Local_Lic_No"
-              Name="Local_Lic_No"
+              name="Local_Lic_No"
               value={formData.Local_Lic_No}
               onChange={handleChange}
               disabled={
@@ -1566,10 +1787,13 @@ const AccountMaster = () => {
             <input
               type="text"
               id="Gst_No"
-              Name="Gst_No"
+              name="Gst_No"
               value={formData.Gst_No}
               onChange={handleChange}
-              disabled={!isEditing && addOneButtonEnabled}
+              disabled={
+                !isFieldEnabled("Gst_No") ||
+                (!isEditing && addOneButtonEnabled)
+              }
             />
 
             <svg
@@ -1588,29 +1812,38 @@ const AccountMaster = () => {
             <input
               type="text"
               id="Email_Id"
-              Name="Email_Id"
+              name="Email_Id"
               value={formData.Email_Id}
               onChange={handleChange}
-              disabled={!isEditing && addOneButtonEnabled}
+              disabled={
+                !isFieldEnabled("Email_Id") ||
+                (!isEditing && addOneButtonEnabled)
+              }
             />
             <label htmlFor="Email_Id_cc">CC Email::</label>
             <input
               type="text"
               id="Email_Id_cc"
-              Name="Email_Id_cc"
+              name="Email_Id_cc"
               value={formData.Email_Id_cc}
               onChange={handleChange}
-              disabled={!isEditing && addOneButtonEnabled}
+              disabled={
+                !isFieldEnabled("Email_Id_cc") ||
+                (!isEditing && addOneButtonEnabled)
+              }
             />
             <label htmlFor="Other_Narration">Other Narration::</label>
             <textarea
               type="text"
               id="Other_Narration"
-              Name="Other_Narration"
+              name="Other_Narration"
               value={formData.Other_Narration}
               rows={2}
               onChange={handleChange}
-              disabled={!isEditing && addOneButtonEnabled}
+              disabled={
+                !isFieldEnabled("Other_Narration") ||
+                (!isEditing && addOneButtonEnabled)
+              }
             />
           </div>
 
@@ -1620,25 +1853,31 @@ const AccountMaster = () => {
             <input
               type="text"
               id="Bank_Name"
-              Name="Bank_Name"
+              name="Bank_Name"
               value={formData.Bank_Name}
               onChange={handleChange}
-              disabled={!isEditing && addOneButtonEnabled}
+              disabled={
+                !isFieldEnabled("Bank_Name") ||
+                (!isEditing && addOneButtonEnabled)
+              }
             />
             <label htmlFor="Bank_Ac_No">Bank A/c No::</label>
             <input
               type="text"
               id="Bank_Ac_No"
-              Name="Bank_Ac_No"
+              name="Bank_Ac_No"
               value={formData.Bank_Ac_No}
               onChange={handleChange}
-              disabled={!isEditing && addOneButtonEnabled}
+              disabled={
+                !isFieldEnabled("Bank_Ac_No") ||
+                (!isEditing && addOneButtonEnabled)
+              }
             />
             <label htmlFor="Bank_Opening">Bank Opening Bal::</label>
             <input
               type="text"
               id="Bank_Opening"
-              Name="Bank_Opening"
+              name="Bank_Opening"
               value={formData.Bank_Opening}
               onChange={handleChange}
               disabled={
@@ -1649,7 +1888,7 @@ const AccountMaster = () => {
             <label htmlFor="bank_Op_Drcr">Bank Dr/Cr: :</label>
             <select
               id="bank_Op_Drcr"
-              Name="bank_Op_Drcr"
+              name="bank_Op_Drcr"
               value={formData.bank_Op_Drcr}
               onChange={handleChange}
               disabled={
@@ -1664,7 +1903,7 @@ const AccountMaster = () => {
             <input
               type="text"
               id="Opening_Balance"
-              Name="Opening_Balance"
+              name="Opening_Balance"
               value={formData.Opening_Balance}
               onChange={handleChange}
               disabled={
@@ -1675,7 +1914,7 @@ const AccountMaster = () => {
             <label htmlFor="Drcr">Dr/Cr:</label>
             <select
               id="Drcr"
-              Name="Drcr"
+              name="Drcr"
               value={formData.Drcr}
               onChange={handleChange}
               disabled={
@@ -1743,25 +1982,31 @@ const AccountMaster = () => {
             <input
               type="text"
               id="Short_Name"
-              Name="Short_Name"
+              name="Short_Name"
               value={formData.Short_Name}
               onChange={handleChange}
-              disabled={!isEditing && addOneButtonEnabled}
+              disabled={
+                !isFieldEnabled("Short_Name") ||
+                (!isEditing && addOneButtonEnabled)
+              }
             />
             <label htmlFor="Commission">Commission Rate::</label>
             <input
               type="text"
               id="Commission"
-              Name="Commission"
+              name="Commission"
               value={formData.Commission}
               onChange={handleChange}
-              disabled={!isEditing && addOneButtonEnabled}
+              disabled={
+                !isFieldEnabled("Commission") ||
+                (!isEditing && addOneButtonEnabled)
+              }
             />
             <label htmlFor="carporate_party">Is Carporate Party::</label>
             <input
               type="checkbox"
               id="carporate_party"
-              Name="carporate_party"
+              name="carporate_party"
               checked={formData.carporate_party === "Y"}
               onChange={(e) => handleCheckbox(e, "string")}
               disabled={
@@ -1773,10 +2018,13 @@ const AccountMaster = () => {
             <input
               type="text"
               id="referBy"
-              Name="referBy"
+              name="referBy"
               value={formData.referBy}
               onChange={handleChange}
-              disabled={!isEditing && addOneButtonEnabled}
+              disabled={
+                !isFieldEnabled("referBy") ||
+                (!isEditing && addOneButtonEnabled)
+              }
             />
           </div>
           <div className="ac-master-form-group ">
@@ -1784,55 +2032,70 @@ const AccountMaster = () => {
             <input
               type="text"
               id="OffPhone"
-              Name="OffPhone"
+              name="OffPhone"
               value={formData.OffPhone}
               onChange={handleChange}
-              disabled={!isEditing && addOneButtonEnabled}
+              disabled={
+                !isFieldEnabled("OffPhone") ||
+                (!isEditing && addOneButtonEnabled)
+              }
             />
             <label htmlFor="Fax">TCS/TDS Link::</label>
             <input
               type="text"
               id="Fax"
-              Name="Fax"
+              name="Fax"
               value={formData.Fax}
               onChange={handleChange}
-              disabled={!isEditing && addOneButtonEnabled}
+              disabled={
+                !isFieldEnabled("Fax") ||
+                (!isEditing && addOneButtonEnabled)
+              }
             />
             <label htmlFor="CompanyPan">Company Pan::</label>
             <input
               type="text"
               id="CompanyPan"
-              Name="CompanyPan"
+              name="CompanyPan"
               value={
                 formData.CompanyPan ||
                 formData.Gst_No.substring(2, formData.Gst_No.length - 3).trim()
               }
               onChange={handleChange}
-              disabled={!isEditing && addOneButtonEnabled}
+              disabled={
+                !isFieldEnabled("CompanyPan") ||
+                (!isEditing && addOneButtonEnabled)
+              }
             />
             <label htmlFor="Mobile_No">Mobile No.::</label>
             <input
               type="text"
               id="Mobile_No"
-              Name="Mobile_No"
+              name="Mobile_No"
               value={formData.Mobile_No}
               onChange={handleChange}
-              disabled={!isEditing && addOneButtonEnabled}
+              disabled={
+                !isFieldEnabled("Mobile_No") ||
+                (!isEditing && addOneButtonEnabled)
+              }
             />
             <label htmlFor="IFSC">Bank IFSC Code::</label>
             <input
               type="text"
               id="IFSC"
-              Name="IFSC"
+              name="IFSC"
               value={formData.IFSC}
               onChange={handleChange}
-              disabled={!isEditing && addOneButtonEnabled}
+              disabled={
+                !isFieldEnabled("IFSC") ||
+                (!isEditing && addOneButtonEnabled)
+              }
             />
             <label htmlFor="FSSAI">FSSAI Lic No::</label>
             <input
               type="text"
               id="FSSAI"
-              Name="FSSAI"
+              name="FSSAI"
               value={formData.FSSAI}
               onChange={handleChange}
               disabled={
@@ -1845,10 +2108,13 @@ const AccountMaster = () => {
             <input
               type="checkbox"
               id="Locked"
-              Name="Locked"
+              name="Locked"
               checked={formData.Locked === 1}
               onChange={(e) => handleCheckbox(e, "numeric")}
-              disabled={!isEditing && addOneButtonEnabled}
+              disabled={
+                !isFieldEnabled("Locked") ||
+                (!isEditing && addOneButtonEnabled)
+              }
             />
             <label htmlFor="GSTStateCode">GST State Code:</label>
             <GSTStateMasterHelp
@@ -1863,42 +2129,54 @@ const AccountMaster = () => {
             <input
               type="checkbox"
               id="UnregisterGST"
-              Name="UnregisterGST"
+              name="UnregisterGST"
               checked={formData.UnregisterGST === 1}
               onChange={(e) => handleCheckbox(e, "numeric")}
-              disabled={!isEditing && addOneButtonEnabled}
+              disabled={
+                !isFieldEnabled("UnregisterGST") ||
+                (!isEditing && addOneButtonEnabled)
+              }
             />
             <label htmlFor="Distance">Distance::</label>
             <input
               type="text"
               id="Distance"
-              Name="Distance"
+              name="Distance"
               value={formData.Distance}
               onChange={handleChange}
-              disabled={!isEditing && addOneButtonEnabled}
+              disabled={
+                !isFieldEnabled("Distance") ||
+                (!isEditing && addOneButtonEnabled)
+              }
             />
             <label htmlFor="whatsup_no">whatsApp No::</label>
             <input
               type="text"
               id="whatsup_no"
-              Name="whatsup_no"
+              name="whatsup_no"
               value={formData.whatsup_no}
               onChange={handleChange}
-              disabled={!isEditing && addOneButtonEnabled}
+              disabled={
+                !isFieldEnabled("whatsup_no") ||
+                (!isEditing && addOneButtonEnabled)
+              }
             />
             <label htmlFor="adhar_no">Adhar No::</label>
             <input
               type="text"
               id="adhar_no"
-              Name="adhar_no"
+              name="adhar_no"
               value={formData.adhar_no}
               onChange={handleChange}
-              disabled={!isEditing && addOneButtonEnabled}
+              disabled={
+                !isFieldEnabled("adhar_no") ||
+                (!isEditing && addOneButtonEnabled)
+              }
             />
             <label htmlFor="Limit_By">Limit::</label>
             <select
               id="Limit_By"
-              Name="Limit_By"
+              name="Limit_By"
               value={formData.Limit_By}
               onChange={handleChange}
               disabled={
@@ -1915,7 +2193,7 @@ const AccountMaster = () => {
             <input
               type="text"
               id="Tan_no"
-              Name="Tan_no"
+              name="Tan_no"
               value={formData.Tan_no}
               onChange={handleChange}
               disabled={
@@ -1925,10 +2203,12 @@ const AccountMaster = () => {
             <label htmlFor="TDSApplicable">TDS Applicable::</label>
             <select
               id="TDSApplicable"
-              Name="TDSApplicable"
+              name="TDSApplicable"
               value={formData.TDSApplicable}
               onChange={handleChange}
-              disabled={!isEditing && addOneButtonEnabled}
+              disabled={
+                !isFieldEnabled("TDSApplicable") || (!isEditing && addOneButtonEnabled)
+              }
             >
               <option value="L">Lock</option>
               <option value="Y">Sale TDS By Limit</option>
@@ -1942,10 +2222,13 @@ const AccountMaster = () => {
             </label>
             <select
               id="PurchaseTDSApplicable"
-              Name="PurchaseTDSApplicable"
+              name="PurchaseTDSApplicable"
               value={formData.PurchaseTDSApplicable}
               onChange={handleChange}
-              disabled={!isEditing && addOneButtonEnabled}
+              disabled={
+                !isFieldEnabled("PurchaseTDSApplicable") ||
+                (!isEditing && addOneButtonEnabled)
+              }
             >
               <option value="L">Lock</option>
               <option value="Y">Purchase TDS By Limit</option>
@@ -1958,28 +2241,37 @@ const AccountMaster = () => {
             <input
               type="text"
               id="PanLink"
-              Name="PanLink"
+              name="PanLink"
               value={formData.PanLink}
               onChange={handleChange}
-              disabled={!isEditing && addOneButtonEnabled}
+              disabled={
+                !isFieldEnabled("PanLink") ||
+                (!isEditing && addOneButtonEnabled)
+              }
             />
             <label htmlFor="loadingbyus">Loading by us:</label>
             <input
               type="checkbox"
               id="loadingbyus"
-              Name="loadingbyus"
+              name="loadingbyus"
               checked={formData.loadingbyus === "Y"}
               onChange={(e) => handleCheckbox(e, "string")}
-              disabled={!isEditing && addOneButtonEnabled}
+              disabled={
+                !isFieldEnabled("loadingbyus") ||
+                (!isEditing && addOneButtonEnabled)
+              }
             />
             <label htmlFor="TransporterId">Transporter ID::</label>
             <input
               type="text"
               id="TransporterId"
-              Name="TransporterId"
+              name="TransporterId"
               value={formData.TransporterId}
               onChange={handleChange}
-              disabled={!isEditing && addOneButtonEnabled}
+              disabled={
+                !isFieldEnabled("TransporterId") ||
+                (!isEditing && addOneButtonEnabled)
+              }
             />
           </div>
 

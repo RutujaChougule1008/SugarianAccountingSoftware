@@ -1,0 +1,65 @@
+.waybill-container {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid #ddd;
+    font-family: Arial, sans-serif;
+    background-color: #fff;
+  }
+  
+  .waybill-header {
+    display: flex;
+    justify-content: space-between;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #ccc;
+  }
+  
+  .header-left p, .header-right p {
+    margin: 2px 0;
+  }
+  
+  .qr-code img {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .address-details {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 2px solid #ccc;
+  }
+  
+  .address-from, .address-to {
+    width: 45%;
+  }
+  
+  .goods-details {
+    padding: 10px 0;
+    border-bottom: 2px solid #ccc;
+  }
+  
+  .goods-table, .vehicle-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 10px;
+  }
+  
+  .goods-table th, .goods-table td, .vehicle-table th, .vehicle-table td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: left;
+  }
+  
+  .transportation-details, .vehicle-details {
+    padding: 10px 0;
+  }
+  
+  .disclaimer {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border: 1px solid #ccc;
+  }
+  

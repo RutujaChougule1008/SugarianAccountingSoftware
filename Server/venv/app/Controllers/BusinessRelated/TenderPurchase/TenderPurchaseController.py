@@ -11,16 +11,16 @@ from app.models.BusinessReleted.TenderPurchase.TenderPurchaseModels import Tende
 from sqlalchemy import func, text
 from sqlalchemy.exc import SQLAlchemyError 
 import os
+import requests
 API_URL = os.getenv('API_URL')
 # Import schemas from the schemas module
 from app.models.BusinessReleted.TenderPurchase.TenserPurchaseSchema import TenderHeadSchema, TenderDetailsSchema
-
+from app.utils.CommonGLedgerFunctions import fetch_auto_voucher_value
+from app.utils.CommonSugarPurchaseStatusCheck import get_match_status 
 sio = socketio.Server()
-
 
 app.config['SECRET_KEY'] = 'ABCDEFGHIJKLMNOPQRST'
 CORS(app, cors_allowed_origins="*")
-
 
 # Global SQL Query
 TASK_DETAILS_QUERY = '''
@@ -48,8 +48,6 @@ def format_dates(task):
     return {
         "Lifting_Date": task.Lifting_Date.strftime('%Y-%m-%d') if task.Lifting_Date else None,
          "Tender_Date": task.Tender_Date.strftime('%Y-%m-%d') if task.Tender_Date else None,
-        #  "Sauda_Date": task.Sauda_Date.strftime('%Y-%m-%d') if task.Sauda_Date else None,
-        #  "payment_date": task.payment_date.strftime('%Y-%m-%d') if task.payment_date else None,
     }
 
 def format_dates_details(row):
@@ -57,8 +55,25 @@ def format_dates_details(row):
         row['Sauda_Date'] = row['Sauda_Date'].strftime('%Y-%m-%d') if row['Sauda_Date'] else None
     if 'payment_date' in row:
         row['payment_date'] = row['payment_date'].strftime('%Y-%m-%d') if row['payment_date'] else None
-    # Add more date fields if necessary
     return row
+
+#Fetching Dates for TenderPurchase 
+def get_millPayment_Date(company_code, year_code):
+    result = db.session.execute(
+        text("SELECT Mill_Payment_date FROM nt_1_companyparameters WHERE company_code = :company_code AND year_code = :year_code"),
+        {'company_code': company_code, 'year_code': year_code}
+    ).fetchone()
+    return result.Mill_Payment_date if result else None
+
+# Define a function to compute the new lifting date
+def compute_lifting_date(lifting_date_str, mill_payment_days):
+    try:
+        # Convert lifting_date from string to date object
+        lifting_date_obj = datetime.strptime(lifting_date_str, "%Y-%m-%d").date()
+        new_lifting_date = lifting_date_obj + timedelta(days=mill_payment_days)
+        return new_lifting_date
+    except ValueError:
+        return None
 
 # Define schemas
 tender_head_schema = TenderHeadSchema()
@@ -67,35 +82,14 @@ tender_head_schemas = TenderHeadSchema(many=True)
 tender_detail_schema = TenderDetailsSchema()
 tender_detail_schemas = TenderDetailsSchema(many=True)
 
-# Get data from both tables TenderHead and Tenderdetails
-@app.route(API_URL+"/get-tenderdataall", methods=["GET"])
-def get_Tenderdataall():
-    try:
-        # Query both tables and get the data
-        tenderhead_data = TenderHead.query.all()
-        tenderdetails_data = TenderDetails.query.all()
-        # Serialize the data using schemas
-        HeadData = tender_head_schema.dump(tenderhead_data)
-        Detaildata = tender_detail_schemas.dump(tenderdetails_data)
-        response = {
-            "HeadData": HeadData,
-            "Detaildata": Detaildata
-        }
-        return jsonify(response), 200
-    except Exception as e:
-        # Handle any potential exceptions and return an error response with a 500 Internal Server Error status code
-        return jsonify({"error": "Internal server error", "message": str(e)}), 500
-    
+
 #Get data for Utility
 @app.route(API_URL+"/all_tender_data", methods=["GET"])
 def all_tender_data():
     try:
-
-        # Get the query parameters
         company_code = request.args.get('Company_Code')
         year_code = request.args.get('Year_Code')
 
-        # Validate the query parameters
         if not company_code or not year_code:
             return jsonify({"error": "Bad request", "message": "Missing company_code or year_code parameter"}), 400
 
@@ -118,11 +112,8 @@ def all_tender_data():
             WHERE Company_Code = :company_code AND Year_Code = :year_code
             ORDER BY Tender_No DESC
         """
-
-        # Execute the SQL query with the provided parameters
         result = db.session.execute(text(sql_query), {'company_code': company_code, 'year_code': year_code})
 
-        # Fetch all rows and convert each row to a dictionary
         columns = result.keys()
         response = [dict(zip(columns, row)) for row in result]
 
@@ -135,19 +126,16 @@ def all_tender_data():
 @app.route(API_URL+'/getTenderByTenderNo', methods=["GET"])
 def get_task_by_task_no():
     try:
-        # Extract taskNo from request query parameters
         Tender_No = request.args.get('Tender_No')
         yearCode = request.args.get('Year_Code')
         companyCode = request.args.get('Company_Code')
         if not Tender_No:
             return jsonify({"error": "Task number not provided"}), 400
 
-        # Use SQLAlchemy to find the record by Task_No
         task_head = TenderHead.query.filter_by(Tender_No=Tender_No, Year_Code = yearCode,Company_Code=companyCode).first()
         newtenderid = task_head.tenderid
         additional_data = db.session.execute(text(TASK_DETAILS_QUERY), {"tenderid": newtenderid})
 
-        # Fetching additional data and converting to a list of dictionaries
         additional_data_rows = [row._asdict() for row in additional_data.fetchall()]
 
         formatted_additional_data_rows = [format_dates_details(row) for row in additional_data_rows]
@@ -159,7 +147,6 @@ def get_task_by_task_no():
             },
             "last_tender_details_data": formatted_additional_data_rows
         }
-        # If record found, return it
         return jsonify(response), 200
     except Exception as e:
         print(e)
@@ -175,10 +162,7 @@ def insert_tender_head_detail():
         try:
             maxTender_No = db.session.query(db.func.max(TenderHead.Tender_No)).filter_by(Company_Code=headData['Company_Code'],Year_Code=headData['Year_Code']).scalar() or 0
             newTenderNo = maxTender_No + 1
-            # Update Task_No in headData
             headData['Tender_No'] = newTenderNo
-            
-
             new_head = TenderHead(**headData)
             new_head
             db.session.add(new_head)
@@ -206,7 +190,7 @@ def insert_tender_head_detail():
                         tenderdetailid = item['tenderdetailid']
                         print('tenderdetailid',tenderdetailid)
                         update_values = {k: v for k, v in item.items() if k not in ('tenderdetailid', 'tenderid')}
-                        del update_values['rowaction']  # Remove 'rowaction' field
+                        del update_values['rowaction']  
                         db.session.query(TenderDetails).filter(TenderDetails.tenderdetailid == tenderdetailid).update(update_values)
                         updatedDetails.append(tenderdetailid)
 
@@ -230,7 +214,137 @@ def insert_tender_head_detail():
             'updatedDetails': updatedDetails,
             'deletedDetailIds': deletedDetailIds
         })
+
+            cash_diff = headData.get('CashDiff', 0)
+            tran_type = "CV" if cash_diff < 0 else "LV"
+
+            qntl = headData['Quantal'] 
+            drpType = headData['type']
+            millRate = float(headData.get('Mill_Rate', 0))  
+            purchaseRate = float(headData.get('Purc_Rate', 0))  
             
+            diffAmt = float(headData.get('CashDiff',0))  
+
+            autoVoucher = fetch_auto_voucher_value(headData['Company_Code'], headData['Year_Code'])
+            narration = ""
+            if autoVoucher == "Yes" and (drpType == "R" or drpType == "W"):
+                if purchaseRate > 0:
+                    narration = f"Quintal: {qntl} Mill: {millRate} Purchase Rate: {purchaseRate}"
+
+            taxMillAmt = float(qntl) * diffAmt  
+
+            isGstCodematched = get_match_status(headData['Voucher_By'], headData['Company_Code'], headData['Year_Code'])
+
+            cgstAmt = 0.00
+            sgstAmt = 0.00
+            igstAmt = 0.00
+
+            cgstRate = 0.00
+            sgstRate = 0.00
+            igstRate = 0.00
+
+            if isGstCodematched == "TRUE":
+                cgstRate = 2.5
+                sgstRate = 2.5
+                igstRate = 0.00
+                cgstAmt = taxMillAmt * cgstRate / 100 or 0.00
+                sgstAmt = taxMillAmt * sgstRate / 100 or 0.00
+            else:
+                cgstRate = 0.00
+                sgstRate = 0.00
+                igstRate = 5.00
+                igstAmt = taxMillAmt * igstRate / 100 or 0.00
+
+            voucherAmt = cgstAmt + sgstAmt + igstAmt + taxMillAmt
+
+            print("VoucherAmt", voucherAmt)
+
+            commissionAmt = diffAmt * float(qntl)
+
+            lvTcsRate = float(headData['TCS_Rate'])  
+            lvTdsRate = float(headData['TDS_Rate'])  
+            lvTcsAmt = lvTcsRate * voucherAmt /100 
+            lvTdsAmt = lvTdsRate * voucherAmt /100
+
+            lvTcsNetPayable = voucherAmt + lvTcsAmt 
+
+            lvNetPayable = 0
+            lvNetPayable = lvNetPayable - lvTdsAmt
+
+            commission_data = {
+                "Company_Code": headData['Company_Code'],
+                "Tran_Type": tran_type,  
+                "Year_Code": headData['Year_Code'],
+                "doc_date": headData['Tender_Date'],  
+                "bill_amount": voucherAmt,  
+                "narration1": narration, 
+                "item_code": headData['itemcode'],
+                "ic": headData['ic'],
+                "ac_code": headData['Voucher_By'],
+                "ac": headData['vb'],
+                "bags": headData['Bags'],
+                "mill_code": headData['Mill_Code'],
+                "mc": headData['mc'],
+                "qntl": int(headData['Quantal']),
+                "packing": headData['Packing'],
+                "mill_rate": headData['Mill_Rate'],
+                "sale_rate": 0.00,
+                "purc_rate": headData['Purc_Rate'],
+                "link_no": newTenderNo,
+                "link_type": drpType,
+                "link_id": newTenderNo,
+                "unit_code": 0,
+                "broker_code": headData['Broker'],
+                "grade": headData['Grade'],
+                "transport_code": 0,
+                "commission_amount": commissionAmt,
+                "resale_rate": 0.00,
+                "resale_commission": 0.00,
+                "misc_amount": 0.00,
+                "texable_amount": taxMillAmt,
+                "gst_code": 1,
+                "cgst_rate": cgstRate,
+                "cgst_amount": cgstAmt,
+                "sgst_rate": sgstRate,
+                "sgst_amount": sgstAmt,
+                "igst_rate": igstRate,
+                "igst_amount": igstAmt,
+                "bill_amount": voucherAmt,
+                "uc": 0,
+                "bc": headData['bk'],
+                "TCS_Rate": lvTcsRate,
+                "TCS_Amt": lvTcsAmt,
+                "TCS_Net_Payable": lvTcsNetPayable,
+                "TDS": lvTdsRate,
+                "TDS_Per": lvTdsRate,
+                "Tran_Type": tran_type,
+                "TDSAmount": lvTdsAmt,
+                "TDS_Ac": headData['Payment_To'],
+                "ta": headData['pt'],
+                "Frieght_Rate":0,
+                "Frieght_amt":0,
+                "subtotal":taxMillAmt,
+                "BANK_COMMISSION":0.0
+            }
+
+            commission_response = requests.post(
+                (
+    f"http://localhost:8080/api/sugarian/create-RecordCommissionBill"
+    f"?Company_Code={headData['Company_Code']}&Tran_Type={tran_type}&Year_Code={headData['Year_Code']}"
+),
+                json=commission_data
+            )
+            if commission_response.status_code == 201:
+                commission_response_data = commission_response.json()
+                commissionId = commission_response_data.get("record", {}).get("commissionid")
+                docNo =  commission_response_data.get("record", {}).get("new_Record_data", {}).get("doc_no") 
+                tranType = commission_response_data.get("record", {}).get("new_Record_data", {}).get("Tran_Type")
+
+                db.session.query(TenderHead).filter_by(Tender_No=newTenderNo, Company_Code=headData['Company_Code'], Year_Code=headData['Year_Code']).update({"Voucher_No": docNo,"commissionid": commissionId, "Voucher_Type": tranType})
+                db.session.commit()
+            else:
+                return jsonify({"error": "Failed to create Commission Bill", "message": commission_response.json()}), 500
+                        
 
             return jsonify({
                 "message": "Data Inserted successfully",
@@ -238,10 +352,8 @@ def insert_tender_head_detail():
                 "addedDetails": [tender_detail_schema.dump(detail) for detail in createdDetails],
                 "updatedDetails": updatedDetails,
                 "deletedDetailIds": deletedDetailIds
-            }), 201  # 201 Created
+            }), 201  
         
-            
-
         except Exception as e:
             print("Traceback",traceback.format_exc())
             db.session.rollback()
@@ -257,7 +369,6 @@ def insert_tender_head_detail():
 @app.route(API_URL+"/update_tender_purchase", methods=["PUT"])
 def update_tender_purchase():
     try:
-        # Retrieve 'tenderid' from URL parameters
         tenderid = request.args.get('tenderid')
         if tenderid is None:
             return jsonify({"error": "Missing 'tenderid' parameter"}), 400  
@@ -267,7 +378,6 @@ def update_tender_purchase():
 
         try:
             transaction = db.session.begin_nested()
-            # Update the head data
             updatedHeadCount = db.session.query(TenderHead).filter(TenderHead.tenderid == tenderid).update(headData)
             
             createdDetails = []
@@ -281,7 +391,6 @@ def update_tender_purchase():
                 if item['rowaction'] == "add":
                     item['Tender_No'] = tender_no
                     item['tenderid'] = tenderid
-                    # Generate new ID if not provided
                     if 'ID' not in item:
                         max_detail_id = db.session.query(db.func.max(TenderDetails.ID)).filter_by(tenderid=tenderid).scalar() or 0
                         new_detail_id = max_detail_id + 1
@@ -310,7 +419,82 @@ def update_tender_purchase():
 
             db.session.commit()
 
-            # Serialize the createdDetails
+
+            qntl = float(headData['Quantal'])
+            millRate = float(headData['Mill_Rate'])
+            purchaseRate = float(headData['Purc_Rate'])
+            cash_diff = headData.get('CashDiff', 0)
+
+            diffAmt = float(cash_diff)
+            taxMillAmt = qntl * diffAmt
+            isGstCodematched = get_match_status(headData['Voucher_By'], headData['Company_Code'], headData['Year_Code'])
+
+            cgstRate = 2.5 if isGstCodematched == "TRUE" else 0.0
+            sgstRate = 2.5 if isGstCodematched == "TRUE" else 0.0
+            igstRate = 5.0 if isGstCodematched != "TRUE" else 0.0
+
+            cgstAmt = taxMillAmt * cgstRate / 100
+            sgstAmt = taxMillAmt * sgstRate / 100
+            igstAmt = taxMillAmt * igstRate / 100
+
+            voucherAmt = cgstAmt + sgstAmt + igstAmt + taxMillAmt
+
+            commissionAmt = diffAmt * qntl
+            lvTcsRate = float(headData['TCS_Rate'])
+            lvTdsRate = float(headData['TDS_Rate'])
+            lvTcsAmt = lvTcsRate * voucherAmt /100
+            lvTdsAmt = lvTdsRate * voucherAmt /100
+
+            lvTcsNetPayable = voucherAmt + lvTcsAmt
+            lvNetPayable = lvTcsNetPayable - lvTdsAmt
+
+            commission_data = {
+                "Company_Code": headData['Company_Code'],
+                "Tran_Type": headData['Voucher_Type'], 
+                "Year_Code": headData['Year_Code'],
+                "doc_date": headData['Tender_Date'],
+                "bill_amount": voucherAmt,
+                "narration1": f"Qntl: {qntl}, Mill: {millRate}, Purc Rate: {purchaseRate}",
+                "item_code": headData['itemcode'],
+                "ac_code": headData['Voucher_By'],
+                "ac": headData['vb'],
+                "bags": headData['Bags'],
+                "mill_code": headData['Mill_Code'],
+                "mc": headData['mc'],
+                "qntl": headData['Quantal'],
+                "packing": headData['Packing'],
+                "mill_rate": millRate,
+                "purc_rate": purchaseRate,
+                "link_no": tender_no,
+                "link_type": headData['type'],
+                "broker_code": headData['Broker'],
+                "commission_amount": commissionAmt,
+                "texable_amount": taxMillAmt,
+                "cgst_rate": cgstRate,
+                "cgst_amount": cgstAmt,
+                "sgst_rate": sgstRate,
+                "sgst_amount": sgstAmt,
+                "igst_rate": igstRate,
+                "igst_amount": igstAmt,
+                "bill_amount": voucherAmt,
+                "TCS_Rate": lvTcsRate,
+                "TCS_Amt": lvTcsAmt,
+                "TCS_Net_Payable": lvTcsNetPayable,
+                "TDS_Ac": headData['Payment_To'],
+                "TDSAmount": lvTdsAmt,
+                "TDS_Rate": lvTdsRate,
+                "BANK_COMMISSION":0.0
+            }
+
+            commission_response = requests.put(
+                f"http://localhost:8080/api/sugarian/update-CommissionBill?Company_Code={headData['Company_Code']}&Tran_Type={headData['Voucher_Type']}&Year_Code={headData['Year_Code']}&doc_no={updated_tender_head.Voucher_No}",
+                json=commission_data
+            )
+
+            if commission_response.status_code != 200:
+                return jsonify({"error": "Failed to update Commission Bill", "message": commission_response.json()}), 500
+
+            db.session.commit()
             serialized_created_details = createdDetails 
 
             return jsonify({
@@ -334,16 +518,9 @@ def update_tender_purchase():
 def delete_TenderBytenderid():
     try:
         tenderid = request.args.get('tenderid')
-
-        # Start a transaction
         with db.session.begin():
-            # Delete records from User table
             deleted_user_rows = TenderDetails.query.filter_by(tenderid=tenderid).delete()
-
-            # Delete record from Task table
             deleted_task_rows = TenderHead.query.filter_by(tenderid=tenderid).delete()
-
-        # Commit the transaction
         db.session.commit()
 
         return jsonify({
@@ -351,7 +528,7 @@ def delete_TenderBytenderid():
         }), 200
 
     except Exception as e:
-        # Roll back the transaction if any error occurs
+        
         db.session.rollback()
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
@@ -366,22 +543,17 @@ def get_last_tender_no_data():
         if not company_code:
             return jsonify({"error": "Company_Code and Year_Code query parameter is required"}), 400
         
-        # Use SQLAlchemy to get the last record from the Task table
         last_tender_head = TenderHead.query.filter_by(Company_Code=company_code,Year_Code=year_code).order_by(TenderHead.tenderid.desc()).first()
 
         if not last_tender_head:
             return jsonify({"error": "No records found in last_tender_head table"}), 404
 
-        # Get the last Taskid
         last_tenderid = last_tender_head.tenderid
 
-        # Execute the additional SQL query
         additional_data = db.session.execute(text(TASK_DETAILS_QUERY), {"tenderid": last_tenderid})
      
-        # Fetching additional data and converting to a list of dictionaries
         additional_data_rows = [row._asdict() for row in additional_data.fetchall()]
     
-        # Prepare the response data
         last_tender_head_data = {
             **{column.name: getattr(last_tender_head, column.name) for column in last_tender_head.__table__.columns},
             **format_dates(last_tender_head), 
@@ -408,23 +580,19 @@ def get_first_record_navigation():
         if not company_code:
             return jsonify({"error": "Company_Code and Year_Code query parameter is required"}), 400
         
-        # Use SQLAlchemy to get the first record from the Task table
         first_task = TenderHead.query.filter_by(Company_Code=company_code,Year_Code=year_code).order_by(TenderHead.tenderid.asc()).first()
 
         if not first_task:
             return jsonify({"error": "No records found in Task_Entry table"}), 404
 
-        # Get the Taskid of the first record
         first_taskid = first_task.tenderid
 
         additional_data = db.session.execute(text(TASK_DETAILS_QUERY), {"tenderid": first_taskid})
 
-        # Fetching additional data and converting to a list of dictionaries
         additional_data_rows = [row._asdict() for row in additional_data.fetchall()]
 
         formatted_additional_data_rows = [format_dates_details(row) for row in additional_data_rows]
        
-        # Prepare response data
         response = {
             "first_tender_head_data": {
                 **{column.name: getattr(first_task, column.name) for column in first_task.__table__.columns},
@@ -448,26 +616,19 @@ def get_last_record_navigation():
         if not company_code:
             return jsonify({"error": "Company_Code and Year_Code query parameter is required"}), 400
         
-        # Use SQLAlchemy to get the last record from the Task table
         last_task = TenderHead.query.filter_by(Company_Code=company_code,Year_Code=year_code).order_by(TenderHead.tenderid.desc()).first()
 
         if not last_task:
             return jsonify({"error": "No records found in Task_Entry table"}), 404
 
-        # Get the Taskid of the last record
         last_taskid = last_task.tenderid
 
-        # Additional SQL query execution
         additional_data = db.session.execute(text(TASK_DETAILS_QUERY), {"tenderid": last_taskid})
 
-        # Extracting category name from additional_data
         additional_data_rows = [row._asdict() for row in additional_data.fetchall()]
 
         formatted_additional_data_rows = [format_dates_details(row) for row in additional_data_rows]
-
-        print(additional_data_rows)
       
-        # Prepare response data
         response = {
             "last_tender_head_data": {
                 **{column.name: getattr(last_task, column.name) for column in last_task.__table__.columns},
@@ -475,9 +636,7 @@ def get_last_record_navigation():
                 
             },
             "last_tender_details_data": 
-                formatted_additional_data_rows,
-        
-            
+                formatted_additional_data_rows,  
         }
 
         return jsonify(response), 200
@@ -495,11 +654,9 @@ def get_previous_task_navigation():
         if not company_code:
             return jsonify({"error": "Company_Code and Year_Code query parameter is required"}), 400
         
-        # Check if the Task_No is provided
         if not current_task_no:
             return jsonify({"error": "Current Task No is required"}), 400
 
-        # Use SQLAlchemy to get the previous record from the Task table
         previous_task = TenderHead.query.filter(
             TenderHead.Tender_No < current_task_no,
             TenderHead.Company_Code == company_code,
@@ -509,17 +666,12 @@ def get_previous_task_navigation():
         if not previous_task:
             return jsonify({"error": "No previous records found"}), 404
 
-        # Get the Task_No of the previous record
         previous_task_id = previous_task.tenderid
-        # Additional SQL query execution
         additional_data = db.session.execute(text(TASK_DETAILS_QUERY), {"tenderid": previous_task_id})
-        # Fetch all rows from additional data
         additional_data_rows = [row._asdict() for row in additional_data.fetchall()]
 
         formatted_additional_data_rows = [format_dates_details(row) for row in additional_data_rows]
 
-        
-        # Prepare response data
         response = {
             "previous_tender_head_data": {
                 **{column.name: getattr(previous_task, column.name) for column in previous_task.__table__.columns},
@@ -543,29 +695,23 @@ def get_next_task_navigation():
         if not company_code:
             return jsonify({"error": "Company_Code and Year_Code query parameter is required"}), 400
         
-        # Check if the currentTaskNo is provided
         if not current_task_no:
             return jsonify({"error": "Current Tender No required"}), 400
 
-        # Use SQLAlchemy to get the next record from the Task table
         next_task = TenderHead.query.filter(TenderHead.Tender_No > current_task_no,TenderHead.Company_Code == company_code,
             TenderHead.Year_Code == year_code).order_by(TenderHead.Tender_No.asc()).first()
 
         if not next_task:
             return jsonify({"error": "No next records found"}), 404
 
-        # Get the Task_No of the next record
         next_task_id = next_task.tenderid
 
-        # Query to fetch System_Name_E from nt_1_systemmaster
         additional_data = db.session.execute(text(TASK_DETAILS_QUERY), {"tenderid": next_task_id})
         
-        # Fetch all rows from additional data
         additional_data_rows = [row._asdict() for row in additional_data.fetchall()]
 
         formatted_additional_data_rows = [format_dates_details(row) for row in additional_data_rows]
         
-        # Prepare response data
         response = {
             "next_tender_head_data": {
                 **{column.name: getattr(next_task, column.name) for column in next_task.__table__.columns},
@@ -577,7 +723,7 @@ def get_next_task_navigation():
     except Exception as e:
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
     
-
+#Sauda Book Entry
 # Add detail entry to a particular tender by Tender_No
 @app.route(API_URL + "/add_tender_detail", methods=["POST"])
 def add_detail_to_tender():
@@ -595,7 +741,6 @@ def add_detail_to_tender():
 
         tenderid = tender_head.tenderid
 
-        # Generate new ID for the detail entry
         max_detail_id = db.session.query(func.max(TenderDetails.ID)).filter_by(tenderid=tenderid).scalar() or 0
         new_detail_id = max_detail_id + 1
 
@@ -615,7 +760,9 @@ def add_detail_to_tender():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
-    
+
+
+#Stock Entry Tender Purchase DeliveryOrder
 @app.route(API_URL + "/Stock_Entry_tender_purchase", methods=["PUT"])
 def Stock_Entry_tender_purchase():
     try:
@@ -630,7 +777,6 @@ def Stock_Entry_tender_purchase():
 
         for item in detailData:
             try:
-                # Parse dates
                 if 'Sauda_Date' in item:
                     item['Sauda_Date'] = datetime.strptime(item['Sauda_Date'], '%Y-%m-%d').date()
                 if 'Lifting_Date' in item:
@@ -643,7 +789,7 @@ def Stock_Entry_tender_purchase():
                         item['ID'] = (db.session.query(db.func.max(TenderDetails.ID)).filter_by(tenderid=tenderid).scalar() or 0) + 1
                     new_detail = TenderDetails(**item)
                     db.session.add(new_detail)
-                    db.session.flush()  # Allocates an ID
+                    db.session.flush()  
                     createdDetails.append(new_detail)
 
                 elif item['rowaction'] == "update":
@@ -672,26 +818,8 @@ def Stock_Entry_tender_purchase():
         
         db.session.rollback()
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
-    
 
-def get_millPayment_Date(company_code, year_code):
-    result = db.session.execute(
-        text("SELECT Mill_Payment_date FROM nt_1_companyparameters WHERE company_code = :company_code AND year_code = :year_code"),
-        {'company_code': company_code, 'year_code': year_code}
-    ).fetchone()
-    return result.Mill_Payment_date if result else None
-
-# Define a function to compute the new lifting date
-def compute_lifting_date(lifting_date_str, mill_payment_days):
-    try:
-        # Convert lifting_date from string to date object
-        lifting_date_obj = datetime.strptime(lifting_date_str, "%Y-%m-%d").date()
-        # Add mill_payment_days to lifting_date
-        new_lifting_date = lifting_date_obj + timedelta(days=mill_payment_days)
-        return new_lifting_date
-    except ValueError:
-        return None
-
+#Fetching NextTender No
 @app.route(API_URL + "/getNextTenderNo_SugarTenderPurchase", methods=["GET"])
 def getNextTenderNo_SugarTenderPurchase():
     try:
@@ -701,7 +829,6 @@ def getNextTenderNo_SugarTenderPurchase():
         if not all([Company_Code, Year_Code]):
             return jsonify({"error": "Missing required parameters"}), 400
 
-        # Fetch the maximum document number for the given Company_Code and Year_Code
         max_doc_no = db.session.query(func.max(TenderHead.Tender_No)).filter_by(Company_Code=Company_Code, Year_Code=Year_Code).scalar()
 
         if max_doc_no is None:
@@ -709,10 +836,8 @@ def getNextTenderNo_SugarTenderPurchase():
         else:
             next_doc_no = max_doc_no + 1  
 
-        # Fetch the Mill_Payment_date
         mill_payment_days = get_millPayment_Date(Company_Code, Year_Code)
 
-        # Compute the new lifting date
         lifting_date = compute_lifting_date(datetime.utcnow().date().isoformat(), mill_payment_days) if mill_payment_days else None
 
 
@@ -725,15 +850,14 @@ def getNextTenderNo_SugarTenderPurchase():
     except Exception as e:
         print(e)
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
-    
+
+#Fetching Self Account    
 @app.route(API_URL +"/get_SelfAc", methods=['GET'])
 def get_SelfAc():
-    # Parse query parameters
     company_code = request.args.get('Company_Code')
 
     if not company_code:
         return jsonify({'error': 'Both Company_Code is required'}), 400
-
     try:
         company_code = int(company_code)
         
@@ -757,6 +881,7 @@ def get_SelfAc():
         'Self_acName': Self_acName
         }), 200
 
+#Fetching DispatchType From CompanyParameter
 @app.route(API_URL+"/get_dispatch_type/<company_code>", methods=['GET'])
 def get_dispatch_type(company_code):
     result = db.session.execute(
