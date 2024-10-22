@@ -17,6 +17,14 @@ CORS(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = f"mssql+pymssql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}/{os.getenv('DB_NAME')}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# Configure email settings
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME') 
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD') 
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER') 
+
 db = SQLAlchemy(app)
 
 # Initialize JWTManager with your app 
@@ -95,6 +103,9 @@ from app.Controllers.Masters.AccountInformation.AccountMaster.AccountMasterContr
 
 #EBuySugar Routes
 from app.Controllers.EBuySugarian.EBuySugarUser.EBuySugarUserControllers import *
+
+#Pending Reports Routes
+from app.Reports.PendingReports.TenderWiseSauda import *
 
 upload_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
 

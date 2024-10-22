@@ -64,6 +64,9 @@ import JournalVoucher_Utility from './Transactions/JournalVoucher/JournalVoucher
 import Ledger from './Reports/Ledger/Ledger.jsx';
 import GledgerReport from './Reports/Ledger/GledgerReport.jsx'
 
+import PendingReports from './Reports/PendingReports/PendingReports.jsx';
+import TenderReports from "./Reports/PendingReports/TenderReports.jsx"
+
 
 const routes = [
   {
@@ -372,6 +375,17 @@ const routes = [
 {
   path:'/ledger-report',
   element: GledgerReport
+},
+
+,
+//Pending Reports routes
+{
+  path: '/pending-reports',
+  element: PendingReports
+},
+{
+  path: '/tenderwise-reports',
+  element: TenderReports
 },
 
 //eBuySugar

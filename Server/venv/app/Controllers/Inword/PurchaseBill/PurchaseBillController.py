@@ -49,32 +49,50 @@ Sugar_head_Schemas = SugarPurchaseHeadSchema(many=True)
 Sugar_detail_Schema = SugarPurchaseDetailSchema()
 Sugar_detail_Schemas = SugarPurchaseDetailSchema(many=True)
 
-# Get data from both tables DebitcreditNote and DebitcreditNoteDetail
-@app.route(API_URL+"/getdata-sugarpurchase", methods=["GET"])
+# Get data from both tables SaleBill and SaleBilllDetail
+@app.route(API_URL + "/getdata-sugarpurchase", methods=["GET"])
 def getdata_sugarpurchase():
     try:
-          # Extract company_code and year_code from the request arguments
         company_code = request.args.get('Company_Code')
         year_code = request.args.get('Year_Code')
 
-        # Validate that the parameters are present
+        # Validate parameters
         if not company_code or not year_code:
             return jsonify({"error": "Missing 'Company_Code' or 'Year_Code' parameter"}), 400
-        
-        # Query both tables and get the data
-        task_data = SugarPurchase.query.filter_by(Company_Code=company_code, Year_Code=year_code).order_by(desc(SugarPurchase.doc_no)).all()
-        
-        # Serialize the data using schemas
-        task_result = Sugar_head_Schemas.dump(task_data)
-    
-        response = {
-            "SugarPurchase_Head": task_result
-            # "SugarPurchase_Detail": user_result
-        }
 
+        # SQL query to get data from both SaleBill and SaleBillDetail tables
+        query = '''
+  SELECT        dbo.nt_1_sugarpurchase.doc_no, dbo.nt_1_sugarpurchase.Tran_Type, dbo.nt_1_sugarpurchase.GstRateCode, dbo.nt_1_sugarpurchase.Ac_Code, qryFrom.Ac_Name_E AS FromName, dbo.nt_1_sugarpurchase.Unit_Code, 
+                         dbo.nt_1_sugarpurchase.mill_code, qryMill.Ac_Name_E AS Mill_Name, dbo.nt_1_sugarpurchase.BROKER, dbo.nt_1_sugarpurchase.doc_date, dbo.nt_1_sugarpurchase.NETQNTL, dbo.nt_1_sugarpurchase.Bill_Amount, 
+                         dbo.nt_1_sugarpurchase.EWay_Bill_No, dbo.nt_1_sugarpurchase.Bill_No, dbo.nt_1_sugarpurchase.purchaseid
+FROM            dbo.nt_1_sugarpurchase INNER JOIN
+                         dbo.qrymstaccountmaster AS qryMill ON dbo.nt_1_sugarpurchase.mc = qryMill.accoid INNER JOIN
+                         dbo.qrymstaccountmaster AS qryFrom ON dbo.nt_1_sugarpurchase.ac = qryFrom.accoid
+        WHERE 
+            dbo.nt_1_sugarpurchase.Company_Code = :company_code 
+            AND dbo.nt_1_sugarpurchase.Year_Code = :year_code
+        '''
+        
+        # Execute query with parameters
+        additional_data = db.session.execute(text(query), {"company_code": company_code, "year_code": year_code})
+
+        # Fetch all data
+        additional_data_rows = additional_data.fetchall()
+
+        # Convert rows to a list of dictionaries
+        all_data = [dict(row._mapping) for row in additional_data_rows]
+
+        # If you need to format any date fields (e.g., `doc_date`), do it here
+        for data in all_data:
+            if 'doc_date' in data:
+                data['doc_date'] = data['doc_date'].strftime('%Y-%m-%d') if data['doc_date'] else None
+
+        # Prepare and return the response data
+        response = {"SugarPurchase_Head":all_data}
         return jsonify(response), 200
+
     except Exception as e:
-        # Handle any potential exceptions and return an error response with a 500 Internal Server Error status code
+        print(f"Error: {e}")
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
     
 # We have to get the data By the Particular doc_no AND tran_type

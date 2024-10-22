@@ -24,7 +24,7 @@ const Year_Code = sessionStorage.getItem('Year_Code');
 function PurchaseBillUtility() {
     const [fetchedData, setFetchedData] = useState([]);
     const [filteredData, setFilteredData] = useState([]);
-    const [perPage, setPerPage] = useState(15);
+    const [perPage, setPerPage] = useState(100); 
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const navigate = useNavigate();
@@ -34,9 +34,10 @@ function PurchaseBillUtility() {
             try {
                 const apiUrl = `${API_URL}/getdata-sugarpurchase?Company_Code=${companyCode}&Year_Code=${Year_Code}`;
                 const response = await axios.get(apiUrl);
+                console.log("response", response.data)
                 if (response.data && response.data.SugarPurchase_Head) {
                     setFetchedData(response.data.SugarPurchase_Head);
-                    setFilteredData(response.data.SugarPurchase_Head); 
+                    setFilteredData(response.data.SugarPurchase_Head);
                 }
             } catch (error) {
                 console.error("Error fetching data:", error);
@@ -92,7 +93,7 @@ function PurchaseBillUtility() {
     };
 
     return (
-        <div className="container" style={{ padding: '20px', overflow: 'hidden' }}>
+        <div style={{ padding: '20px' }}>
             <Typography variant="h4" gutterBottom style={{ textAlign: 'center', marginBottom: '20px' }}>
                 Sugar Purchase Bill
             </Typography>
@@ -119,18 +120,18 @@ function PurchaseBillUtility() {
                 </Grid>
                 <Grid item xs={12}>
                     <Paper elevation={3}>
-                        <TableContainer style={{ maxHeight: '400px' }}>
-                            <Table stickyHeader>
+                        <TableContainer>
+                            <Table>
                                 <TableHead>
                                     <TableRow>
                                         <TableCell>Doc No</TableCell>
                                         <TableCell>Doc Date</TableCell>
+                                        <TableCell>Supplier Name</TableCell>
                                         <TableCell>NETQNTL</TableCell>
                                         <TableCell>Bill Amount</TableCell>
                                         <TableCell>EWay Bill No</TableCell>
-                                        <TableCell>Mill Inv Date</TableCell>
+                                        <TableCell>Invoice No</TableCell>
                                         <TableCell>PurchID</TableCell>
-                                        <TableCell>Purcid</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -143,12 +144,12 @@ function PurchaseBillUtility() {
                                         >
                                             <TableCell>{post.doc_no}</TableCell>
                                             <TableCell>{post.doc_date}</TableCell>
+                                            <TableCell>{post.FromName}</TableCell>
                                             <TableCell>{post.NETQNTL}</TableCell>
                                             <TableCell>{post.Bill_Amount}</TableCell>
                                             <TableCell>{post.EWay_Bill_No}</TableCell>
-                                            <TableCell>{post.mill_inv_date}</TableCell>
+                                            <TableCell>{post.Bill_No}</TableCell>
                                             <TableCell>{post.purchaseid}</TableCell>
-                                            <TableCell>{post.Purcid}</TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>
