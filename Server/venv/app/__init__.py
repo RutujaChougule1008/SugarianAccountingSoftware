@@ -57,7 +57,7 @@ from app.Controllers.BusinessRelated.DeliveryOrder.DeliveryOrderController impor
 from app.Controllers.Masters.OtherMasters.SysytemMasterController import *
 from app.Controllers.BusinessRelated.TenderPurchase.TenderPurchaseController import *
 from app.Controllers.Transactions.DebitCreditNote.DebitCreditNoteController import *
-from app.Controllers.Reports.GLedger.GLedgerController import *
+from app.Reports.GLedger.GLedgerController import *
 from app.Controllers.Inword.PurchaseBill.PurchaseBillController import *
 from app.Controllers.Outword.SaleBill.SaleBillController import *
 from app.Controllers.Outword.CommissionBill.CommissionBillController import *
