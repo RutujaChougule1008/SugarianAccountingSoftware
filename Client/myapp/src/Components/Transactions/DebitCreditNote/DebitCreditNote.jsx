@@ -159,32 +159,38 @@ const DebitCreditNote = () => {
 
     validateField(name, value);
 
-    const matchStatus = await checkMatchStatus(
-      formData.ac_code,
-      companyCode,
-      Year_Code
-    );
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
 
-    let gstRate = GstRate;
+  const handleKeyDownCalculations = async (event) => {
+    if (event.key === "Tab") {
+      // event.preventDefault();
 
-    if (!gstRate || gstRate === 0) {
-      const cgstRate = parseFloat(formData.cgst_rate) || 0;
-      const sgstRate = parseFloat(formData.sgst_rate) || 0;
-      const igstRate = parseFloat(formData.igst_rate) || 0;
+      const { name, value } = event.target;
+      let gstRate = GstRate;
 
-      gstRate = igstRate > 0 ? igstRate : cgstRate + sgstRate;
+      if (!gstRate || gstRate === 0) {
+        const cgstRate = parseFloat(formData.cgst_rate) || 0;
+        const sgstRate = parseFloat(formData.sgst_rate) || 0;
+        const igstRate = parseFloat(formData.igst_rate) || 0;
+
+        gstRate = igstRate > 0 ? igstRate : cgstRate + sgstRate;
+      }
+
+      const updatedFormData = await calculateDependentValues(
+        name,
+        value,
+        formData,
+        matchStatus,
+        gstRate
+      );
+
+      setFormData(updatedFormData);
+      validateField(name, value);
     }
-
-    // Calculate dependent values and update form data
-    const updatedFormData = await calculateDependentValues(
-      name,
-      value,
-      formData,
-      matchStatus,
-      gstRate
-    );
-
-    setFormData(updatedFormData);
   };
 
   const handleDateChange = (event, fieldName) => {
@@ -909,6 +915,7 @@ const DebitCreditNote = () => {
           HSN: hsnNo || formDataDetail.HSN,
           Quantal: formDataDetail.Quantal,
           rowaction: updatedRowaction,
+          ic: itemCodeAccoid
         };
       }
       return user;
@@ -1063,6 +1070,8 @@ const DebitCreditNote = () => {
     setExpacAccoid(accoid);
     setExpacName(name);
 
+    console.log("handleExpAcCode called", { code, accoid, name });
+
     // Update expacAccoid for all users with the same expac_code
     const updatedUsers = users.map((user) => {
       if (user.expac_code === code) {
@@ -1091,7 +1100,7 @@ const DebitCreditNote = () => {
       );
       return data.match_status;
     } catch (error) {
-      toast.error("Error checking GST State Code match.");
+      console.error("Error checking GST State Code match.");
 
       return error;
     }
@@ -1143,9 +1152,9 @@ const DebitCreditNote = () => {
       setMatchStatus(matchStatusResult);
 
       if (matchStatusResult === "TRUE") {
-        toast.success("GST State Codes match!");
+        console.log("GST State Codes match!");
       } else {
-        toast.warn("GST State Codes do not match.");
+        console.log("GST State Codes do not match.");
       }
 
       let gstRate = GstRate;
@@ -1168,7 +1177,7 @@ const DebitCreditNote = () => {
       );
       setFormData(updatedFormData);
     } catch (error) {
-      console.error("Error in handleBillFrom:", error);
+      console.log("Error in handleBillFrom:", error);
     }
   };
   const handleGstCode = async (code, Rate) => {
@@ -1389,7 +1398,7 @@ const DebitCreditNote = () => {
                 onAcCodeClick={handleBillFrom}
                 CategoryName={BillFromName}
                 CategoryCode={BillFormCode}
-                name="Bill_From"
+                name="ac_code"
                 tabIndexHelp={2}
                 disabledFeild={!isEditing && addOneButtonEnabled}
               />
@@ -1490,7 +1499,7 @@ const DebitCreditNote = () => {
             disabled={!isEditing}
             tabIndex="8"
             onKeyDown={(event) => {
-              if (event.key === "Enter") {
+              if (event.key === 13) {
                 openPopup("add");
               }
             }}
@@ -1532,9 +1541,9 @@ const DebitCreditNote = () => {
                       <div className="form-element">
                         <AccountMasterHelp
                           onAcCodeClick={handleExpAcCode}
-                          CategoryName={expacName}
+                          CategoryName={expacName }
                           CategoryCode={expacCode}
-                          name="ExpAcCode"
+                          name="expac_code"
                           tabIndexHelp={10}
                           className="account-master-help"
                         />
@@ -1609,7 +1618,7 @@ const DebitCreditNote = () => {
                         onClick={updateUser}
                         tabIndex="16"
                         onKeyDown={(event) => {
-                          if (event.key === "Enter") {
+                          if (event.key === 13) {
                             updateUser();
                           }
                         }}
@@ -1622,7 +1631,7 @@ const DebitCreditNote = () => {
                         onClick={addUser}
                         tabIndex="17"
                         onKeyDown={(event) => {
-                          if (event.key === "Enter") {
+                          if (event.key === 13) {
                             addUser();
                           }
                         }}
@@ -1673,7 +1682,7 @@ const DebitCreditNote = () => {
                           onClick={() => editUser(user)}
                           disabled={!isEditing}
                           onKeyDown={(event) => {
-                            if (event.key === "Enter") {
+                            if (event.key === 13) {
                               editUser(user);
                             }
                           }}
@@ -1685,7 +1694,7 @@ const DebitCreditNote = () => {
                           className="btn btn-danger ms-2"
                           onClick={() => deleteModeHandler(user)}
                           onKeyDown={(event) => {
-                            if (event.key === "Enter") {
+                            if (event.key === 13) {
                               deleteModeHandler(user);
                             }
                           }}
@@ -1817,6 +1826,7 @@ const DebitCreditNote = () => {
                 autoComplete="off"
                 value={formData.texable_amount}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
               {formErrors.texable_amount && (
@@ -1835,6 +1845,7 @@ const DebitCreditNote = () => {
                 name="cgst_rate"
                 autoComplete="off"
                 value={formData.cgst_rate}
+                onKeyDown={handleKeyDownCalculations}
                 onChange={handleChange}
                 disabled={!isEditing && addOneButtonEnabled}
               />
@@ -1849,6 +1860,7 @@ const DebitCreditNote = () => {
                 autoComplete="off"
                 value={formData.cgst_amount}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
               {formErrors.cgst_amount && (
@@ -1867,6 +1879,7 @@ const DebitCreditNote = () => {
                 autoComplete="off"
                 value={formData.sgst_rate}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
               {formErrors.sgst_rate && (
@@ -1880,6 +1893,7 @@ const DebitCreditNote = () => {
                 autoComplete="off"
                 value={formData.sgst_amount}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
               {formErrors.sgst_amount && (
@@ -1899,6 +1913,7 @@ const DebitCreditNote = () => {
                 autoComplete="off"
                 value={formData.igst_rate}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
               {formErrors.igst_rate && (
@@ -1912,6 +1927,7 @@ const DebitCreditNote = () => {
                 autoComplete="off"
                 value={formData.igst_amount}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
               {formErrors.igst_amount && (
@@ -1931,6 +1947,7 @@ const DebitCreditNote = () => {
                 autoComplete="off"
                 value={formData.misc_amount}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
               {formErrors.misc_amount && (
@@ -1950,6 +1967,7 @@ const DebitCreditNote = () => {
                 autoComplete="off"
                 value={formData.bill_amount}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
               {formErrors.bill_amount && (
@@ -1969,6 +1987,7 @@ const DebitCreditNote = () => {
                 autoComplete="off"
                 value={formData.TCS_Rate}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
               {formErrors.TCS_Rate && (
@@ -1982,6 +2001,7 @@ const DebitCreditNote = () => {
                 autoComplete="off"
                 value={formData.TCS_Amt}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
               {formErrors.TCS_Amt && (
@@ -2001,6 +2021,7 @@ const DebitCreditNote = () => {
                 autoComplete="off"
                 value={formData.TCS_Net_Payable}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
               {formErrors.TCS_Net_Payable && (
@@ -2021,6 +2042,7 @@ const DebitCreditNote = () => {
                 autoComplete="off"
                 value={formData.TDS_Rate}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
               {formErrors.TDS_Rate && (
@@ -2035,6 +2057,7 @@ const DebitCreditNote = () => {
                 value={formData.TDS_Amt !== null ? formData.TDS_Amt : ""}
                 // value={formData.TDS_Amt}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
               {formErrors.TDS_Amt && (

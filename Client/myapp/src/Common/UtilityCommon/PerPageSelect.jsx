@@ -4,16 +4,20 @@ import Form from 'react-bootstrap/Form';
 function PerPageSelect({ value, onChange }) {
   const options = [15, 25, 50, 100];
 
-//1. const options = [15, 25, 50, 100];: Defines an array of available options for posts per page.
-
   return (
     <div className="controls">
-      <Form.Group className="mb-3" style={{ float: "left", marginLeft: "150px" }}>
-        <Form.Label id="perPage-label">Posts Per Page</Form.Label>
+      <Form.Group
+       
+        style={{ display: "flex", alignItems: "center"}}
+      >
+        <Form.Label id="perPage-label">
+          Show Entries
+        </Form.Label>
         <Form.Select
-          aria-label="Postsm Per Page"
+          aria-label="Posts Per Page"
           value={value}
           onChange={onChange}
+          style={{ width: "auto" }} 
         >
           {options.map((option) => (
             <option key={option} value={option}>
@@ -27,6 +31,3 @@ function PerPageSelect({ value, onChange }) {
 }
 
 export default PerPageSelect;
-
-
-

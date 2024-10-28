@@ -39,6 +39,25 @@ const SystemHelpMaster = ({ onAcCodeClick, name, CategoryName, CategoryCode, tab
         setShowModal(true);
     };
 
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                await fetchAndOpenPopup();
+                setShowModal(false);
+                setApiDataFetched(true);
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            }
+        };
+
+        if (!apiDataFetched) {
+            fetchData();
+        }
+
+    }, [apiDataFetched]);
+
+
+
     const handleButtonClicked = () => {
         fetchAndOpenPopup();
     };
@@ -47,30 +66,43 @@ const SystemHelpMaster = ({ onAcCodeClick, name, CategoryName, CategoryCode, tab
         setShowModal(false);
     };
 
-    const handleCodeChange = async (event) => {
+    //handle onChange event for Mill Code,Broker Code and Bp Account
+    const handleCodeChange = (event) => {
         const { value } = event.target;
         setEnteredCode(value);
-        setEnteredName("");
 
-        if (!apiDataFetched) {
-            await fetchData();
-        }
-
-        const matchingItem = popupContent.find((item) => item.Category_Code === parseInt(value, 10));
-
-        if (matchingItem) {
-            setEnteredCode(matchingItem.Category_Code);
-            setEnteredName(matchingItem.Category_Name);
-            setEnteredAccoid(matchingItem.accoid);
-            setEnteredHSN(matchingItem.HSN)
-
-            if (onAcCodeClick) {
-                onAcCodeClick(matchingItem.Category_Code, matchingItem.accoid, matchingItem.HSN, matchingItem.Category_Name);
-            }
-        } else {
+        if (value === "") {
             setEnteredName("");
             setEnteredAccoid("");
             setEnteredHSN("");
+
+        }
+
+    };
+
+    const handleKeyDown = async (event) => {
+        if (event.key === "Tab" && event.target.id === name) {
+
+            if (!apiDataFetched) {
+                await fetchData();
+            }
+
+            const matchingItem = popupContent.find((item) => item.Category_Code.toString() === enteredCode);
+
+            if (matchingItem) {
+                setEnteredCode(matchingItem.Category_Code);
+                setEnteredName(matchingItem.Category_Name);
+                setEnteredAccoid(matchingItem.accoid);
+                setEnteredHSN(matchingItem.HSN)
+
+                if (onAcCodeClick) {
+                    onAcCodeClick(matchingItem.Category_Code, matchingItem.accoid, matchingItem.HSN, matchingItem.Category_Name);
+                }
+            } else {
+                setEnteredName("");
+                setEnteredAccoid("");
+                setEnteredHSN("");
+            }
         }
     };
 
@@ -156,6 +188,7 @@ const SystemHelpMaster = ({ onAcCodeClick, name, CategoryName, CategoryCode, tab
                         autoComplete="off"
                         value={enteredCode !== '' ? enteredCode : CategoryCode}
                         onChange={handleCodeChange}
+                        onKeyDown={handleKeyDown}
                         style={{ width: "150px", height: "35px" }}
                         tabIndex={tabIndexHelp}
                         disabled={disabledField}
@@ -174,7 +207,7 @@ const SystemHelpMaster = ({ onAcCodeClick, name, CategoryName, CategoryCode, tab
                     </label>
                 </div>
             </div>
-            
+
             <Modal
                 show={showModal}
                 onHide={handleCloseModal}

@@ -32,7 +32,7 @@ const CompanyList = () => {
     const fetchCompanies = async () => {
       try {
         const response = await axios.get(`${API_URL}/get_company_data_All`);
-        setCompanies(response.data);
+        setCompanies(response.data.Company_Data);
         if (response.data.length > 0 && firstCompanyRef.current) {
           firstCompanyRef.current.focus();
         }
@@ -98,6 +98,7 @@ const CompanyList = () => {
         formattedAccountingYear = `${selectedAccountingYear.Start_Date} - ${selectedAccountingYear.End_Date}`;
         sessionStorage.setItem('Accounting_Year', formattedAccountingYear); 
         sessionStorage.setItem('Company_Name', selectedCompany.Company_Name_E);
+        sessionStorage.setItem('uid',response.data.user_id)
       
       }
 
@@ -106,9 +107,9 @@ const CompanyList = () => {
       sessionStorage.setItem('SELF_AC', selfAcResponse.data.SELF_AC);
       sessionStorage.setItem('Self_acid', selfAcResponse.data.Self_acid);
 
-      const permissionResponse = await axios.get(`http://localhost:8080/api/sugarian/get_user_permissions?uid=${response.data.user_id}`);
-      const permissions = permissionResponse.data.permissions;  
-      sessionStorage.setItem('permissions', JSON.stringify(permissions)); 
+      // const permissionResponse = await axios.get(`http://localhost:8080/api/sugarian/get_user_permissions?uid=${response.data.user_id}`);
+      // const permissions = permissionResponse.data.permissions;  
+      // sessionStorage.setItem('permissions', JSON.stringify(permissions)); 
 
       sessionStorage.setItem('Year_Code', selectedAccountingYear.yearCode);
       sessionStorage.setItem('username', username);

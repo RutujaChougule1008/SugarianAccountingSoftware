@@ -49,7 +49,12 @@ class TblUserDetail(db.Model):
     Modified_Date = db.Column(db.Date, nullable=True)
     Year_Code = db.Column(db.Integer, nullable=True)
     udid = db.Column(db.Integer, primary_key=True, autoincrement=True)  
-    uid = db.Column(db.Integer, db.ForeignKey('tbluser.uid'),nullable=False)  
+    uid = db.Column(db.Integer, db.ForeignKey('tbluser.uid'),nullable=False)
+    canView = db.Column(db.String(45), nullable=True)
+    canEdit = db.Column(db.String(45), nullable=True)
+    canSave = db.Column(db.String(45), nullable=True)
+    canDelete = db.Column(db.String(45), nullable=True)
+    DND = db.Column(db.String(45), nullable=True)
 
     
     

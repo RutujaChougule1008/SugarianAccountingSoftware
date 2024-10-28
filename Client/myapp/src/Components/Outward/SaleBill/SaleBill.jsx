@@ -101,6 +101,7 @@ const SaleBill = () => {
   //In utility page record doubleClicked that recod show for edit functionality
   const location = useLocation();
   const selectedRecord = location.state?.selectedRecord;
+  const permissions = location.state?.permissionsData;
   const navigate = useNavigate();
   const setFocusTaskdate = useRef(null);
   const [isHandleChange, setIsHandleChange] = useState(false);
@@ -1480,6 +1481,7 @@ const SaleBill = () => {
             cancelButtonEnabled={cancelButtonEnabled}
             handleBack={handleBack}
             backButtonEnabled={backButtonEnabled}
+            permissions={permissions}
           />
 
           {/* Navigation Buttons */}
@@ -1856,7 +1858,7 @@ const SaleBill = () => {
                       <label className="SaleBill-form-label">Narration:</label>
                       <div className="SaleBill-col-Ewaybillno">
                         <div className="SaleBill-form-group">
-                          <textPath
+                          <textarea
                             type="text"
                             tabIndex="21"
                             className="SaleBill-form-control"
@@ -1881,7 +1883,7 @@ const SaleBill = () => {
                           }
                         }}
                       >
-                        Update User
+                        Update 
                       </button>
                     ) : (
                       <button
@@ -1889,12 +1891,12 @@ const SaleBill = () => {
                         onClick={addUser}
                         tabIndex="23"
                         onKeyDown={(event) => {
-                          if (event.key === "Enter") {
+                          if (event.key ===13) {
                             addUser();
                           }
                         }}
                       >
-                        Add User
+                        Add
                       </button>
                     )}
                     <button

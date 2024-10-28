@@ -115,7 +115,9 @@ def all_tender_data():
         result = db.session.execute(text(sql_query), {'company_code': company_code, 'year_code': year_code})
 
         columns = result.keys()
-        response = [dict(zip(columns, row)) for row in result]
+        data = [dict(zip(columns, row)) for row in result]
+
+        response = {"Tender_Utility":data}
 
         return jsonify(response), 200
 

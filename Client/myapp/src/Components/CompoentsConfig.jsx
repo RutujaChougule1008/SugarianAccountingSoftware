@@ -177,11 +177,11 @@ const routes = [
 },
 //purchase bill
 {
-  path: 'sugarpurchasebill-utility',
+  path: '/sugarpurchasebill-utility',
   element: PurchaseBillUtility 
 },
 {
-  path: 'sugarpurchasebill',
+  path: '/sugarpurchasebill',
   element: SugarPurchase 
 },
 

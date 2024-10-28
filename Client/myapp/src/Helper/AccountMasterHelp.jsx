@@ -24,16 +24,16 @@ const AccountMasterHelp = ({ onAcCodeClick, name, CategoryName, CategoryCode, ta
     const [apiDataFetched, setApiDataFetched] = useState(false);
 
 
-    const fetchData = useCallback(async () => {
-        try {
-            const response = await axios.get(`http://localhost:8080/api/sugarian/account_master_all?Company_Code=${CompanyCode}`);
-            const data = response.data;
-            setPopupContent(data);
-            setApiDataFetched(true);
-        } catch (error) {
-            console.error("Error fetching data:", error);
-        }
-    }, []);
+    // const fetchData = useCallback(async () => {
+    //     try {
+    //         const response = await axios.get(`http://localhost:8080/api/sugarian/account_master_all?Company_Code=${CompanyCode}`);
+    //         const data = response.data;
+    //         setPopupContent(data);
+    //         setApiDataFetched(true);
+    //     } catch (error) {
+    //         console.error("Error fetching data:", error);
+    //     }
+    // }, []);
 
     const fetchAndOpenPopup = async () => {
         if (!apiDataFetched) {
@@ -50,31 +50,57 @@ const AccountMasterHelp = ({ onAcCodeClick, name, CategoryName, CategoryCode, ta
         setShowModal(false);
     };
 
-    const handleAcCodeChange = async (event) => {
+    const fetchData = useCallback(async () => {
+        try {
+            const response = await axios.get(`http://localhost:8080/api/sugarian/account_master_all?Company_Code=${CompanyCode}`);
+            const data = response.data;
+            setPopupContent(data);
+            setApiDataFetched(true);
+        } catch (error) {
+            console.error("Error fetching data:", error);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
+
+    const handleAcCodeChange = (event) => {
         const { value } = event.target;
         setEnteredAcCode(value);
-        setEnteredAcName("");
 
-        if (!apiDataFetched) {
-            await fetchData();
+        if(value === ""){
+            setEnteredAcName("");
+                setEnteredAccoid("");
+                setEnteredMobNo("");
+                setCity("");
         }
 
-        const matchingItem = popupContent.find((item) => item.Ac_Code === parseInt(value, 10));
+    };
 
-        if (matchingItem) {
-            setEnteredAcCode(matchingItem.Ac_Code);
-            setEnteredAcName(matchingItem.Ac_Name_E);
-            setEnteredAccoid(matchingItem.accoid);
-            setEnteredMobNo(matchingItem.Mobile_No);
-            setCity(matchingItem.cityname)
-            
-
-            if (onAcCodeClick) {
-                onAcCodeClick(matchingItem.Ac_Code, matchingItem.accoid, matchingItem.Ac_Name_E, matchingItem.Mobile_No, matchingItem.Gst_No,matchingItem.TDSApplicable, matchingItem.GSTStateCode);
+    const handleKeyDown = async (event) => {
+        if (event.key === "Tab" && event.target.id === name) {
+        
+            if (!apiDataFetched) {
+                await fetchData();
             }
-        } else {
-            setEnteredAcName("");
-            setEnteredAccoid("");
+
+            const matchingItem = popupContent.find(item => item.Ac_Code.toString() === enteredAcCode);
+            if (matchingItem) {
+                setEnteredAcName(matchingItem.Ac_Name_E);
+                setEnteredAccoid(matchingItem.accoid);
+                setEnteredMobNo(matchingItem.Mobile_No);
+                setCity(matchingItem.cityname);
+
+                if (onAcCodeClick) {
+                    onAcCodeClick(matchingItem.Ac_Code, matchingItem.accoid, matchingItem.Ac_Name_E, matchingItem.Mobile_No, matchingItem.Gst_No, matchingItem.TDSApplicable, matchingItem.GSTStateCode);
+                }
+            } else {
+                // setEnteredAcName("");
+                // setEnteredAccoid("");
+                // setEnteredMobNo("");
+                // setCity("");
+            }
         }
     };
 
@@ -163,6 +189,7 @@ const AccountMasterHelp = ({ onAcCodeClick, name, CategoryName, CategoryCode, ta
                         autoComplete="off"
                         value={enteredAcCode !== '' ? enteredAcCode : CategoryCode}
                         onChange={handleAcCodeChange}
+                        onKeyDown={handleKeyDown}
                         style={{ width: "150px", height: "35px" }}
                         tabIndex={tabIndexHelp}
                         disabled={disabledFeild}

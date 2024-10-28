@@ -13,7 +13,8 @@ const ActionButtonGroup = ({
   handleCancel,
   cancelButtonEnabled,
   handleBack,
-  backButtonEnabled
+  backButtonEnabled,
+  permissions
 }) => {
   const editButtonRef = useRef(null);
   const updateButtonRef = useRef(null);
@@ -59,14 +60,14 @@ const ActionButtonGroup = ({
     >
       <button
         onClick={handleAddOne}
-        disabled={!addOneButtonEnabled}
+        disabled={!addOneButtonEnabled || permissions?.canSave==="N"}
    
         onKeyDown={(event) => handleKeyDown(event, handleAddOne)}
         style={{
           backgroundColor: addOneButtonEnabled ? "blue" : "white",
           color: addOneButtonEnabled ? "white" : "black",
           border: "1px solid #ccc",
-          cursor: "pointer",
+          cursor: permissions?.canSave==="N" ? "not-allowed" : "pointer",
           width: "4%",
           height: "35px",
           fontSize: "12px",
@@ -96,14 +97,14 @@ const ActionButtonGroup = ({
       ) : (
         <button
           onClick={handleSaveOrUpdate}
-          disabled={!saveButtonEnabled}
+          disabled={!saveButtonEnabled || permissions?.canSave==="N"}
           onKeyDown={(event) => handleKeyDown(event, handleSaveOrUpdate)}
           id="save"
           style={{
             backgroundColor: saveButtonEnabled ? "blue" : "white",
             color: saveButtonEnabled ? "white" : "black",
             border: "1px solid #ccc=",
-            cursor: saveButtonEnabled ? "pointer" : "not-allowed",
+            cursor: saveButtonEnabled && permissions?.canSave !== "N" ? "pointer" : "not-allowed",
             width: "4%",
             height: "35px",
             fontSize: "12px",
@@ -115,13 +116,13 @@ const ActionButtonGroup = ({
       <button
         ref={editButtonRef}
         onClick={handleEdit}
-        disabled={!editButtonEnabled}
+        disabled={!editButtonEnabled || permissions?.canEdit==="N"}
         onKeyDown={(event) => handleKeyDown(event, handleEdit)}
         style={{
           backgroundColor: editButtonEnabled ? "blue" : "white",
-          color: editButtonEnabled ? "white" : "black",
+          color: editButtonEnabled  ? "white" : "black",
           border: "1px solid #ccc",
-          cursor: editButtonEnabled ? "pointer" : "not-allowed",
+          cursor: editButtonEnabled && permissions?.canEdit !== "N" ? "pointer" : "not-allowed",
           width: "4%",
           height: "35px",
           fontSize: "12px",
@@ -131,13 +132,13 @@ const ActionButtonGroup = ({
       </button>
       <button
         onClick={handleDelete}
-        disabled={!deleteButtonEnabled}
+        disabled={!deleteButtonEnabled || permissions?.canDelete==="N"}
         onKeyDown={(event) => handleKeyDown(event, handleDelete)}
         style={{
           backgroundColor: deleteButtonEnabled ? "blue" : "white",
-          color: deleteButtonEnabled ? "white" : "black",
+          color: deleteButtonEnabled?"white" : "black",
           border: "1px solid #ccc",
-          cursor: deleteButtonEnabled ? "pointer" : "not-allowed",
+          cursor: deleteButtonEnabled && permissions?.canDelete !== "N" ? "pointer" : "not-allowed",
           width: "4%",
           height: "35px",
           fontSize: "12px",
@@ -164,7 +165,7 @@ const ActionButtonGroup = ({
       </button>
       <button
         onClick={handleBack}
-        disabled={!backButtonEnabled}
+        disabled={!backButtonEnabled }
         onKeyDown={(event) => handleKeyDown(event, handleBack)}
     
         style={{

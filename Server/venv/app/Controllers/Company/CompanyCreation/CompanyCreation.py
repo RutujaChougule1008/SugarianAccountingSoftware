@@ -41,7 +41,8 @@ def get_company_data():
     try:
         companies = CompanyCreation.query.all()
         result = [serialize_company(company) for company in companies]
-        return jsonify(result), 200
+        response = {"Company_Data":result}
+        return jsonify(response), 200
     except Exception as e:
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 

@@ -12,6 +12,7 @@ import "./SugarPurchase.css"
 import { HashLoader } from 'react-spinners';
 import { z } from "zod";
 import { Grid, TextField, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import BrandMasterHelp from "../../../Helper/BrandMasterHelp";
 
 //Validation Part Using Zod Library
 const stringToNumber = z
@@ -73,6 +74,7 @@ var CGSTRate = 0.00
 var SGSTRate = 0.00
 var IGSTRate = 0.00
 var BillAmountNew = 0.00
+var newAcCode = 0
 
 var selectedfilter = ""
 const API_URL = process.env.REACT_APP_API;
@@ -118,10 +120,15 @@ const SugarPurchase = () => {
     //In utility page record doubleClicked that recod show for edit functionality
     const location = useLocation();
     const selectedRecord = location.state?.selectedRecord;
+    const permissions = location.state?.permissionsData;
     const navigate = useNavigate();
     const setFocusTaskdate = useRef(null);
     const [isHandleChange, setIsHandleChange] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [itemNameLabel, setItemNameLabel] = useState('')
+    const [brandName, setBrandName] = useState('')
+
+    const inputRef = useRef(null);
 
     const initialFormData = {
         doc_no: "",
@@ -173,7 +180,7 @@ const SugarPurchase = () => {
         TCS_Net_Payable: 0.00,
         TDS_Rate: 0.00,
         TDS_Amt: 0.00,
-        Retail_Stock: "Y",
+        Retail_Stock: "N",
         purchaseidnew: 1,
     };
 
@@ -187,16 +194,21 @@ const SugarPurchase = () => {
     const [gstCode, setGstCode] = useState("");
     const [gstRate, setGstRate] = useState("");
 
+    // Function to format the truck number
+    const formatTruckNumber = (value) => {
+        const cleanedValue = value.replace(/\s+/g, '').toUpperCase();
+        return cleanedValue.length <= 10 ? cleanedValue : cleanedValue.substring(0, 10);
+    };
+
     const handleChange = (event) => {
         const { name, value } = event.target;
-        // Call validateField to validate the field value
         validateField(name, value);
+        const updatedValue = name === "LORRYNO" ? formatTruckNumber(value) : value;
+
         setFormData((prevState) => ({
             ...prevState,
-            [name]: value
-
+            [name]: updatedValue
         }));
-
     };
 
     useEffect(() => {
@@ -239,6 +251,53 @@ const SugarPurchase = () => {
         }
     };
 
+    const calculateTotals = () => {
+        const subTotal = users.reduce((total, user) => total + (parseFloat(user.item_Amount) || 0), 0);
+        const quantalTotal = users.reduce((total, user) => total + (parseFloat(user.Quantal) || 0), 0);
+    
+       
+        const cgstRate = parseFloat(formData.CGSTRate) || 0;
+        const sgstRate = parseFloat(formData.SGSTRate) || 0;
+        const igstRate = parseFloat(formData.IGSTRate) || 0;
+        const tcsRate = parseFloat(formData.TCS_Rate) || 0;
+        const tdsRate = parseFloat(formData.TDS_Rate) || 0;
+    
+        
+        const cgstAmount = (subTotal * cgstRate / 100).toFixed(2);
+        const sgstAmount = (subTotal * sgstRate / 100).toFixed(2);
+        const igstAmount = (subTotal * igstRate / 100).toFixed(2);
+    
+       
+        const tcsAmount = ((parseFloat(formData.Bill_Amount) || 0) * tcsRate / 100).toFixed(2);
+        const tdsAmount = (subTotal * tdsRate / 100).toFixed(2);
+    
+        
+        const otherAmt = parseFloat(formData.OTHER_AMT) || 0;
+        const cashAdvance = parseFloat(formData.cash_advance) || 0;
+        const bankCommission = parseFloat(formData.bank_commission) || 0;
+    
+      
+        const billAmount = subTotal + parseFloat(cgstAmount) + parseFloat(sgstAmount) + parseFloat(igstAmount) +
+            otherAmt + cashAdvance + bankCommission;
+    
+       
+        const netPayable = (billAmount + parseFloat(tcsAmount)).toFixed(2);
+    
+        
+        setFormData(prev => ({
+            ...prev,
+            subTotal: subTotal.toFixed(2),
+            CGSTAmount: cgstAmount,
+            SGSTAmount: sgstAmount,
+            IGSTAmount: igstAmount,
+            Bill_Amount: billAmount.toFixed(2),
+            TCS_Amt: tcsAmount,
+            TDS_Amt: tdsAmount,
+            TCS_Net_Payable: netPayable,
+            NETQNTL: quantalTotal.toFixed(2)
+        }));
+    };
+    
     //Fetch last record
     const fetchLastRecord = () => {
         fetch(`${API_URL}/get-next-doc-no-purchaseBill?Company_Code=${companyCode}&Year_Code=${Year_Code}`)
@@ -259,8 +318,10 @@ const SugarPurchase = () => {
             });
     };
 
+    console.log("Permissions", permissions)
     //handle Add button Functionality
     const handleAddOne = async () => {
+        
         setAddOneButtonEnabled(false);
         setSaveButtonEnabled(true);
         setCancelButtonEnabled(true);
@@ -270,6 +331,7 @@ const SugarPurchase = () => {
         setIsEditing(true);
         fetchLastRecord()
         setFormData(initialFormData)
+       
         FromName = ""
         FromCode = ""
         Unitname = ""
@@ -430,6 +492,7 @@ const SugarPurchase = () => {
         setSaveButtonEnabled(false);
         setCancelButtonEnabled(false);
         setCancelButtonClicked(true);
+
         try {
             const response = await axios.get(
                 `${API_URL}/get-lastrecordsugarpurchase?Company_Code=${companyCode}&Year_Code=${Year_Code}`
@@ -439,6 +502,7 @@ const SugarPurchase = () => {
                 purchaseidNew = data.last_SugarPurchasehead.purchaseid
                 FromName = data.last_SugarPurchasedetail[0].FromName
                 FromCode = data.last_SugarPurchasehead.Ac_Code
+                newAcCode = data.last_SugarPurchasehead.Ac_Code
                 Unitname = data.last_SugarPurchasedetail[0].Unit_Name
                 UnitCode = data.last_SugarPurchasehead.Unit_Code
                 MillName = data.last_SugarPurchasedetail[0].Mill_Name
@@ -669,6 +733,20 @@ const SugarPurchase = () => {
 
     //After Record DoubleClicked on utility page show that record on User Creation for Edit Mode
     const handlerecordDoubleClicked = async () => {
+        // if(permissions?.canSave === "N")
+        // {
+        //     setAddOneButtonEnabled(false);
+        //     setSaveButtonEnabled(false);
+        // }
+        // else if(permissions?.canEdit === "N")
+        //     {
+        //         setEditButtonEnabled(false);
+        //     }
+        //     else if(permissions?.canDelte === "N")
+        //         {
+        //             setDeleteButtonEnabled(false);
+        //         }
+        // else{
         setIsEditing(false);
         setIsEditMode(false);
         setAddOneButtonEnabled(true);
@@ -779,6 +857,8 @@ const SugarPurchase = () => {
                     rate: detail.rate,
                     item_Amount: detail.item_Amount,
                     narration: detail.narration,
+                    itemNameLabel: detail.itemNameLabel,
+                    brandName: detail.brandName,
                     detail_id: detail.detail_id
 
                 }))
@@ -801,6 +881,8 @@ const SugarPurchase = () => {
                 rate: detail.rate,
                 item_Amount: detail.item_Amount,
                 narration: detail.narration,
+                itemNameLabel: detail.ItemName,
+                brandName: detail.Brand_Name,
                 detail_id: detail.detail_id
             }))
         );
@@ -871,6 +953,8 @@ const SugarPurchase = () => {
         setSelectedUser(user);
         setItemSelect(user.item_code);
         setBrandCode(user.Branch_Code);
+        setBrandName(user.brandName)
+        setItemNameLabel(user.itemNameLabel)
         setFormDataDetail({
             bags: user.bags || "",
             packing: user.packing || "",
@@ -904,13 +988,20 @@ const SugarPurchase = () => {
         const sgstAmount = parseFloat(calculateGSTAmount(subTotal, sgstRate)).toFixed(2);
         const igstAmount = parseFloat(calculateGSTAmount(subTotal, igstRate)).toFixed(2);
 
+        const TCSRate = parseFloat(formData.TCS_Rate) || 0
+        const TDSRate = parseFloat(formData.TDS_Rate) || 0
+
         let billAmount;
         let netPayable;
+        let TCSAmount;
+        let TDSAmount;
 
         // Update formData based on match_status
         if (match_status === "TRUE") {
             billAmount = parseFloat(subTotal) + parseFloat(cgstAmount) + parseFloat(sgstAmount) + parseFloat(formData.OTHER_AMT) + parseFloat(formData.cash_advance);
             netPayable = billAmount.toFixed(2);
+            TCSAmount = billAmount * TCSRate / 100
+            TDSAmount = subTotal * TDSRate / 100
             setFormData({
                 ...formData,
                 CGSTRate: cgstRate.toFixed(2),
@@ -920,11 +1011,15 @@ const SugarPurchase = () => {
                 SGSTAmount: sgstAmount,
                 IGSTAmount: 0.00, // Reset IGST amount
                 Bill_Amount: billAmount,
-                TCS_Net_Payable: netPayable
+                TCS_Net_Payable: netPayable,
+                TCS_Amt: TCSAmount,
+                TDS_Amt: TDSAmount
             });
         } else {
             billAmount = parseFloat(subTotal) + parseFloat(igstAmount) + parseFloat(formData.OTHER_AMT) + parseFloat(formData.cash_advance);
             netPayable = billAmount.toFixed(2);
+            TCSAmount = billAmount * TCSRate / 100
+            TDSAmount = subTotal * TDSRate / 100
             setFormData({
                 ...formData,
                 CGSTRate: 0.00, // Reset CGST rate
@@ -934,18 +1029,23 @@ const SugarPurchase = () => {
                 SGSTAmount: 0.00,
                 IGSTAmount: igstAmount,
                 Bill_Amount: billAmount,
-                TCS_Net_Payable: netPayable
+                TCS_Net_Payable: netPayable,
+                TCS_Amt: TCSAmount,
+                TDS_Amt: TDSAmount
             });
         }
     };
 
-    const addUser = async () => {
-        debugger;
+    const   addUser = async () => {
+        debugger
+
         const newUser = {
             id: users.length > 0 ? Math.max(...users.map((user) => user.id)) + 1 : 1,
             item_code: itemSelect,
             ic: itemSelectAccoid,
             Brand_Code: brandCode,
+            itemNameLabel: itemNameLabel,
+            brandName: brandName,
             ...formDataDetail,
             rowaction: "add",
         };
@@ -967,12 +1067,16 @@ const SugarPurchase = () => {
             subTotal: subTotal
         });
 
+        const updatedFormData = {
+            ...formData,
+        };
+
         if (from !== "" || FromCode !== "") {
             // Fetch match status
             const match_status = await fetchMatchStatus({
                 Company_Code: companyCode,
                 Year_Code: Year_Code,
-                Ac_Code: cancelButtonClicked ? FromCode : from
+                Ac_Code: cancelButtonClicked ? FromCode || updatedFormData.Ac_Code : from
             });
 
             if (match_status) {
@@ -996,8 +1100,10 @@ const SugarPurchase = () => {
                 return {
                     ...user,
                     item_code: itemSelect,
+                    itemNameLabel: itemNameLabel,
                     ic: itemSelectAccoid,
                     Brand_Code: brandCode,
+                    brandName: brandName,
                     ...formDataDetail,
                     item_Amount: updatedItemAmount,
                     rowaction: updatedRowaction,
@@ -1024,12 +1130,16 @@ const SugarPurchase = () => {
             subTotal: subTotal
         });
 
+        const updatedFormData = {
+            ...formData
+        }
+
         if (from !== "" || FromCode !== "") {
             // Fetch match status
             const match_status = await fetchMatchStatus({
                 Company_Code: companyCode,
                 Year_Code: Year_Code,
-                Ac_Code: cancelButtonClicked ? FromCode : from
+                Ac_Code: cancelButtonClicked ? FromCode || updatedFormData.Ac_Code : from
             });
 
             if (match_status) {
@@ -1083,6 +1193,10 @@ const SugarPurchase = () => {
 
         globalQuantalTotal = totalQuantal;
 
+        const updatedFormData = {
+            ...formData
+        }
+
         // Update formDataDetail with updatedUsers and subTotal
         setFormDataDetail({
             ...formDataDetail,  // Spread existing formDataDetail fields
@@ -1095,7 +1209,7 @@ const SugarPurchase = () => {
             const match_status = await fetchMatchStatus({
                 Company_Code: companyCode,
                 Year_Code: Year_Code,
-                Ac_Code: cancelButtonClicked ? FromCode : from
+                Ac_Code: cancelButtonClicked ? FromCode || updatedFormData.Ac_Code : from
             });
 
             if (match_status) {
@@ -1147,6 +1261,10 @@ const SugarPurchase = () => {
 
         globalQuantalTotal = totalQuantal;
 
+        const updatedFormData = {
+            ...formData
+        }
+
         // Update formDataDetail with updatedUsers and subTotal
         setFormDataDetail({
             ...formDataDetail,
@@ -1158,7 +1276,7 @@ const SugarPurchase = () => {
             const match_status = await fetchMatchStatus({
                 Company_Code: companyCode,
                 Year_Code: Year_Code,
-                Ac_Code: cancelButtonClicked ? FromCode : from
+                Ac_Code: cancelButtonClicked ? FromCode || updatedFormData.Ac_Code : from
             });
 
             if (match_status) {
@@ -1175,16 +1293,19 @@ const SugarPurchase = () => {
     };
 
     //Functionality to help section to set the record.
-    const handleItemSelect = (code, accoid) => {
+    const handleItemSelect = (code, accoid, HSN, Name) => {
         setItemSelect(code);
         setItemSelectAccoid(accoid)
+        setItemNameLabel(Name)
         // setHSNNo(HSN)
     };
 
     // Handle changes in the Mill_Code input (assuming SystemMasterHelp handles its own state
-    const handleBrandCode = (code, accoid) => {
+    const handleBrandCode = (code, accoid, Name) => {
         setBrandCode(code);
         setBrandCodeAccoid(accoid)
+        setBrandName(Name)
+
     };
 
     //Head Section help Functions to manage the Ac_Code and accoid
@@ -1197,11 +1318,13 @@ const SugarPurchase = () => {
 
     const handleFrom = (code, accoid) => {
         setFrom(code)
+        newAcCode = code
         setFormData({
             ...formData,
             Ac_Code: code,
             ac: accoid
         });
+
     }
 
     const handleUnit = (code, accoid) => {
@@ -1232,20 +1355,22 @@ const SugarPurchase = () => {
     }
 
     const handleGstCode = async (code, Rate) => {
+        debugger
         setGstCode(code);
         setGstRate(Rate);
 
+        const updatedFormData = {
+            ...formData,
+        };
+
+
         if (from != "" || FromCode != "") {
             // Make an API call to fetch match status
-            const response = await axios.get(`http://localhost:8080/api/sugarian/get_match_status`, {
-                params: {
-                    Company_Code: companyCode,
-                    Year_Code: Year_Code,
-                    Ac_Code: cancelButtonClicked ? FromCode : from
-                }
+            const match_status = await fetchMatchStatus({
+                Company_Code: companyCode,
+                Year_Code: Year_Code,
+                Ac_Code: cancelButtonClicked ? FromCode : updatedFormData.Ac_Code
             });
-
-            const { match_status } = response.data;
 
             const gstRateDivide = parseFloat(Rate);
 
@@ -1272,7 +1397,7 @@ const SugarPurchase = () => {
                 TCSAmount = billAmount * TCSRate / 100
                 TDSAmount = subTotal * TDSRate / 100
 
-                
+
 
                 setFormData({
                     ...formData,
@@ -1315,55 +1440,28 @@ const SugarPurchase = () => {
         return (subTotal * (rate / 100)).toFixed(2);
     };
 
-
     const handleKeyDownOther = (e) => {
         if (e.key === 'Tab') {
-            const { name, value } = e.target;
 
-            // Validate input
-            if (!isNaN(value) && value.trim() !== "") {
-                const amount = parseFloat(value);
-
-                let updatedBillAmount = parseFloat(formData.Bill_Amount);
-                let TCSRate = parseFloat(formData.TCS_Rate) || 0
-                let TCSAmount = updatedBillAmount * TCSRate / 100
-
-                let updatedSubTotal = parseFloat(formData.subTotal);
-                let TDSRate = parseFloat(formData.TDS_Rate) || 0
-                let TDSAmount = updatedSubTotal * TDSRate / 100
-
-                if (name === "cash_advance") {
-                    updatedBillAmount += amount;
-                } else if (name === "OTHER_AMT") {
-                    if (amount > 0) {
-                        updatedBillAmount += amount;
-                    } else {
-                        updatedBillAmount += amount;
-                    }
-                }
-                const updatedNetPayable = updatedBillAmount.toFixed(2);
-                // Update the form data with the new amounts
-                setFormData((prevData) => ({
-                    ...prevData,
-                    Bill_Amount: updatedBillAmount.toFixed(2),
-                    TCS_Net_Payable: updatedNetPayable,
-                    TCS_Amt: TCSAmount,
-                    TDS_Amt: TDSAmount
-                }));
-            }
+            
+            calculateTotals();
         }
     };
 
 
+    const validateNumericInput = (e) => {
+        e.target.value = e.target.value.replace(/[^0-9.]/g, '');
+    };
+
     return (
         <>
             <ToastContainer />
-            <h3 className="mt-4 mb-4 text-center custom-heading">
-                Sugar Purchase For GST
-            </h3>
             {/* <button style={{ marginBottom: "-80px" }} className="btn btn-primary">Print</button> */}
             {/* Action button  */}
-            <div className="container">
+            <div className="main-container" >
+            <h5 className="mt-4 mb-4 text-center custom-heading">
+                Sugar Purchase For GST
+            </h5>
                 <ActionButtonGroup
                     handleAddOne={handleAddOne}
                     addOneButtonEnabled={addOneButtonEnabled}
@@ -1378,6 +1476,7 @@ const SugarPurchase = () => {
                     cancelButtonEnabled={cancelButtonEnabled}
                     handleBack={handleBack}
                     backButtonEnabled={backButtonEnabled}
+                    permissions={permissions} 
                 />
                 <div>
                     {/* Navigation Buttons */}
@@ -1390,9 +1489,8 @@ const SugarPurchase = () => {
                         isEditing={isEditing}
                     />
                 </div>
-            </div>
-
-            <form className="" onSubmit={handleSubmit}>
+  
+            <form onSubmit={handleSubmit}>
                 <div >
 
                     <Grid container spacing={2}>
@@ -1413,8 +1511,7 @@ const SugarPurchase = () => {
                         <Grid item xs={2}>
                             <FormControl>
                                 <TextField
-                                    inputRef={setFocusTaskdate}
-                                    label="Bill No"
+                                    label="doc no"
                                     name="doc_no"
                                     variant="outlined"
                                     autoComplete="off"
@@ -1422,6 +1519,7 @@ const SugarPurchase = () => {
                                     onChange={handleChange}
                                     disabled
                                     size="small"
+
                                 />
                             </FormControl>
                         </Grid>
@@ -1434,7 +1532,7 @@ const SugarPurchase = () => {
                                     CategoryName={""}
                                     CategoryCode={""}
                                     name="DO_No"
-                                    tabIndexHelp={2}
+
                                     disabledFeild={!isEditing && addOneButtonEnabled}
 
                                 />
@@ -1456,6 +1554,7 @@ const SugarPurchase = () => {
                                 }}
                                 fullWidth
                                 size="small"
+                                tabIndex={1}
 
                             />
                         </Grid>
@@ -1471,6 +1570,7 @@ const SugarPurchase = () => {
                                     onChange={handleChange}
                                     disabled={!isEditing && addOneButtonEnabled}
                                     label="Retail Stock"
+                                    tabIndex={2}
                                 >
                                     <MenuItem value="Y">Yes</MenuItem>
                                     <MenuItem value="N">No</MenuItem>
@@ -1489,7 +1589,8 @@ const SugarPurchase = () => {
                                     CategoryName={FromName}
                                     CategoryCode={FromCode}
                                     name="From"
-                                    tabIndexHelp={2}
+                                    disabledFeild={!isEditing && addOneButtonEnabled}
+
                                 />
                             </FormControl>
                         </Grid>
@@ -1503,7 +1604,7 @@ const SugarPurchase = () => {
                                     CategoryName={Unitname}
                                     CategoryCode={UnitCode}
                                     name="Unit"
-                                    tabIndexHelp={3}
+
                                     disabledFeild={!isEditing && addOneButtonEnabled}
                                 />
                             </FormControl>
@@ -1517,7 +1618,7 @@ const SugarPurchase = () => {
                                         CategoryName={MillName}
                                         CategoryCode={MillCode}
                                         name="Mill"
-                                        tabIndexHelp={5}
+
                                         disabledFeild={!isEditing && addOneButtonEnabled}
                                     />
                                 </FormControl>
@@ -1527,20 +1628,6 @@ const SugarPurchase = () => {
 
                     <div className="debitCreditNote-row" >
                         <Grid container spacing={2} sx={{ mt: 2 }}>
-                            {/* <Grid item xs={2}>
-                                <TextField
-                                    label="MILL"
-                                    variant="outlined"
-                                    name="MILL"
-                                    autoComplete="off"
-                                    value={formData.MILL}
-                                    onChange={handleChange}
-                                    disabled={!isEditing && addOneButtonEnabled}
-                                    fullWidth
-                                    size="small"
-                                />
-                            </Grid> */}
-
                             <Grid item xs={2}>
                                 <TextField
                                     label="From"
@@ -1552,6 +1639,7 @@ const SugarPurchase = () => {
                                     disabled={!isEditing && addOneButtonEnabled}
                                     fullWidth
                                     size="small"
+
                                 />
                             </Grid>
 
@@ -1625,7 +1713,7 @@ const SugarPurchase = () => {
                                         CategoryName={BrokerName}
                                         CategoryCode={BrokerCode}
                                         name="broker"
-                                        tabIndexHelp={6}
+
                                         disabledFeild={!isEditing && addOneButtonEnabled}
                                     />
                                 </FormControl>
@@ -1639,7 +1727,7 @@ const SugarPurchase = () => {
                                         GstRateName={GstRateName}
                                         GstRateCode={GstRateCode}
                                         name="gst_code"
-                                        tabIndexHelp={8}
+
                                         disabledFeild={!isEditing && addOneButtonEnabled}
                                     />
                                 </FormControl>
@@ -1649,7 +1737,7 @@ const SugarPurchase = () => {
                                 <TextField
                                     label="Bill No"
                                     variant="outlined"
-                                    name="Ewaybillno"
+                                    name="Bill_No"
                                     autoComplete="off"
                                     value={formData.Bill_No}
                                     onChange={handleChange}
@@ -1665,7 +1753,6 @@ const SugarPurchase = () => {
                                     label="Mill Invoice Date"
                                     type="date"
                                     variant="outlined"
-                                    inputRef={setFocusTaskdate}
                                     name="mill_inv_date"
                                     value={formData.mill_inv_date}
                                     onChange={handleChange}
@@ -1691,7 +1778,8 @@ const SugarPurchase = () => {
 
 
                 {/*detail part popup functionality and Validation part Grid view */}
-                <div className=" mt-4">
+                <div className="mt-4" >
+                <div className="mt-4" style={{float:'left',marginBottom:'10px'}}>
                     <button
                         className="btn btn-primary"
                         onClick={openPopup}
@@ -1713,6 +1801,7 @@ const SugarPurchase = () => {
                     >
                         Close
                     </button>
+                    </div>
                     {showPopup && (
                         <div
                             className="modal"
@@ -1739,29 +1828,27 @@ const SugarPurchase = () => {
                                         <form>
                                             <Grid container spacing={2}>
                                                 <Grid item xs={6}>
-                                                <label htmlFor="Item Name">Item Name :</label>
+                                                    <label htmlFor="Item Name">Item Name :</label>
                                                     <FormControl fullWidth variant="outlined" size="small">
                                                         <SystemHelpMaster
                                                             onAcCodeClick={handleItemSelect}
-                                                            CategoryName={ItemName}
-                                                            CategoryCode={ItemCodeNew}
+                                                            CategoryName={itemNameLabel}
+                                                            CategoryCode={itemSelect}
                                                             name="Item_Select"
-                                                            tabIndexHelp={3}
+
                                                             SystemType="I"
                                                             className="account-master-help"
                                                         />
                                                     </FormControl>
                                                 </Grid>
                                                 <Grid item xs={6}>
-                                                <label htmlFor="Item Name">Brand Code :</label>
+                                                    <label htmlFor="Item Name">Brand Code :</label>
                                                     <FormControl fullWidth variant="outlined" size="small">
-                                                        <SystemHelpMaster
+                                                        <BrandMasterHelp
                                                             onAcCodeClick={handleBrandCode}
-                                                            CategoryName={BrandName}
-                                                            CategoryCode={BrandCode}
+                                                            CategoryName={brandName}
+                                                            CategoryCode={brandCode}
                                                             name="Brand_Code"
-                                                            tabIndexHelp={3}
-                                                            SystemType="I"
                                                             className="account-master-help"
                                                         />
                                                     </FormControl>
@@ -1857,7 +1944,7 @@ const SugarPurchase = () => {
                                     <div className="modal-footer">
                                         {selectedUser.id ? (
                                             <button className="btn btn-primary" onClick={updateUser} onKeyDown={(event) => {
-                                                if (event.key === "Enter") {
+                                                if (event.key === 13) {
                                                     updateUser();
                                                 }
                                             }}>
@@ -1865,7 +1952,7 @@ const SugarPurchase = () => {
                                             </button>
                                         ) : (
                                             <button className="btn btn-primary" onClick={addUser} onKeyDown={(event) => {
-                                                if (event.key === "Enter") {
+                                                if (event.key === 13) {
                                                     addUser();
                                                 }
                                             }}>
@@ -1890,15 +1977,18 @@ const SugarPurchase = () => {
                             <tr>
                                 <th>Actions</th>
                                 <th>ID</th>
+                                <th>Rowaction</th>
                                 <th>Item Code</th>
+                                <th>Item Name</th>
                                 <th>Brand Code</th>
+                                <th>Brand Name</th>
                                 <th>Quantal</th>
                                 <th>packing</th>
                                 <th>rate</th>
                                 <th>bags</th>
                                 <th>item_Amount</th>
                                 <th>narration</th>
-                                <th>Rowaction</th>
+
                             </tr>
                         </thead>
                         <tbody>
@@ -1947,15 +2037,18 @@ const SugarPurchase = () => {
                                         ) : null}
                                     </td>
                                     <td>{user.id}</td>
+                                    <td>{user.rowaction}</td>
                                     <td>{user.item_code}</td>
+                                    <td>{user.itemNameLabel}</td>
                                     <td>{user.Brand_Code}</td>
+                                    <td>{user.brandName}</td>
                                     <td>{user.Quantal}</td>
                                     <td>{user.packing}</td>
                                     <td>{user.rate}</td>
                                     <td>{user.bags}</td>
                                     <td>{user.item_Amount}</td>
                                     <td>{user.narration}</td>
-                                    <td>{user.rowaction}</td>
+
                                 </tr>
                             ))}
                         </tbody>
@@ -1980,6 +2073,7 @@ const SugarPurchase = () => {
                                     shrink: true,
                                 }}
                                 size="small"
+                               
                             />
                         </Grid>
 
@@ -2027,13 +2121,18 @@ const SugarPurchase = () => {
                                 variant="outlined"
                                 name="subTotal"
                                 autoComplete="off"
-                                value={subTotal}
+                                value={subTotal || formData.subTotal}
                                 disabled={!isEditing && addOneButtonEnabled}
                                 fullWidth
                                 InputLabelProps={{ shrink: true }}
                                 error={!!formErrors.subTotal}
                                 helperText={formErrors.subTotal}
                                 size="small"
+                                inputProps={{
+                                    inputMode: 'decimal',
+                                    pattern: '[0-9]*[.,]?[0-9]+',
+                                    onInput: validateNumericInput,
+                                }}
                             />
                         </Grid>
 
@@ -2053,6 +2152,11 @@ const SugarPurchase = () => {
                                         error={!!formErrors.CGSTRate}
                                         helperText={formErrors.CGSTRate}
                                         size="small"
+                                        inputProps={{
+                                            inputMode: 'decimal',
+                                            pattern: '[0-9]*[.,]?[0-9]+',
+                                            onInput: validateNumericInput,
+                                        }}
                                     />
                                 </Grid>
                                 <Grid item xs={6} sm={2}>
@@ -2069,6 +2173,11 @@ const SugarPurchase = () => {
                                         error={!!formErrors.CGSTAmount}
                                         helperText={formErrors.CGSTAmount}
                                         size="small"
+                                        inputProps={{
+                                            inputMode: 'decimal',
+                                            pattern: '[0-9]*[.,]?[0-9]+',
+                                            onInput: validateNumericInput,
+                                        }}
                                     />
                                 </Grid>
                                 <Grid item xs={6} sm={1}>
@@ -2085,6 +2194,11 @@ const SugarPurchase = () => {
                                         error={!!formErrors.SGSTRate}
                                         helperText={formErrors.SGSTRate}
                                         size="small"
+                                        inputProps={{
+                                            inputMode: 'decimal',
+                                            pattern: '[0-9]*[.,]?[0-9]+',
+                                            onInput: validateNumericInput,
+                                        }}
                                     />
                                 </Grid>
                                 <Grid item xs={6} sm={2}>
@@ -2101,6 +2215,11 @@ const SugarPurchase = () => {
                                         error={!!formErrors.SGSTAmount}
                                         helperText={formErrors.SGSTAmount}
                                         size="small"
+                                        inputProps={{
+                                            inputMode: 'decimal',
+                                            pattern: '[0-9]*[.,]?[0-9]+',
+                                            onInput: validateNumericInput,
+                                        }}
                                     />
                                 </Grid>
 
@@ -2118,6 +2237,11 @@ const SugarPurchase = () => {
                                         error={!!formErrors.IGSTRate}
                                         helperText={formErrors.IGSTRate}
                                         size="small"
+                                        inputProps={{
+                                            inputMode: 'decimal',
+                                            pattern: '[0-9]*[.,]?[0-9]+',
+                                            onInput: validateNumericInput,
+                                        }}
                                     />
                                 </Grid>
                                 <Grid item xs={6} sm={2}>
@@ -2134,6 +2258,11 @@ const SugarPurchase = () => {
                                         error={!!formErrors.IGSTAmount}
                                         helperText={formErrors.IGSTAmount}
                                         size="small"
+                                        inputProps={{
+                                            inputMode: 'decimal',
+                                            pattern: '[0-9]*[.,]?[0-9]+',
+                                            onInput: validateNumericInput,
+                                        }}
                                     />
                                 </Grid>
 
@@ -2151,6 +2280,11 @@ const SugarPurchase = () => {
                                         error={!!formErrors.LESS_FRT_RATE}
                                         helperText={formErrors.LESS_FRT_RATE}
                                         size="small"
+                                        inputProps={{
+                                            inputMode: 'decimal',
+                                            pattern: '[0-9]*[.,]?[0-9]+',
+                                            onInput: validateNumericInput,
+                                        }}
                                     />
                                 </Grid>
                                 <Grid item xs={6} sm={2}>
@@ -2167,6 +2301,11 @@ const SugarPurchase = () => {
                                         error={!!formErrors.freight}
                                         helperText={formErrors.freight}
                                         size="small"
+                                        inputProps={{
+                                            inputMode: 'decimal',
+                                            pattern: '[0-9]*[.,]?[0-9]+',
+                                            onInput: validateNumericInput,
+                                        }}
                                     />
                                 </Grid>
                             </Grid>
@@ -2188,6 +2327,11 @@ const SugarPurchase = () => {
                                 error={Boolean(formErrors.bank_commission)}
                                 helperText={formErrors.bank_commission || ''}
                                 size="small"
+                                inputProps={{
+                                    inputMode: 'decimal',
+                                    pattern: '[0-9]*[.,]?[0-9]+',
+                                    onInput: validateNumericInput,
+                                }}
                             />
                         </Grid>
 
@@ -2204,6 +2348,7 @@ const SugarPurchase = () => {
                                 error={Boolean(formErrors.OTHER_AMT)}
                                 helperText={formErrors.OTHER_AMT || ''}
                                 size="small"
+                            
                             />
                         </Grid>
                         <Grid item xs={3}>
@@ -2219,6 +2364,11 @@ const SugarPurchase = () => {
                                 error={Boolean(formErrors.cash_advance)}
                                 helperText={formErrors.cash_advance || ''}
                                 size="small"
+                                inputProps={{
+                                    inputMode: 'decimal',
+                                    pattern: '[0-9]*[.,]?[0-9]+',
+                                    onInput: validateNumericInput,
+                                }}
                             />
                         </Grid>
 
@@ -2228,12 +2378,17 @@ const SugarPurchase = () => {
                                 variant="outlined"
                                 fullWidth
                                 name="Bill_Amount"
-                                value={formData.Bill_Amount}
+                                value={formData.Bill_Amount || 0}
                                 onChange={handleChange}
                                 disabled={!isEditing && addOneButtonEnabled}
                                 error={Boolean(formErrors.Bill_Amount)}
                                 helperText={formErrors.Bill_Amount || ''}
                                 size="small"
+                                inputProps={{
+                                    inputMode: 'decimal',
+                                    pattern: '[0-9]*[.,]?[0-9]+',
+                                    onInput: validateNumericInput,
+                                }}
                             />
                         </Grid>
                     </Grid>
@@ -2253,6 +2408,11 @@ const SugarPurchase = () => {
                                     error={Boolean(formErrors.TCS_Rate)}
                                     helperText={formErrors.TCS_Rate || ''}
                                     size="small"
+                                    inputProps={{
+                                        inputMode: 'decimal',
+                                        pattern: '[0-9]*[.,]?[0-9]+',
+                                        onInput: validateNumericInput,
+                                    }}
                                 />
                             </Grid>
 
@@ -2262,13 +2422,18 @@ const SugarPurchase = () => {
                                     variant="outlined"
                                     fullWidth
                                     name="TCS_Amt"
-                                    value={formData.TCS_Amt}
+                                    value={formData.TCS_Amt || 0}
                                     onKeyDown={handleKeyDownOther}
                                     onChange={handleChange}
                                     disabled={!isEditing && addOneButtonEnabled}
                                     error={Boolean(formErrors.TCS_Amt)}
                                     helperText={formErrors.TCS_Amt || ''}
                                     size="small"
+                                    inputProps={{
+                                        inputMode: 'decimal',
+                                        pattern: '[0-9]*[.,]?[0-9]+',
+                                        onInput: validateNumericInput,
+                                    }}
                                 />
                             </Grid>
 
@@ -2285,6 +2450,11 @@ const SugarPurchase = () => {
                                     error={Boolean(formErrors.TDS_Rate)}
                                     helperText={formErrors.TDS_Rate || ''}
                                     size="small"
+                                    inputProps={{
+                                        inputMode: 'decimal',
+                                        pattern: '[0-9]*[.,]?[0-9]+',
+                                        onInput: validateNumericInput,
+                                    }}
                                 />
                             </Grid>
 
@@ -2301,6 +2471,11 @@ const SugarPurchase = () => {
                                     error={Boolean(formErrors.TDS_Amt)}
                                     helperText={formErrors.TDS_Amt || ''}
                                     size="small"
+                                    inputProps={{
+                                        inputMode: 'decimal',
+                                        pattern: '[0-9]*[.,]?[0-9]+',
+                                        onInput: validateNumericInput,
+                                    }}
                                 />
                             </Grid>
 
@@ -2310,18 +2485,25 @@ const SugarPurchase = () => {
                                     variant="outlined"
                                     fullWidth
                                     name="TCS_Net_Payable"
-                                    value={formData.TCS_Net_Payable}
+                                    value={formData.TCS_Net_Payable || 0}
                                     onChange={handleChange}
                                     disabled={!isEditing && addOneButtonEnabled}
                                     error={Boolean(formErrors.TCS_Net_Payable)}
                                     helperText={formErrors.TCS_Net_Payable || ''}
                                     size="small"
+                                    inputProps={{
+                                        inputMode: 'decimal',
+                                        pattern: '[0-9]*[.,]?[0-9]+',
+                                        onInput: validateNumericInput,
+                                    }}
                                 />
                             </Grid>
                         </Grid>
                     </div>
                 </div>
+               
             </form>
+            </div>
         </>
     );
 };

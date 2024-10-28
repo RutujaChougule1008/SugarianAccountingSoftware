@@ -83,11 +83,41 @@ def get_acShort_Name(ac_code,company_code):
 def fetch_auto_voucher_value(company_code, year_code):
         query = """
         SELECT        AutoVoucher
-FROM            dbo.nt_1_companyparameters 
+FROM  dbo.nt_1_companyparameters 
           WHERE Company_Code = :company_code AND Year_Code = :year_code
         """
         result = db.session.execute(text(query), {'company_code': company_code, 'year_code': year_code}).fetchone()
         return result
+
+#Create GLegder Effects
+def create_gledger_entry(data, amount, drcr, ac_code, accoid,ordercode,trans_type,doc_no):
+        return {
+            "TRAN_TYPE": trans_type,
+            "DOC_NO": doc_no,
+            "DOC_DATE": data['doc_date'],
+            "AC_CODE": ac_code,
+            "AMOUNT": amount,
+            "COMPANY_CODE": data['Company_Code'],
+            "YEAR_CODE": data['Year_Code'],
+            "ORDER_CODE": ordercode,
+            "DRCR": drcr,
+            "UNIT_Code": 0,
+            "NARRATION": "aaaa",
+            "TENDER_ID": 0,
+            "TENDER_ID_DETAIL": 0,
+            "VOUCHER_ID": 0,
+            "DRCR_HEAD": 0,
+            "ADJUSTED_AMOUNT": 0,
+            "Branch_Code": 1,
+            "SORT_TYPE": trans_type,
+            "SORT_NO": doc_no,
+            "vc": 0,
+            "progid": 0,
+            "tranid": 0,
+            "saleid": 0,
+            "ac": accoid
+        }
+
 
 
       

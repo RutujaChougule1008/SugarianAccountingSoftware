@@ -271,6 +271,8 @@ def insert_SaleBill():
         TCS_Amt = float(headData.get('TCS_Amt', 0) or 0)
         cash_advance = float(headData.get('cash_advance', 0) or 0)
         RoundOff = float(headData.get('RoundOff', 0) or 0)
+        TaxableAmount = float(headData.get('TaxableAmount', 0) or 0)
+        ordercode = 0
 
         
         sale_ac = getSaleAc(item.get('ic'))
@@ -315,16 +317,19 @@ def insert_SaleBill():
             )
         print('creditnarration',creditnarration)
         if CGSTAmount > 0:
+            ordercode=ordercode+1
             ac_code = company_parameters.CGSTAc
             accoid = get_accoid(ac_code, headData['Company_Code'])
             add_gledger_entry(gledger_entries, headData, CGSTAmount, 'C', ac_code, accoid, creditnarration)
 
         if SGSTAmount > 0:
+            ordercode=ordercode+1
             ac_code = company_parameters.SGSTAc
             accoid = get_accoid(ac_code, headData['Company_Code'])
             add_gledger_entry(gledger_entries, headData, SGSTAmount, 'C', ac_code, accoid, creditnarration)
 
         if IGSTAmount > 0:
+            ordercode=ordercode+1
             ac_code = company_parameters.IGSTAc
             accoid = get_accoid(ac_code, headData['Company_Code'])
             add_gledger_entry(gledger_entries, headData, IGSTAmount, 'C', ac_code, accoid, creditnarration)
@@ -351,7 +356,7 @@ def insert_SaleBill():
             add_gledger_entry(gledger_entries, headData, Bill_Amount, 'D', ac_code, accoid, creditnarration)
             ac_code = sale_ac
             accoid = get_accoid(ac_code, headData['Company_Code'])
-            add_gledger_entry(gledger_entries, headData, Bill_Amount, 'C', ac_code, accoid, saleacnarration)
+            add_gledger_entry(gledger_entries, headData, TaxableAmount, 'C', ac_code, accoid, saleacnarration)
 
         if cash_advance > 0:
             ac_code = headData['Transport_Code']
@@ -445,15 +450,11 @@ def update_SaleBill():
         detailData = data['detailData']
         dono=headData['DO_No']
         doc_no=headData['doc_no']
+        print("dono", dono)
         if dono!=0  :
             if doc_no == 0 :
                 headData['doc_no'] = 0
                 updateddoc_no = 0
-        else:    
-            max_doc_no = get_max_doc_no()
-            updateddoc_no = max_doc_no + 1
-            print("New Document Number:", updateddoc_no)
-            headData['doc_no'] = updateddoc_no
 
         saleid = request.args.get('saleid')
         if saleid is None:
@@ -519,6 +520,7 @@ def update_SaleBill():
         TCS_Amt = float(headData.get('TCS_Amt', 0) or 0)
         cash_advance= float(headData.get(' cash_advance', 0) or 0)
         RoundOff= float(headData.get(' RoundOff', 0) or 0)
+        TaxableAmount = float(headData.get('TaxableAmount', 0) or 0)
 
         sale_ac = getSaleAc(item.get('ic'))     
         unitcode=headData['Unit_Code']
@@ -614,7 +616,7 @@ def update_SaleBill():
                    
                     ac_code = sale_ac
                     accoid = get_accoid(ac_code,headData['Company_Code'])
-                    add_gledger_entry(gledger_entries, headData, Bill_Amount, 'C', ac_code, accoid,saleacnarration,ordercode)
+                    add_gledger_entry(gledger_entries, headData, TaxableAmount, 'C', ac_code, accoid,saleacnarration,ordercode)
                    
         if cash_advance>0 :
               ordercode=ordercode+1

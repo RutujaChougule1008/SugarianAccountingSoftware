@@ -26,11 +26,28 @@ EDIT_PERMISSION = 2
 DELETE_PERMISSION = 4
 SAVE_PERMISSION = 8
 
+userQuery = '''
+SELECT        dbo.tbluser.User_Id, dbo.tbluser.User_Name, dbo.tbluser.User_Type, dbo.tbluser.Password, dbo.tbluser.EmailId, dbo.tbluser.EmailPassword, dbo.tbluser.uid, dbo.tbluser.userfullname, dbo.tbluser.Mobile, 
+                         dbo.tbluser.User_Security, dbo.tbluser.PaymentsPassword, dbo.tbluser.User_Password, dbo.tbluserdetail.Detail_Id, dbo.tbluserdetail.Program_Name, dbo.tbluserdetail.Tran_Type, dbo.tbluserdetail.udid, 
+                         dbo.tbluserdetail.canView, dbo.tbluserdetail.canEdit, dbo.tbluserdetail.canSave, dbo.tbluserdetail.canDelete, dbo.tbluserdetail.DND
+FROM            dbo.tbluser INNER JOIN
+                         dbo.tbluserdetail ON dbo.tbluser.uid = dbo.tbluserdetail.uid
+WHERE dbo.tbluser.uid =:uid
+'''
+
 def format_dates(data):
-    return {
-        "Modified_By": data.Modified_By.strftime('%Y-%m-%d') if data.Modified_By else None,
-        "Created_Date": data.Created_Date.strftime('%Y-%m-%d') if data.Created_Date else None,
-    }
+    formatted_data = (
+        {column.name: getattr(data, column.name) for column in data.__table__.columns}
+        if not isinstance(data, dict)
+        else data.copy()
+    )
+    for date_field in ["Modified_Date", "Created_Date"]:
+        if date_field in formatted_data and formatted_data[date_field]:
+            formatted_data[date_field] = formatted_data[date_field].strftime('%Y-%m-%d')
+
+    return formatted_data
+
+
 
 
 @app.route(API_URL + "/insert-user", methods=["POST"])
@@ -44,6 +61,10 @@ def insert_user_with_permissions():
         if not user_data or not permission_data:
             return jsonify({"error": "Missing parameters"}), 400
 
+        max_doc_no = db.session.query(func.max(TblUser.User_Id)).scalar() or 0
+        new_doc_no = max_doc_no + 1
+        user_data['User_Id'] = new_doc_no
+
         # Convert date strings in user_data to datetime objects
         if 'Created_Date' in user_data:
             user_data['Created_Date'] = datetime.strptime(user_data['Created_Date'], '%Y-%m-%d')
@@ -56,22 +77,15 @@ def insert_user_with_permissions():
         db.session.flush()  # This is important to get the uid for the new user
 
         uId = new_user.uid
-        UserId = new_user.User_Id
 
         createdDetails = []
 
         for perm_item in permission_data:
-            perm_item['User_Id'] = UserId
+            perm_item['User_Id'] = new_doc_no
             perm_item['uid'] = uId
-
-            permission_string = ", ".join(
-                perm for perm in ['view', 'edit', 'delete', 'save'] if perm in perm_item['Permission']
-            )
-            if permission_string:
-                perm_item['Permission'] = permission_string
-                new_permission = TblUserDetail(**perm_item)
-                new_user.details.append(new_permission)
-                createdDetails.append(new_permission)
+            new_permission = TblUserDetail(**perm_item)
+            new_user.details.append(new_permission)
+            createdDetails.append(new_permission)
 
             # Debugging output
             print("Added permission:", new_permission)
@@ -108,7 +122,7 @@ def update_user():
 
         if not user:
             return jsonify({"error": "User not found"}), 404
-        
+
         updatedPermissions = []
 
         # Update user details
@@ -121,16 +135,11 @@ def update_user():
         # Process permissions
         for perm_item in permission_data:
             # Convert date strings to datetime objects
-            if 'Created_Date' in perm_item:
+            if 'Created_Date' in perm_item and isinstance(perm_item['Created_Date'], str):
                 perm_item['Created_Date'] = datetime.strptime(perm_item['Created_Date'], '%Y-%m-%d')
-            if 'Modified_Date' in perm_item:
+            if 'Modified_Date' in perm_item and isinstance(perm_item['Modified_Date'], str):
                 perm_item['Modified_Date'] = datetime.strptime(perm_item['Modified_Date'], '%Y-%m-%d')
-
-            # Generate permission string
-            permission_string = ", ".join(
-                perm for perm in ['view', 'edit', 'delete', 'save'] if perm_item.get(perm) == 'Y'
-            )
-            perm_item['Permission'] = permission_string
+                
             perm_item['User_Id'] = user.User_Id
             perm_item['uid'] = uid
 
@@ -142,13 +151,13 @@ def update_user():
             ).first()
 
             if existing_permission:
-                # Update existing permission
-                existing_permission.Permission = permission_string
-                existing_permission.Modified_By = perm_item.get('Modified_By')
+                # Update all relevant fields in existing permission
+                for field, value in perm_item.items():
+                    setattr(existing_permission, field, value)
                 existing_permission.Modified_Date = datetime.now()
                 updatedPermissions.append(existing_permission)
             else:
-                # Insert new permission record
+                # Insert new permission record if it does not exist
                 new_permission = TblUserDetail(**perm_item)
                 db.session.add(new_permission)
                 updatedPermissions.append(new_permission)
@@ -167,17 +176,16 @@ def update_user():
         db.session.rollback()
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
-
 @app.route(API_URL + "/delete_user", methods=["DELETE"])
 def delete_user():
     try:
-        User_Id = request.args.get('User_Id')
+        uid = request.args.get('uid')
         if not User_Id:
             return jsonify({"error": "Missing required parameter"}), 400
 
         with db.session.begin():
-            deleted_contact_rows = TblUserDetail.query.filter_by(User_Id=User_Id).delete()
-            deleted_master_rows = TblUser.query.filter_by(User_Id=User_Id).delete()
+            deleted_contact_rows = TblUserDetail.query.filter_by(uid=uid).delete()
+            deleted_master_rows = TblUser.query.filter_by(uid=uid).delete()
 
         db.session.commit()
 
@@ -218,52 +226,144 @@ def get_next_user_id():
         print(e)
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
     
-@app.route(API_URL + "/get_user_permissions", methods=['GET'])
-def get_user_permissions():
-    uid = request.args.get('uid')
+# @app.route(API_URL + "/get_user_permissions", methods=['GET'])
+# def get_user_permissions():
+#     uid = request.args.get('uid')
     
-    if not uid:
-        return jsonify({'error': 'User ID is required'}), 400
+#     if not uid:
+#         return jsonify({'error': 'User ID is required'}), 400
 
-    try:
-        # Prepare the SQL query using text() to indicate raw SQL
-        query = text('''
-            SELECT dbo.tbluserdetail.Program_Name, dbo.tbluserdetail.Permission,  
-                   dbo.tbluser.User_Type, dbo.tbluser.uid
-            FROM dbo.tbluser 
-            LEFT OUTER JOIN dbo.tbluserdetail 
-            ON dbo.tbluser.uid = dbo.tbluserdetail.uid
-            WHERE dbo.tbluser.uid = :uid
-        ''')
+#     try:
+#         # Prepare the SQL query using text() to indicate raw SQL
+#         query = text('''
+#             SELECT dbo.tbluserdetail.Program_Name, dbo.tbluserdetail.Permission,  
+#                    dbo.tbluser.User_Type, dbo.tbluser.uid
+#             FROM dbo.tbluser 
+#             LEFT OUTER JOIN dbo.tbluserdetail 
+#             ON dbo.tbluser.uid = dbo.tbluserdetail.uid
+#             WHERE dbo.tbluser.uid = :uid
+#         ''')
         
-        # Execute the query with the uid parameter
-        result = db.session.execute(query, {'uid': uid})
+#         # Execute the query with the uid parameter
+#         result = db.session.execute(query, {'uid': uid})
 
-        permissions = []
-        for row in result:
-            permission_field = row.Permission
+#         permissions = []
+#         for row in result:
+#             permission_field = row.Permission
 
-            # Handle case where Permission is 'Y' (all permissions)
-            if permission_field == 'Y':
-                permission_list = ['view', 'edit', 'save', 'delete']  # Grant all permissions
-            elif isinstance(permission_field, str):
-                # If permission is a comma-separated string, split it into a list
-                permission_list = [perm.strip() for perm in permission_field.split(',')]
-            else:
-                permission_list = []
+#             # Handle case where Permission is 'Y' (all permissions)
+#             if permission_field == 'Y':
+#                 permission_list = ['view', 'edit', 'save', 'delete']  # Grant all permissions
+#             elif isinstance(permission_field, str):
+#                 # If permission is a comma-separated string, split it into a list
+#                 permission_list = [perm.strip() for perm in permission_field.split(',')]
+#             else:
+#                 permission_list = []
 
-            permissions.append({
-                'Program_Name': row.Program_Name,
-                'Permission': permission_list,  
-                'User_Type': row.User_Type,
-                'uid': row.uid
-            })
+#             permissions.append({
+#                 'Program_Name': row.Program_Name,
+#                 'Permission': permission_list,  
+#                 'User_Type': row.User_Type,
+#                 'uid': row.uid
+#             })
 
-        if not permissions:
-            return jsonify({'error': 'User not found'}), 404
+#         if not permissions:
+#             return jsonify({'error': 'User not found'}), 404
 
-        return jsonify({'permissions': permissions}), 200
+#         return jsonify({'permissions': permissions}), 200
+
+#     except Exception as e:
+#         return jsonify({'error': str(e)}), 500
+
+@app.route(API_URL + "/get_user_permissions", methods=["GET"])
+def getUserById():
+    """Retrieve a specific OtherGSTInput record by document number."""
+    try:
+        company_code = request.args.get('Company_Code')
+        Year_Code = request.args.get('Year_Code')
+        Program_Name = request.args.get('Program_Name')
+        uid = request.args.get('uid')
+        if not all([company_code, Year_Code, Program_Name, uid]):
+            return jsonify({'error': 'Missing parameters'}), 400
+
+        try:
+            company_code = int(company_code)
+            Year_Code = int(Year_Code)
+            Program_Name = str(Program_Name)
+            uid = int(uid)
+        except ValueError:
+            return jsonify({'error': 'Invalid parameter type'}), 400
+
+        # user_record = TblUser.query.filter_by(Company_Code=company_code, User_Id=User_Id).first()
+        # if not user_record:
+        #     return jsonify({'error': 'No user record found'}), 404
+
+        
+        user_detail_record = TblUserDetail.query.filter_by(Company_Code=company_code, Year_Code=Year_Code, Program_Name=Program_Name, uid=uid).first()
+        if not user_detail_record:
+            return jsonify({'error': 'No user detail record found'}), 404
+
+        # user_data = tbl_user_schema.dump(user_record)
+        user_detail_data = tbl_user_detail_schema.dump(user_detail_record)
+
+        
+        return jsonify({ 'UserDetails': user_detail_data}), 200
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@app.route(API_URL + "/getLastUserWithPermissions", methods=["GET"])
+def getLastUserWithPermissions():
+    try:
+        Company_Code = request.args.get('Company_Code')
+        if not Company_Code:
+            return jsonify({"error": "Missing required parameters"}), 400
+
+        # Query the last user by Company_Code and order by User_Id descending
+        last_user = TblUser.query.filter_by(Company_Code=Company_Code).order_by(TblUser.User_Id.desc()).first()
+
+        if last_user is None:
+            return jsonify({"error": "No records found"}), 404
+
+        lastUid = last_user.uid
+
+        # Execute the additional query to fetch permissions or other related data
+        additional_data = db.session.execute(text(userQuery), {'uid': lastUid})
+        additional_data_rows = additional_data.fetchall()
+
+        # Prepare the lastUserData dictionary from the last_user record
+        lastUserData = {column.name: getattr(last_user, column.name) for column in last_user.__table__.columns}
+
+        # Convert additional_data_rows to a list of dictionaries
+        lastUserPermissionData = [dict(row._mapping) for row in additional_data_rows]
+
+        # Format dates if required for lastUserPermissionData
+        lastUserPermissionData = [format_dates(data) for data in lastUserPermissionData]
+
+        # Prepare response data
+        response = {
+            "lastUserData": lastUserData,
+            "lastUserPermissionData": lastUserPermissionData
+        }
+        return jsonify(response), 200
+
+    except Exception as e:
+        print(e)
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
+
+@app.route(API_URL + "/getProgramNames", methods=["GET"])
+def get_program_names():
+    try:
+        program_names = db.session.query(TblUserDetail.Program_Name).distinct().all()
+        
+        program_names_list = [name[0] for name in program_names if name[0] is not None]
+
+        return jsonify({"programNames": program_names_list}), 200
+
+    except Exception as e:
+        print("Error fetching program names:", e)
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
+
 
