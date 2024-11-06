@@ -489,7 +489,7 @@ const Navbar = () => {
               <a href="/general-info-sms">General Info Throghout SMS</a>
             </div>
             <div className="submenu-item">
-              <a href="/user-creation">User Creation</a>
+              <a href="/user-permission-utility">User Creation</a>
             </div>
             <div className="submenu-item">
               <a href="/group-user-creation">Group User Creation</a>

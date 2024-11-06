@@ -24,6 +24,7 @@ const TenderPurchaseUtility = () => {
             rowKey="Tender_No"
             addUrl="/tender_head"
             detailUrl="/tender_head"
+            permissionUrl="/tender-purchaseutility"
         />
     );
 };

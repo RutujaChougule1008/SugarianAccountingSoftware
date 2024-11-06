@@ -30,7 +30,7 @@ def get_GSTRateMasterallData():
             selected_Record_data = {column.key: getattr(record, column.key) for column in record.__table__.columns}
             record_data.append (selected_Record_data)
 
-        return jsonify(record_data)
+        return jsonify({"record_data":record_data})
     except Exception as e:
         print (e)
         return jsonify({'error': 'internal server error'}), 500

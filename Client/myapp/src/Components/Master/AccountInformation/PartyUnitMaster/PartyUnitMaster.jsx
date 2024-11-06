@@ -39,6 +39,8 @@ const PartyUnitMaster = () => {
     //In utility page record doubleClicked that recod show for edit functionality
     const location = useLocation();
     const selectedRecord = location.state?.selectedRecord;
+    const permissions = location.state?.permissionsData;
+
     const initialFormData = {
         unit_code: '',
         Ac_Code: '',
@@ -402,6 +404,7 @@ const PartyUnitMaster = () => {
                     cancelButtonEnabled={cancelButtonEnabled}
                     handleBack={handleBack}
                     backButtonEnabled={backButtonEnabled}
+                    permissions={permissions}
                 />
                 <div>
                     {/* Navigation Buttons */}

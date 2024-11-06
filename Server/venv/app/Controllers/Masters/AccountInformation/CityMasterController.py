@@ -29,7 +29,7 @@ def getAll_Cities():
             group_data = {column.key: getattr(group, column.key) for column in group.__table__.columns}
             groups_data.append(group_data)
 
-        return jsonify(groups_data)
+        return jsonify({"cityData":groups_data})
     except Exception as e:
         print(e)
         return jsonify({'error': 'Internal server error'}), 500

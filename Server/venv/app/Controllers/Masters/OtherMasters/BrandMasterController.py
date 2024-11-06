@@ -52,7 +52,7 @@ def get_BrandMasterallData():
 
             all_records_data.append(record_data)
 
-        return jsonify(all_records_data), 200
+        return jsonify({"brandMasterData":all_records_data}), 200
     except Exception as e:
         print(e)
         return jsonify({'error': 'Internal server error'}), 500

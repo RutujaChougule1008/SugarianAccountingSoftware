@@ -331,19 +331,23 @@ def getAll_PartyUnitMaster():
         all_records_data = []
 
         for record in records:
+            # Get the main record data
             recordData = {column.name: getattr(record, column.name) for column in record.__table__.columns}
-            
 
+            # Fetch additional data
             additional_data = db.session.execute(text(PARTY_UNIT_MASTER_QUERY), {'ucid': record.ucid})
-            additional_data_rows = additional_data.fetchall()
-            additional_labels = [dict(row._mapping) for row in additional_data_rows]
+            additional_data_row = additional_data.fetchone()  # Get the first row, if available
 
-            record_response = {
-                "recordData": recordData,
-                "additionalLabels": additional_labels
-            }
-            all_records_data.append(record_response)
+            # Merge recordData and additional data into a single object
+            if additional_data_row:
+                additional_data_dict = dict(additional_data_row._mapping)
+                combined_record = {**recordData, **additional_data_dict}  # Combine both dictionaries
+            else:
+                combined_record = recordData  # Only use recordData if additional data is unavailable
 
+            all_records_data.append(combined_record)
+
+        # Final response
         response = {
             "all_records_data": all_records_data
         }

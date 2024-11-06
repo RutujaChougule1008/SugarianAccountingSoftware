@@ -95,6 +95,7 @@ const DebitCreditNote = () => {
   const navigate = useNavigate();
   const setFocusTaskdate = useRef(null);
   selectedfilter = location.state?.selectedfilter;
+  const permissions = location.state?.permissionsData;
   const [tranType, setTranType] = useState(selectedfilter);
   const [isHandleChange, setIsHandleChange] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -142,6 +143,7 @@ const DebitCreditNote = () => {
     TDS_Rate: 0.0,
     TDS_Amt: 0.0,
     IsDeleted: 1,
+    tran_type: tranType
   };
 
   // Head data functionality code.
@@ -165,6 +167,7 @@ const DebitCreditNote = () => {
     }));
   };
 
+  console.log("permission", permissions)
   const handleKeyDownCalculations = async (event) => {
     if (event.key === "Tab") {
       // event.preventDefault();
@@ -1309,6 +1312,7 @@ const DebitCreditNote = () => {
           cancelButtonEnabled={cancelButtonEnabled}
           handleBack={handleBack}
           backButtonEnabled={backButtonEnabled}
+          permissions={permissions}
         />
         <div>
           {/* Navigation Buttons */}

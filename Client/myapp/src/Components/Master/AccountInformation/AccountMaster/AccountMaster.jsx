@@ -63,10 +63,12 @@ const AccountMaster = () => {
   const [groupMasterData, setGroupMasterData] = useState("");
   const [city_data, setCityData] = useState("");
 
+
   const navigate = useNavigate();
   //In utility page record doubleClicked that recod show for edit functionality
   const location = useLocation();
   const selectedRecord = location.state?.selectedRecord;
+  const permissions = location.state?.permissionsData;
   const initialFormData = {
     Ac_Code: "",
     Ac_Name_E: "",
@@ -219,79 +221,6 @@ const AccountMaster = () => {
       [name]: value, // Set the appropriate value based on valueType
     }));
   };
-
-  const fetchGstStateCode = async () => {
-    try {
-      const response = await axios.get(
-        `http://localhost:8080/get-GSTStateCode?Company_Code=${companyCode}&Year_Code=${Year_Code}`
-      );
-      return response.data.GSTStateCode;
-    } catch (error) {
-      console.error("Error fetching GST State Code:", error);
-      return null;
-    }
-  };
-
-  useEffect(()=>{
-    fetchGstStateCode();
-  })
-
-//   const validateForm = () => {
-//     if (!formData.Ac_Name_E.trim()) {
-//       toast.error("Account Name is required.");
-//       return false;
-//     }
-
-//     if (!formData.City_Code) {
-//       toast.error("City Code is required.");
-//       return false;
-//     }
-
-//     if (!formData.Group_Code) {
-//       toast.error("Group Code is required.");
-//       return false;
-//     }
-
-//     if (!formData.Address_E) {
-//       toast.error("Address Is Required...");
-//       return false;
-//     }
-
-//     if (formData.Ac_type === "BR" && !formData.Short_Name.trim()) {
-//       toast.error("Short Name is required for Brokers.");
-//       return false;
-//     }
-
-//     if (
-//       (formData.Ac_type === "P" || formData.Ac_type === "S") &&
-//       formData.Bank_Opening > 0
-//     ) {
-//       toast.error("Bank Opening must be zero for Party or Supplier.");
-//       return false;
-//     }
-
-//   if ((formData.Ac_type === "P" || formData.Ac_type === "S") && formData.UnregisterGST !== 1) {
-//     if(!formData.Gst_No) {
-//       toast.error("GST Number is required");
-//       return false;
-//     }
-//     if(!formData.CompanyPan) {
-//       toast.error("Company Pan is required");
-//       return false;
-//     }
-// }
-
-//     if (
-//       formData.Ac_type === "B" &&
-//       (!formData.Bank_Ac_No.trim() || !formData.IFSC.trim())
-//     ) {
-//       toast.error("Bank Account Number and IFSC Code are required for Banks.");
-//       return false;
-//     }
-
-//     return true;
-//   };
-
 
 const validateForm = () => {
   // Common required fields
@@ -1578,6 +1507,7 @@ const isFieldEnabled = (fieldType) => {
           cancelButtonEnabled={cancelButtonEnabled}
           handleBack={handleBack}
           backButtonEnabled={backButtonEnabled}
+          permissions={permissions}
         />
 
         {/* Navigation Buttons */}

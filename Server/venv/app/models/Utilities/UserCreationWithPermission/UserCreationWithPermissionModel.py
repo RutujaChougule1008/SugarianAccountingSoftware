@@ -55,6 +55,7 @@ class TblUserDetail(db.Model):
     canSave = db.Column(db.String(45), nullable=True)
     canDelete = db.Column(db.String(45), nullable=True)
     DND = db.Column(db.String(45), nullable=True)
+    menuNames = db.Column(db.String(255), nullable=True)
 
     
     

@@ -62,11 +62,12 @@ const CommissionBill = () => {
 
   const location = useLocation();
   const selectedRecord = location.state?.selectedRecord;
-  const tranType =
-    location.state?.tranType
 
   const selectedVoucherNo = location.state?.selectedVoucherNo;
   const selectedVoucherType = location.state?.selectedVoucherType;
+
+  const selectedfilter = location.state?.selectedfilter;
+  const [tranType, setTranType] = useState(selectedfilter);
 
   const TranTypeInputRef = useRef(null);
   const isTDSRef = useRef(null);
@@ -201,17 +202,6 @@ const CommissionBill = () => {
     }));
   };
 
-  const fetchGstStateCode = async () => {
-    try {
-      const response = await axios.get(
-        `http://localhost:8080/get-GSTStateCode?Company_Code=${companyCode}&Year_Code=${Year_Code}`
-      );
-      return response.data.GSTStateCode;
-    } catch (error) {
-      console.error("Error fetching GST State Code:", error);
-      return null;
-    }
-  };
 
   const checkMatchStatus = async (ac_code, company_code, year_code) => {
     try {

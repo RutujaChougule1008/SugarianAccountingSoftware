@@ -31,6 +31,8 @@ const CityMaster = ({isPopup = false}, ref) => {
     //In utility page record doubleClicked that recod show for edit functionality
     const location = useLocation();
     const selectedRecord = location.state?.selectedRecord;
+    const permissions = location.state?.permissionsData;
+
 
     const initialFormData = {
         city_code: '',
@@ -429,6 +431,7 @@ const CityMaster = ({isPopup = false}, ref) => {
                     cancelButtonEnabled={cancelButtonEnabled}
                     handleBack={handleBack}
                     backButtonEnabled={backButtonEnabled}
+                    permissions={permissions}
                 />
                 <div>
                     {/* Navigation Buttons */}

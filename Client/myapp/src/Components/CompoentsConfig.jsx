@@ -66,6 +66,7 @@ import GledgerReport from './Reports/Ledger/GledgerReport.jsx'
 
 import PendingReports from './Reports/PendingReports/PendingReports.jsx';
 import TenderReports from "./Reports/PendingReports/TenderReports.jsx"
+import UserCreationWithPermissionUtility from './Utilities/UserCreationWithPermission/UserCreationWithPermissionUtility.jsx';
 
 
 const routes = [
@@ -316,10 +317,15 @@ const routes = [
   element: ServiceBill
 },
 
-//
+// User Creations
 {
   path:'/user-creation',
   element: UserCreationWithPermission
+}
+,
+{
+  path:'/user-permission-utility',
+  element: UserCreationWithPermissionUtility
 }
 ,
 //Letter

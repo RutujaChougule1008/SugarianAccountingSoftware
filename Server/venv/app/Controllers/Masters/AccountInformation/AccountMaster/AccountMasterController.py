@@ -47,49 +47,6 @@ def delete_acgroups_by_accoid(accoid):
         return False
 
 
-# Get data from both tables AccountMaster and AccountContact
-# @app.route(API_URL + "/getdata-accountmaster", methods=["GET"])
-# def getdata_accountmaster():
-#     try:
-#         company_code = request.args.get('Company_Code')
-#         if not company_code:
-#             return jsonify({"error": "Missing 'Company_Code' parameter"}), 400
-        
-#         records = AccountMaster.query.filter_by(company_code=company_code).all()
-
-#         if not records:
-#             return jsonify({"error": "No records found"}), 404
-
-#         all_records_data = []
-
-#         for record in records:
-#             account_master_data = {column.name: getattr(record, column.name) for column in record.__table__.columns}
-
-#             additional_data = db.session.execute(text(ACCOUNT_CONTACT_DETAILS_QUERY), {"accoid": record.accoid})
-#             additional_data_row = additional_data.fetchone()  # Fetch only the first row
-
-#             account_labels = dict(additional_data_row._mapping) if additional_data_row else {}
-
-#             # detail_records = AccountContact.query.filter_by(accoid=record.accoid).all()
-#             # detail_data = [{column.name: getattr(detail_record, column.name) for column in detail_record.__table__.columns} for detail_record in detail_records]
-
-#             record_response = {
-#                 "account_master_data": account_master_data,
-#                 # "account_detail_data": detail_data,
-#                 "account_labels": account_labels
-#             }
-
-#             all_records_data.append(record_response)
-
-#         response = {
-#             "all_data_account_master": all_records_data
-#         }
-#         return jsonify(response), 200
-
-#     except Exception as e:
-#         return jsonify({"error": "Internal server error", "message": str(e)}), 500
-
-
 @app.route(API_URL+"/getdata-accountmaster", methods=["GET"])
 def getdata_accountmaster():
     try:

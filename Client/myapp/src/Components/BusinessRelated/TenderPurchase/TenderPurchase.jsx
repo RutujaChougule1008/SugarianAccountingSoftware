@@ -189,6 +189,7 @@ const TenderPurchase = () => {
   //In utility page record doubleClicked that recod show for edit functionality
   const location = useLocation();
   const selectedRecord = location.state?.selectedRecord;
+  const permissions = location.state?.permissionsData;
 
   const selectedTenderNo = location.state?.selectedTenderNo;
   const initialFormData = {
@@ -2206,6 +2207,7 @@ const TenderPurchase = () => {
             cancelButtonEnabled={cancelButtonEnabled}
             handleBack={handleBack}
             backButtonEnabled={backButtonEnabled}
+            permissions={permissions}
           />
 
           {/* Navigation Buttons */}
