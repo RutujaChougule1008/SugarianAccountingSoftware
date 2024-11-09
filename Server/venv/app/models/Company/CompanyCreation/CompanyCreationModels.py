@@ -24,6 +24,8 @@ class CompanyCreation(db.Model):
     GST = db.Column(db.String(255))
     Logo = db.Column(db.LargeBinary)  
     Signature = db.Column(db.LargeBinary)
+    LogoFileName = db.Column(db.String(50))
+    SignatureFileName = db.Column(db.String(50))
 
     # isLocked = db.Column(db.Boolean, nullable=False, default=False)
     # LockedbyUser = db.Column(db.String(50),default='')

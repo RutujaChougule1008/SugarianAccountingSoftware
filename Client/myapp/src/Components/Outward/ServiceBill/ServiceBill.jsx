@@ -3,7 +3,6 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import AccountMasterHelp from "../../../Helper/AccountMasterHelp";
 import GSTRateMasterHelp from "../../../Helper/GSTRateMasterHelp";
 import ItemMasterHelp from "../../../Helper/SystemmasterHelp";
-import BrandMasterHelp from "../../../Helper/BrandMasterHelp";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import ActionButtonGroup from "../../../Common/CommonButtons/ActionButtonGroup";
@@ -12,21 +11,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./ServiceBill.css";
 import { HashLoader } from "react-spinners";
-import { z } from "zod";
-// Validation Part Using Zod Library
-const stringToNumber = z
-  .string()
-  .refine((value) => !isNaN(Number(value)), {
-    message: "This field must be a number",
-  })
-  .transform((value) => Number(value));
-
-// Validation Schemas
-const ServiceBillSchema = z.object({
-  //   texable_amount: stringToNumber.refine(value => value !== undefined && value >= 0),
-  //   bill_amount: stringToNumber.refine(value => value !== undefined && value >= 0),
-  //   TCS_Net_Payable: stringToNumber.refine(value => value !== undefined && value >= 0),
-});
+import { TextField, Grid } from '@mui/material';
 
 //Global Variables
 var newSaleid = "";
@@ -63,7 +48,6 @@ const ServiceBill = () => {
     Amount: 0.0,
   });
 
-  //Head Section State Managements
   const [addOneButtonEnabled, setAddOneButtonEnabled] = useState(false);
   const [saveButtonEnabled, setSaveButtonEnabled] = useState(true);
   const [cancelButtonEnabled, setCancelButtonEnabled] = useState(true);
@@ -80,7 +64,6 @@ const ServiceBill = () => {
   const [isChecked, setIsChecked] = useState(false);
   const [gstNo, setGstNo] = useState("");
 
-  //In utility page record doubleClicked that recod show for edit functionality
   const location = useLocation();
   const selectedRecord = location.state?.selectedRecord;
   const navigate = useNavigate();
@@ -89,41 +72,41 @@ const ServiceBill = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const initialFormData = {
-    Doc_No: '', 
+    Doc_No: '',
     Date: new Date().toISOString().split("T")[0],
-    Customer_Code: '', 
-    GstRateCode: '', 
-    Subtotal: 0.00, 
-    CGSTRate: 0.00, 
-    CGSTAmount: 0.00, 
-    SGSTRate: 0.00, 
-    SGSTAmount: 0.00, 
-    IGSTRate: 0.00, 
-    IGSTAmount: 0.00, 
-    Total: 0.00, 
-    Round_Off: 0.00, 
-    Final_Amount: 0.00, 
-    IsTDS: 'N', 
-    TDS_Ac: '', 
-    TDS_Per: 0.00, 
-    TDSAmount: 0.00, 
-    TDS: 0.00, 
-    Company_Code: companyCode, 
-    Year_Code: Year_Code, 
-    Branch_Code: '', 
-    Created_By: '', 
-    Modified_By: '', 
-    billno: '', 
-    cc: '', 
+    Customer_Code: '',
+    GstRateCode: '',
+    Subtotal: 0.00,
+    CGSTRate: 0.00,
+    CGSTAmount: 0.00,
+    SGSTRate: 0.00,
+    SGSTAmount: 0.00,
+    IGSTRate: 0.00,
+    IGSTAmount: 0.00,
+    Total: 0.00,
+    Round_Off: 0.00,
+    Final_Amount: 0.00,
+    IsTDS: 'N',
+    TDS_Ac: '',
+    TDS_Per: 0.00,
+    TDSAmount: 0.00,
+    TDS: 0.00,
+    Company_Code: companyCode,
+    Year_Code: Year_Code,
+    Branch_Code: '',
+    Created_By: '',
+    Modified_By: '',
+    billno: '',
+    cc: '',
     ta: '',
-    TCS_Rate: 0.000, 
-    TCS_Amt: 0.00, 
-    TCS_Net_Payable: 0.00, 
-    einvoiceno: '', 
+    TCS_Rate: 0.000,
+    TCS_Amt: 0.00,
+    TCS_Net_Payable: 0.00,
+    einvoiceno: '',
     ackno: '',
-    QRCode: '', 
-    IsDeleted: 0, 
-    gstid: '' 
+    QRCode: '',
+    IsDeleted: 0,
+    gstid: ''
   };
 
   const [formData, setFormData] = useState(initialFormData);
@@ -149,25 +132,17 @@ const ServiceBill = () => {
       [name]: value,
     }));
   };
-  
 
   const handleKeyDownCalculations = async (event) => {
     if (event.key === "Tab") {
-      // event.preventDefault();
-
       const { name, value } = event.target;
-
-    
       let gstRate = GstRate;
-
       if (!gstRate || gstRate === 0) {
         const cgstRate = parseFloat(formData.CGSTRate) || 0;
         const sgstRate = parseFloat(formData.SGSTRate) || 0;
         const igstRate = parseFloat(formData.IGSTRate) || 0;
-
         gstRate = igstRate > 0 ? igstRate : cgstRate + sgstRate;
       }
-
       const updatedFormData = await calculateDependentValues(
         name,
         value,
@@ -175,70 +150,16 @@ const ServiceBill = () => {
         matchStatus,
         gstRate
       );
-
       setFormData(updatedFormData);
-      validateField(name, value);
     }
   };
 
-  const handleOnChange = () => {
-    setIsChecked((prev) => {
-      const newValue = !prev;
-      const value = newValue ? "Y" : "N";
-
-      setFormData((prevData) => ({
-        ...prevData,
-        EWayBill_Chk: value,
-      }));
-
-      return newValue;
-    });
-  };
-
-  const handleDateChange = (event, fieldName) => {
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      [fieldName]: event.target.value,
-    }));
-  };
   useEffect(() => {
     if (isHandleChange) {
       handleCancel();
       setIsHandleChange(false);
     }
   }, []);
-
-  // Validation Part
-  const validateField = (name, value) => {
-    try {
-      ServiceBillSchema.pick({ [name]: true }).parse({ [name]: value });
-      setFormErrors((prevErrors) => {
-        const updatedErrors = { ...prevErrors };
-        delete updatedErrors[name];
-        return updatedErrors;
-      });
-    } catch (err) {
-      setFormErrors((prevErrors) => ({
-        ...prevErrors,
-        [name]: err.errors[0].message,
-      }));
-    }
-  };
-
-  const validateForm = () => {
-    try {
-      ServiceBillSchema.parse(formData);
-      setFormErrors({});
-      return true;
-    } catch (err) {
-      const errors = {};
-      err.errors.forEach((error) => {
-        errors[error.path[0]] = error.message;
-      });
-      setFormErrors(errors);
-      return false;
-    }
-  };
 
   const fetchLastRecord = () => {
     fetch(
@@ -299,10 +220,8 @@ const ServiceBill = () => {
   };
 
   const handleSaveOrUpdate = async () => {
-    
     setIsEditing(true);
     setIsLoading(true);
-
     const head_data = {
       ...formData,
       GstRateCode: gstCode || gstRateCode,
@@ -321,12 +240,12 @@ const ServiceBill = () => {
       Company_Code: companyCode,
       Year_Code: Year_Code,
       Amount: user.Amount,
-      
+
     }));
 
     const requestData = {
-        head_data,
-        detail_data,
+      head_data,
+      detail_data,
     };
 
     try {
@@ -379,7 +298,6 @@ const ServiceBill = () => {
       setSaveButtonEnabled(false);
       setCancelButtonEnabled(false);
       setIsLoading(true);
-
       try {
         const deleteApiUrl = `${API_URL}/delete_data_by_rbid?rbid=${newSaleid}&Company_Code=${companyCode}&doc_no=${formData.Doc_No}&Year_Code=${Year_Code}`;
         const response = await axios.delete(deleteApiUrl);
@@ -405,7 +323,6 @@ const ServiceBill = () => {
   };
 
   const handleCancel = async () => {
-    
     setIsEditing(false);
     setIsEditMode(false);
     setAddOneButtonEnabled(true);
@@ -415,15 +332,11 @@ const ServiceBill = () => {
     setSaveButtonEnabled(false);
     setCancelButtonEnabled(false);
     setCancelButtonClicked(true);
-
     try {
       const response = await axios.get(`${API_URL}/get-lastservicebilldata?Company_Code=${companyCode}&Year_Code=${Year_Code}`);
       if (response.status === 200) {
         const { last_head_data, last_details_data, service_labels } = response.data;
-
         const detailsArray = Array.isArray(last_details_data) ? last_details_data : [];
-
-
         newSaleid = last_head_data.rbid;
         partyName = service_labels[0].partyname;
         partyCode = last_head_data.Customer_Code;
@@ -433,34 +346,31 @@ const ServiceBill = () => {
         gstName = service_labels[0].GST_Name;
         itemName = service_labels[0].itemname;
         item_Code = last_details_data.Item_Code;
-
         const itemNameMap = service_labels.reduce((map, label) => {
-            if (label.Item_Code !== undefined && label.itemname) {
-              map[label.Item_Code] = label.itemname;
-            }
-            return map;
-          }, {});
+          if (label.Item_Code !== undefined && label.itemname) {
+            map[label.Item_Code] = label.itemname;
+          }
+          return map;
+        }, {});
 
-          const enrichedDetails = detailsArray.map((detail) => ({
-            ...detail,
-            itemname: itemNameMap[detail.Item_Code] || "Unknown Item",
-          }));
-        // Prepare head data for setting form state
+        const enrichedDetails = detailsArray.map((detail) => ({
+          ...detail,
+          itemname: itemNameMap[detail.Item_Code] || "Unknown Item",
+        }));
         setFormData((prevData) => ({
-            ...prevData,
-            ...last_head_data,
-          }));
-        // Ensure that last_details_data is treated as an array and combined with relevant label data
+          ...prevData,
+          ...last_head_data,
+        }));
         setLastTenderData(last_head_data || {});
         setLastTenderDetails(enrichedDetails);
-       
+
       } else {
         console.error("Failed to fetch last data:", response.status, response.statusText);
       }
     } catch (error) {
       console.error("Error during API call:", error);
     }
-};
+  };
 
 
   const handleBack = () => {
@@ -476,8 +386,6 @@ const ServiceBill = () => {
         const { first_head_data, first_details_data, service_labels } = response.data;
 
         const detailsArray = Array.isArray(first_details_data) ? first_details_data : [];
-
-
         newSaleid = first_head_data.rbid;
         partyName = service_labels[0].partyname;
         partyCode = first_head_data.Customer_Code;
@@ -487,27 +395,24 @@ const ServiceBill = () => {
         gstName = service_labels[0].GST_Name;
         itemName = service_labels[0].itemname;
         item_Code = first_details_data.Item_Code;
-
         const itemNameMap = service_labels.reduce((map, label) => {
-            if (label.Item_Code !== undefined && label.itemname) {
-              map[label.Item_Code] = label.itemname;
-            }
-            return map;
-          }, {});
+          if (label.Item_Code !== undefined && label.itemname) {
+            map[label.Item_Code] = label.itemname;
+          }
+          return map;
+        }, {});
 
-          const enrichedDetails = detailsArray.map((detail) => ({
-            ...detail,
-            itemname: itemNameMap[detail.Item_Code] || "Unknown Item",
-          }));
-        // Prepare head data for setting form state
+        const enrichedDetails = detailsArray.map((detail) => ({
+          ...detail,
+          itemname: itemNameMap[detail.Item_Code] || "Unknown Item",
+        }));
         setFormData((prevData) => ({
-            ...prevData,
-            ...first_head_data,
-          }));
-        // Ensure that last_details_data is treated as an array and combined with relevant label data
+          ...prevData,
+          ...first_head_data,
+        }));
         setLastTenderData(first_head_data || {});
         setLastTenderDetails(enrichedDetails);
-       
+
       } else {
         console.error(
           "Failed to fetch first tender data:",
@@ -527,10 +432,7 @@ const ServiceBill = () => {
       );
       if (response.status === 200) {
         const { next_head_data, next_details_data, service_labels } = response.data;
-
         const detailsArray = Array.isArray(next_details_data) ? next_details_data : [];
-
-
         newSaleid = next_head_data.rbid;
         partyName = service_labels[0].partyname;
         partyCode = next_head_data.Customer_Code;
@@ -540,27 +442,24 @@ const ServiceBill = () => {
         gstName = service_labels[0].GST_Name;
         itemName = service_labels[0].itemname;
         item_Code = next_details_data.Item_Code;
-
         const itemNameMap = service_labels.reduce((map, label) => {
-            if (label.Item_Code !== undefined && label.itemname) {
-              map[label.Item_Code] = label.itemname;
-            }
-            return map;
-          }, {});
+          if (label.Item_Code !== undefined && label.itemname) {
+            map[label.Item_Code] = label.itemname;
+          }
+          return map;
+        }, {});
 
-          const enrichedDetails = detailsArray.map((detail) => ({
-            ...detail,
-            itemname: itemNameMap[detail.Item_Code] || "Unknown Item",
-          }));
-        // Prepare head data for setting form state
+        const enrichedDetails = detailsArray.map((detail) => ({
+          ...detail,
+          itemname: itemNameMap[detail.Item_Code] || "Unknown Item",
+        }));
         setFormData((prevData) => ({
-            ...prevData,
-            ...next_head_data,
-          }));
-        // Ensure that last_details_data is treated as an array and combined with relevant label data
+          ...prevData,
+          ...next_head_data,
+        }));
         setLastTenderData(next_head_data || {});
         setLastTenderDetails(enrichedDetails);
-       
+
       } else {
         console.error(
           "Failed to fetch next tender data:",
@@ -583,8 +482,6 @@ const ServiceBill = () => {
         const { previous_head_data, previous_details_data, service_labels } = response.data;
 
         const detailsArray = Array.isArray(previous_details_data) ? previous_details_data : [];
-
-
         newSaleid = previous_head_data.rbid;
         partyName = service_labels[0].partyname;
         partyCode = previous_head_data.Customer_Code;
@@ -594,27 +491,23 @@ const ServiceBill = () => {
         gstName = service_labels[0].GST_Name;
         itemName = service_labels[0].itemname;
         item_Code = previous_details_data.Item_Code;
-
         const itemNameMap = service_labels.reduce((map, label) => {
-            if (label.Item_Code !== undefined && label.itemname) {
-              map[label.Item_Code] = label.itemname;
-            }
-            return map;
-          }, {});
-
-          const enrichedDetails = detailsArray.map((detail) => ({
-            ...detail,
-            itemname: itemNameMap[detail.Item_Code] || "Unknown Item",
-          }));
-        // Prepare head data for setting form state
+          if (label.Item_Code !== undefined && label.itemname) {
+            map[label.Item_Code] = label.itemname;
+          }
+          return map;
+        }, {});
+        const enrichedDetails = detailsArray.map((detail) => ({
+          ...detail,
+          itemname: itemNameMap[detail.Item_Code] || "Unknown Item",
+        }));
         setFormData((prevData) => ({
-            ...prevData,
-            ...previous_head_data,
-          }));
-        // Ensure that last_details_data is treated as an array and combined with relevant label data
+          ...prevData,
+          ...previous_head_data,
+        }));
         setLastTenderData(previous_head_data || {});
         setLastTenderDetails(enrichedDetails);
-       
+
       } else {
         console.error(
           "Failed to fetch previous tender data:",
@@ -656,10 +549,7 @@ const ServiceBill = () => {
       );
       if (response.status === 200) {
         const { service_bill_head, service_bill_details, service_labels } = response.data;
-
         const detailsArray = Array.isArray(service_bill_details) ? service_bill_details : [];
-
-
         newSaleid = service_bill_head.rbid;
         partyName = service_labels[0].partyname;
         partyCode = service_bill_head.Customer_Code;
@@ -669,27 +559,24 @@ const ServiceBill = () => {
         gstName = service_labels[0].GST_Name;
         itemName = service_labels[0].itemname;
         item_Code = service_bill_details.Item_Code;
-
         const itemNameMap = service_labels.reduce((map, label) => {
-            if (label.Item_Code !== undefined && label.itemname) {
-              map[label.Item_Code] = label.itemname;
-            }
-            return map;
-          }, {});
+          if (label.Item_Code !== undefined && label.itemname) {
+            map[label.Item_Code] = label.itemname;
+          }
+          return map;
+        }, {});
 
-          const enrichedDetails = detailsArray.map((detail) => ({
-            ...detail,
-            itemname: itemNameMap[detail.Item_Code] || "Unknown Item",
-          }));
-        // Prepare head data for setting form state
+        const enrichedDetails = detailsArray.map((detail) => ({
+          ...detail,
+          itemname: itemNameMap[detail.Item_Code] || "Unknown Item",
+        }));
         setFormData((prevData) => ({
-            ...prevData,
-            ...service_bill_head,
-          }));
-        // Ensure that last_details_data is treated as an array and combined with relevant label data
+          ...prevData,
+          ...service_bill_head,
+        }));
         setLastTenderData(service_bill_head || {});
         setLastTenderDetails(enrichedDetails);
-       
+
       } else {
         console.error(
           "Failed to fetch last tender data:",
@@ -710,10 +597,7 @@ const ServiceBill = () => {
           `${API_URL}/getservicebillByid?doc_no=${changeNoValue}&Company_Code=${companyCode}&Year_Code=${Year_Code}`
         );
         const { service_bill_head, service_bill_details, service_labels } = response.data;
-
         const detailsArray = Array.isArray(service_bill_details) ? service_bill_details : [];
-
-
         newSaleid = service_bill_head.rbid;
         partyName = service_labels[0].partyname;
         partyCode = service_bill_head.Customer_Code;
@@ -723,24 +607,21 @@ const ServiceBill = () => {
         gstName = service_labels[0].GST_Name;
         itemName = service_labels[0].itemname;
         item_Code = service_bill_details.Item_Code;
-
         const itemNameMap = service_labels.reduce((map, label) => {
-            if (label.Item_Code !== undefined && label.itemname) {
-              map[label.Item_Code] = label.itemname;
-            }
-            return map;
-          }, {});
+          if (label.Item_Code !== undefined && label.itemname) {
+            map[label.Item_Code] = label.itemname;
+          }
+          return map;
+        }, {});
 
-          const enrichedDetails = detailsArray.map((detail) => ({
-            ...detail,
-            itemname: itemNameMap[detail.Item_Code] || "Unknown Item",
-          }));
-        // Prepare head data for setting form state
+        const enrichedDetails = detailsArray.map((detail) => ({
+          ...detail,
+          itemname: itemNameMap[detail.Item_Code] || "Unknown Item",
+        }));
         setFormData((prevData) => ({
-            ...prevData,
-            ...service_bill_head,
-          }));
-        // Ensure that last_details_data is treated as an array and combined with relevant label data
+          ...prevData,
+          ...service_bill_head,
+        }));
         setLastTenderData(service_bill_head || {});
         setLastTenderDetails(enrichedDetails);
         setIsEditing(false);
@@ -794,8 +675,6 @@ const ServiceBill = () => {
       .reduce((sum, user) => sum + parseFloat(user.Amount || 0), 0);
   };
 
-  
-
   const calculateDependentValues = async (
     name,
     input,
@@ -805,12 +684,7 @@ const ServiceBill = () => {
   ) => {
     const updatedFormData = { ...formData, [name]: input };
     const subtotal = parseFloat(updatedFormData.Subtotal) || 0.0;
-
     const rate = gstRate;
-
-   
-    
-
     if (matchStatus === "TRUE") {
       updatedFormData.CGSTRate = (rate / 2).toFixed(2);
       updatedFormData.SGSTRate = (rate / 2).toFixed(2);
@@ -838,19 +712,15 @@ const ServiceBill = () => {
       updatedFormData.SGSTAmount = 0.0;
     }
 
-   
-
     const RoundOff = parseFloat(updatedFormData.Round_Off) || 0.0;
-
-   
     updatedFormData.Total = (
-      updatedFormData.Subtotal +
+      parseFloat(updatedFormData.Subtotal) +
       parseFloat(updatedFormData.CGSTAmount) +
       parseFloat(updatedFormData.SGSTAmount) +
       parseFloat(updatedFormData.IGSTAmount)
     ).toFixed(2);
 
-    updatedFormData.Final_Amount = (parseFloat(updatedFormData.Total)+RoundOff).toFixed(2)
+    updatedFormData.Final_Amount = (parseFloat(updatedFormData.Total) + RoundOff).toFixed(2)
 
     const tcsRate = parseFloat(updatedFormData.TCS_Rate) || 0.0;
     updatedFormData.TCS_Amt = (
@@ -878,12 +748,12 @@ const ServiceBill = () => {
           Item_Code: detail.Item_Code,
           item_Name: detail.item_Name,
           rowaction: "Normal",
-      ic: detail.ic,
-      id: detail.rbdid,
-      rbdid: detail.rbdid,
-      Description: detail.Description,
-      Amount: detail.Amount,
-      Detail_Id: detail.Detail_Id
+          ic: detail.ic,
+          id: detail.rbdid,
+          rbdid: detail.rbdid,
+          Description: detail.Description,
+          Amount: detail.Amount,
+          Detail_Id: detail.Detail_Id
         }))
       );
     }
@@ -904,14 +774,6 @@ const ServiceBill = () => {
     setUsers(updatedUsers);
   }, [lastTenderDetails]);
 
-//   const calculateDetails = (quantal, packing, rate) => {
-//     const bags = packing !== 0 ? (quantal / packing) * 100 : 0;
-//     const item_Amount = quantal * rate;
-//     return { bags, item_Amount };
-//   };
-
-  
-
   const handleChangeDetail = (event) => {
     const { name, value } = event.target;
     setFormDataDetail((prevDetail) => {
@@ -920,7 +782,6 @@ const ServiceBill = () => {
         [name]:
           value
       };
-
       return updatedDetail;
     });
   };
@@ -931,16 +792,13 @@ const ServiceBill = () => {
       Item_Code: itemCode,
       item_Name: item_Name,
       ic: itemCodeAccoid,
-      
+
       ...formDataDetail,
       rowaction: "add",
     };
 
     const updatedUsers = [...users, newUser];
     setUsers(updatedUsers);
-
-    
-
     const subtotal = calculateTotalItemAmount(updatedUsers);
     let updatedFormData = {
       ...formData,
@@ -957,7 +815,6 @@ const ServiceBill = () => {
       const cgstRate = parseFloat(formData.CGSTRate) || 0;
       const sgstRate = parseFloat(formData.SGSTRate) || 0;
       const igstRate = parseFloat(formData.IGSTRate) || 0;
-
       gstRate = igstRate > 0 ? igstRate : cgstRate + sgstRate;
     }
 
@@ -968,9 +825,7 @@ const ServiceBill = () => {
       matchStatus,
       gstRate
     );
-
     setFormData(updatedFormData);
-
     closePopup();
   };
 
@@ -994,14 +849,11 @@ const ServiceBill = () => {
     });
 
     setUsers(updatedUsers);
-
-    
-
     const subtotal = calculateTotalItemAmount(updatedUsers);
 
     let updatedFormData = {
       ...formData,
-     
+
       Subtotal: subtotal,
     };
     const matchStatus = await checkMatchStatus(
@@ -1020,15 +872,14 @@ const ServiceBill = () => {
     }
 
     updatedFormData = await calculateDependentValues(
-      "GstRateCode", // Pass the name of the field being changed
-      gstRate, // Pass the correct gstRate
+      "GstRateCode",
+      gstRate,
       updatedFormData,
       matchStatus,
-      gstRate // Pass gstRate explicitly to calculateDependentValues
+      gstRate
     );
 
     setFormData(updatedFormData);
-
     closePopup();
   };
 
@@ -1055,13 +906,9 @@ const ServiceBill = () => {
     }
     setUsers(updatedUsers);
     setSelectedUser({});
-
-    
-
     const subtotal = calculateTotalItemAmount(updatedUsers);
     let updatedFormData = {
       ...formData,
-     
       Subtotal: subtotal,
     };
 
@@ -1076,18 +923,15 @@ const ServiceBill = () => {
       const cgstRate = parseFloat(formData.CGSTRate) || 0;
       const sgstRate = parseFloat(formData.SGSTRate) || 0;
       const igstRate = parseFloat(formData.IGSTRate) || 0;
-
       gstRate = igstRate > 0 ? igstRate : cgstRate + sgstRate;
     }
-
     updatedFormData = await calculateDependentValues(
-      "GstRateCode", // Pass the name of the field being changed
-      gstRate, // Pass the correct gstRate
+      "GstRateCode",
+      gstRate,
       updatedFormData,
       matchStatus,
-      gstRate // Pass gstRate explicitly to calculateDependentValues
+      gstRate
     );
-
     setFormData(updatedFormData);
   };
 
@@ -1107,15 +951,12 @@ const ServiceBill = () => {
     setUsers(updatedUsers);
     setSelectedUser({});
 
-    
-
     const subtotal = calculateTotalItemAmount(updatedUsers);
     let updatedFormData = {
       ...formData,
-      
+
       Subtotal: subtotal,
     };
-
     const matchStatus = await checkMatchStatus(
       updatedFormData.Customer_Code,
       companyCode,
@@ -1132,11 +973,11 @@ const ServiceBill = () => {
     }
 
     updatedFormData = await calculateDependentValues(
-      "GstRateCode", // Pass the name of the field being changed
-      gstRate, // Pass the correct gstRate
+      "GstRateCode",
+      gstRate,
       updatedFormData,
       matchStatus,
-      gstRate // Pass gstRate explicitly to calculateDependentValues
+      gstRate
     );
 
     setFormData(updatedFormData);
@@ -1169,10 +1010,10 @@ const ServiceBill = () => {
     setSelectedUser(user);
     setItemCode(user.Item_Code);
     setItemName(user.item_Name);
-   
+
     setFormDataDetail({
-     Description: user.Description,
-     Amount: user.Amount
+      Description: user.Description,
+      Amount: user.Amount
     });
     openPopup("edit");
   };
@@ -1183,10 +1024,8 @@ const ServiceBill = () => {
     setItemCodeAccoid(accoid);
   };
 
-
-  //Head Section help Functions to manage the Ac_Code and accoid
-  const handleBillFrom = async (code, accoid, name, mobileNo,gstNo,TDSApplicable,GstStateCode) => {
-    gstStateCode = GstStateCode ; 
+  const handleBillFrom = async (code, accoid, name, mobileNo, gstNo, TDSApplicable, GstStateCode) => {
+    gstStateCode = GstStateCode;
     setBillFrom(code);
     setPartyMobNo(mobileNo);
     let updatedFormData = {
@@ -1201,15 +1040,7 @@ const ServiceBill = () => {
         Year_Code
       );
       setMatchStatus(matchStatusResult);
-
-      // if (matchStatusResult === "TRUE") {
-      //   toast.success("GST State Codes match!");
-      // } else {
-      //   toast.warn("GST State Codes do not match.");
-      // }
-
       let gstRate = GstRate;
-
       if (!gstRate || gstRate === 0) {
         const cgstRate = parseFloat(formData.CGSTRate) || 0;
         const sgstRate = parseFloat(formData.SGSTRate) || 0;
@@ -1217,8 +1048,6 @@ const ServiceBill = () => {
 
         gstRate = igstRate > 0 ? igstRate : cgstRate + sgstRate;
       }
-
-      // Perform the calculation after setting BillFrom
       updatedFormData = await calculateDependentValues(
         "GstRateCode",
         GstRate,
@@ -1231,7 +1060,6 @@ const ServiceBill = () => {
       console.error("Error in handleBillFrom:", error);
     }
   };
-  const handleBillNo = () => {};
 
   const handleTDSAc = (code, accoid) => {
     setTDSAc(code);
@@ -1239,27 +1067,6 @@ const ServiceBill = () => {
       ...formData,
       TDS_Ac: code,
       ta: accoid,
-    });
-  };
-
-  const handleMillData = (code, accoid, name, mobileNo, gstno) => {
-    setMill(code);
-    setMillName(name);
-    setMillGSTNo(gstno);
-    setFormData({
-      ...formData,
-      mill_code: code,
-      mc: accoid,
-    });
-  };
-
-  const handleShipTo = (code, accoid, name, Mobile_No) => {
-    setShipTo(code);
-    setShipToMobNo(Mobile_No);
-    setFormData({
-      ...formData,
-      Unit_Code: code,
-      uc: accoid,
     });
   };
 
@@ -1271,12 +1078,10 @@ const ServiceBill = () => {
       GstRateCode: code,
     });
     setGstRate(rate);
-
     const updatedFormData = {
       ...formData,
       GstRateCode: code,
     };
-
     try {
       const matchStatusResult = await checkMatchStatus(
         updatedFormData.Customer_Code,
@@ -1284,36 +1089,20 @@ const ServiceBill = () => {
         Year_Code
       );
       setMatchStatus(matchStatusResult);
-
-      // Calculate the dependent values based on the match status
       const newFormData = await calculateDependentValues(
         "GstRateCode",
         rate,
         updatedFormData,
-        matchStatusResult, // Use the matchStatusResult
-        rate // Explicitly pass the gstRate
+        matchStatusResult,
+        rate
       );
-
       setFormData(newFormData);
-    } catch (error) {}
-  };
-  const handleTransport = (code, accoid, name, mobileNo) => {
-    setTransport(code);
-    setTransportMob(mobileNo);
-    setFormData({
-      ...formData,
-      Transport_Code: code,
-      tc: accoid,
-    });
+    } catch (error) { }
   };
 
-  const handleBroker = (code, accoid) => {
-    setBroker(code);
-    setFormData({
-      ...formData,
-      BROKER: code,
-      bk: accoid,
-    });
+  //Validation Checks
+  const validateNumericInput = (e) => {
+    e.target.value = e.target.value.replace(/[^0-9.]/g, '');
   };
 
   return (
@@ -1321,7 +1110,6 @@ const ServiceBill = () => {
       <ToastContainer />
       <form className="ServiceBill-container" onSubmit={handleSubmit}>
         <h6 className="Heading">Service Bill</h6>
-
         <div>
           <ActionButtonGroup
             handleAddOne={handleAddOne}
@@ -1338,8 +1126,6 @@ const ServiceBill = () => {
             handleBack={handleBack}
             backButtonEnabled={backButtonEnabled}
           />
-
-          {/* Navigation Buttons */}
           <NavigationButtons
             handleFirstButtonClick={handleFirstButtonClick}
             handlePreviousButtonClick={handlePreviousButtonClick}
@@ -1351,55 +1137,51 @@ const ServiceBill = () => {
         </div>
 
         {/* <ServiceBillReport doc_no = {formData.doc_no}/> */}
-
-        <div className="ServiceBill-row">
-          <label className="ServiceBill-form-label">Change No:</label>
-          <div className="ServiceBill-col-Text">
-            <div className="ServiceBill-form-group">
-              <input
-                type="text"
-                className="ServiceBill-form-control"
-                name="changeNo"
-                autoComplete="off"
-                onKeyDown={handleKeyDown}
-                disabled={!addOneButtonEnabled}
-              />
-            </div>
-          </div>
-          <label className="ServiceBill-form-label">Bill No:</label>
-          <div className="ServiceBill-col-Text">
-            <div className="ServiceBill-form-group">
-              <input
-                ref={setFocusTaskdate}
-                type="text"
-                className="ServiceBill-form-control"
-                name="Doc_No"
-                autoComplete="off"
-                value={formData.Doc_No}
-                onChange={handleChange}
-                disabled
-              />
-            </div>
-          </div>
-
-          <label className="ServiceBill-form-label">Bill Date:</label>
-          <div className="ServiceBill-col">
-            <div className="ServiceBill-form-group">
-              <input
-                tabIndex="1"
-                ref={setFocusTaskdate}
-                type="date"
-                className="ServiceBill-form-control"
-                id="datePicker"
-                name="Date"
-                value={formData.Date}
-                onChange={handleChange}
-                disabled={!isEditing && addOneButtonEnabled}
-              />
-            </div>
-          </div>
-        </div>
-
+        <Grid container spacing={2} className="ServiceBill-row">
+          <Grid item xs={12} sm={1}>
+            <TextField
+              label="Change No"
+              name="changeNo"
+              variant="outlined"
+              fullWidth
+              onKeyDown={handleKeyDown}
+              disabled={!addOneButtonEnabled}
+              autoComplete="off"
+              size="small"
+            />
+          </Grid>
+          <Grid item xs={12} sm={1}>
+            <TextField
+              label="Bill No"
+              name="Doc_No"
+              variant="outlined"
+              fullWidth
+              inputRef={setFocusTaskdate}
+              value={formData.Doc_No}
+              onChange={handleChange}
+              disabled
+              size="small"
+            />
+          </Grid>
+          <Grid item xs={12} sm={2}>
+            <TextField
+              label="Bill Date"
+              type="date"
+              name="Date"
+              variant="outlined"
+              fullWidth
+              InputLabelProps={{
+                shrink: true,
+              }}
+              inputRef={setFocusTaskdate}
+              value={formData.Date}
+              onChange={handleChange}
+              disabled={!isEditing && addOneButtonEnabled}
+              size="small"
+            />
+          </Grid>
+        </Grid>
+        <br></br>
         <div className="ServiceBill-row">
           <label htmlFor="Customer_Code" className="ServiceBill-form-label">
             Customer:
@@ -1411,58 +1193,57 @@ const ServiceBill = () => {
                 CategoryName={partyName}
                 CategoryCode={partyCode}
                 name="Customer_Code"
-                tabIndexHelp={1}
                 disabledFeild={!isEditing && addOneButtonEnabled}
               />
             </div>
           </div>
         </div>
+
         <div className="ServiceBill-row">
-          
-          <label className="ServiceBill-form-label">State Code:</label>
-          <div className="ServiceBill-col-Text">
-            <div className="ServiceBill-form-group">
-              <input
-                type="text"
-                className="ServiceBill-form-control"
+          <Grid container spacing={2} className="ServiceBill-row">
+
+            <Grid item xs={12} sm={1}>
+              <TextField
+                label="State Code"
                 name="state"
-                autoComplete="off"
+                variant="outlined"
+                fullWidth
                 value={gstStateCode}
                 disabled={!isEditing && addOneButtonEnabled}
-                tabIndex={5}
-              />
-            </div>
-          </div>
-          <label htmlFor="GstRateCode" className="ServiceBill-form-label">
-            GST Rate Code:
-          </label>
-          <div className="ServiceBill-col">
-            <div className="ServiceBill-form-group">
-              <GSTRateMasterHelp
-                onAcCodeClick={handleGstCode}
-                GstRateName={gstName}
-                GstRateCode={gstRateCode}
-                name="GstRateCode"
-                tabIndexHelp={10}
-                disabledFeild={!isEditing && addOneButtonEnabled}
-              />
-            </div>
-          </div>
-          <label className="ServiceBill-form-label">Bill No:</label>
-          <div className="ServiceBill-col-Text">
-            <div className="ServiceBill-form-group">
-              <input
-                type="text"
-                className="ServiceBill-form-control"
-                name="billno"
                 autoComplete="off"
+                size="small"
+              />
+            </Grid>
+
+            <label htmlFor="GstRateCode" className="ServiceBill-form-label" style={{ marginTop: "25px" }} >
+              GST Rate Code:
+            </label>
+            <div className="ServiceBill-col" style={{ marginTop: "25px" }}>
+              <div className="ServiceBill-form-group">
+                <GSTRateMasterHelp
+                  onAcCodeClick={handleGstCode}
+                  GstRateName={gstName}
+                  GstRateCode={gstRateCode}
+                  name="GstRateCode"
+                  disabledFeild={!isEditing && addOneButtonEnabled}
+                />
+              </div>
+            </div>
+
+            <Grid item xs={12} sm={1} >
+              <TextField
+                label="Bill No"
+                name="billno"
+                variant="outlined"
+                fullWidth
                 value={formData.billno}
                 onChange={handleChange}
                 disabled={!isEditing && addOneButtonEnabled}
-                tabIndex={7}
+                autoComplete="off"
+                size="small"
               />
-            </div>
-          </div>
+            </Grid>
+          </Grid>
         </div>
 
         {isLoading && (
@@ -1473,7 +1254,6 @@ const ServiceBill = () => {
           </div>
         )}
 
-        {/*detail part popup functionality and Validation part Grid view */}
         <div className="">
           {showPopup && (
             <div className="modal" role="dialog" style={{ display: "block" }}>
@@ -1506,19 +1286,15 @@ const ServiceBill = () => {
                           CategoryCode={itemCode}
                           SystemType="I"
                           name="Item_Code"
-                          tabIndexHelp={14}
                           className="account-master-help"
                         />
                       </div>
-
-        
 
                       <label className="ServiceBill-form-label">Description:</label>
                       <div className="ServiceBill-col-Ewaybillno">
                         <div className="ServiceBill-form-group">
                           <input
                             type="text"
-                            tabIndex="16"
                             className="ServiceBill-form-control"
                             name="Description"
                             autoComplete="off"
@@ -1532,7 +1308,6 @@ const ServiceBill = () => {
                         <div className="ServiceBill-form-group">
                           <input
                             type="text"
-                            tabIndex="17"
                             className="ServiceBill-form-control"
                             name="Amount"
                             autoComplete="off"
@@ -1541,17 +1316,12 @@ const ServiceBill = () => {
                           />
                         </div>
                       </div>
-                     
-                      
-                      
-                      
                     </form>
                   </div>
                   <div className="modal-footer">
                     {selectedUser.id ? (
                       <button
                         className="btn btn-primary"
-                        tabIndex="22"
                         onClick={updateUser}
                         onKeyDown={(event) => {
                           if (event.key === "Enter") {
@@ -1565,7 +1335,6 @@ const ServiceBill = () => {
                       <button
                         className="btn btn-primary"
                         onClick={addUser}
-                        tabIndex="23"
                         onKeyDown={(event) => {
                           if (event.key === "Enter") {
                             addUser();
@@ -1578,7 +1347,6 @@ const ServiceBill = () => {
                     <button
                       type="button"
                       className="btn btn-secondary"
-                      tabIndex="24"
                       onClick={closePopup}
                     >
                       Cancel
@@ -1600,7 +1368,6 @@ const ServiceBill = () => {
               <button
                 className="btn btn-primary"
                 onClick={() => openPopup("add")}
-                tabIndex="12"
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
                     openPopup("add");
@@ -1613,7 +1380,6 @@ const ServiceBill = () => {
                 className="btn btn-danger"
                 disabled={!isEditing}
                 style={{ marginLeft: "10px" }}
-                tabIndex=""
               >
                 Close
               </button>
@@ -1636,8 +1402,8 @@ const ServiceBill = () => {
                   <tr key={user.id}>
                     <td>
                       {user.rowaction === "add" ||
-                      user.rowaction === "update" ||
-                      user.rowaction === "Normal" ? (
+                        user.rowaction === "update" ||
+                        user.rowaction === "Normal" ? (
                         <>
                           <button
                             className="btn btn-warning"
@@ -1648,7 +1414,6 @@ const ServiceBill = () => {
                                 editUser(user);
                               }
                             }}
-                            tabIndex="18"
                           >
                             Edit
                           </button>
@@ -1661,7 +1426,6 @@ const ServiceBill = () => {
                               }
                             }}
                             disabled={!isEditing}
-                            tabIndex="19"
                           >
                             Delete
                           </button>
@@ -1691,330 +1455,455 @@ const ServiceBill = () => {
         </div>
 
         <div className="ServiceBill-row">
-          
-
-          
-
-        <label className="ServiceBill-form-label">SubTotal:</label>
-          <div className="ServiceBill-col-Text">
-            <div className="ServiceBill-form-group">
-              <input
-                // tabIndex="13"
-                type="text"
-                className="ServiceBill-form-control"
+          <Grid container spacing={1} alignItems="center" style={{ float: "right" }}>
+            <Grid item xs={1}>
+              <label className="debitCreditNote-form-label">Subtotal:</label>
+            </Grid>
+            <Grid item xs={12} sm={2}>
+              <TextField
+                variant="outlined"
                 name="Subtotal"
                 autoComplete="off"
                 value={formData.Subtotal}
-                onChange={handleChange}
-                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                error={!!formErrors.Subtotal}
+                helperText={formErrors.Subtotal}
+                size="small"
+                inputProps={{
+                  sx: { textAlign: 'right' },
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-            </div>
-          </div>
-          <label className="ServiceBill-form-label">CGST:</label>
-          <div className="ServiceBill-col-Text">
-            <div className="ServiceBill-form-group">
-              <input
-                // tabIndex="14"
-                type="text"
-                className="ServiceBill-form-control"
+            </Grid>
+          </Grid>
+
+          <Grid container spacing={1} alignItems="center" style={{ marginTop: '-6px' }} >
+            <Grid item xs={1}>
+              <label className="debitCreditNote-form-label">CGST:</label>
+            </Grid>
+            <Grid item xs={12} sm={1}>
+              <TextField
+                variant="outlined"
                 name="CGSTRate"
                 autoComplete="off"
                 value={formData.CGSTRate}
                 onChange={handleChange}
                 onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                error={!!formErrors.CGSTRate}
+                helperText={formErrors.CGSTRate}
+                size="small"
+                inputProps={{
+                  sx: { textAlign: 'right' },
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
 
-              <input
-                // tabIndex="15"
-                type="text"
-                className="ServiceBill-form-control"
+            </Grid>
+            <Grid item xs={12} sm={1}>
+              <TextField
+                variant="outlined"
                 name="CGSTAmount"
                 autoComplete="off"
                 value={formData.CGSTAmount}
                 onChange={handleChange}
                 onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                error={!!formErrors.CGSTAmount}
+                helperText={formErrors.CGSTAmount}
+                size="small"
+                inputProps={{
+                  sx: { textAlign: 'right' },
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-            </div>
-          </div>
+            </Grid>
+          </Grid>
 
-          <label className="ServiceBill-form-label">SGST:</label>
-          <div className="ServiceBill-col-Text">
-            <div className="ServiceBill-form-group">
-              <input
-                // tabIndex="16"
-                type="text"
-                className="ServiceBill-form-control"
+          <Grid container spacing={1} alignItems="center" style={{ marginTop: '-6px' }} >
+            <Grid item xs={1}>
+              <label className="debitCreditNote-form-label">SGST:</label>
+            </Grid>
+            <Grid item xs={12} sm={1}>
+              <TextField
+                variant="outlined"
                 name="SGSTRate"
                 autoComplete="off"
                 value={formData.SGSTRate}
                 onChange={handleChange}
                 onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                error={!!formErrors.SGSTRate}
+                helperText={formErrors.SGSTRate}
+                size="small"
+                inputProps={{
+                  sx: { textAlign: 'right' },
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-
-              <input
-                // tabIndex="17"
-                type="text"
-                className="ServiceBill-form-control"
+            </Grid>
+            <Grid item xs={12} sm={1}>
+              <TextField
+                variant="outlined"
                 name="SGSTAmount"
                 autoComplete="off"
                 value={formData.SGSTAmount}
                 onChange={handleChange}
                 onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                error={!!formErrors.SGSTAmount}
+                helperText={formErrors.SGSTAmount}
+                size="small"
+                inputProps={{
+                  sx: { textAlign: 'right' },
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-            </div>
-          </div>
+            </Grid>
+          </Grid>
 
-          <label className="ServiceBill-form-label">IGST:</label>
-          <div className="ServiceBill-col-Text">
-            <div className="ServiceBill-form-group">
-              <input
-                // tabIndex="18"
-                type="text"
-                className="ServiceBill-form-control"
+          <Grid container spacing={1} alignItems="center" style={{ marginTop: '-6px' }} >
+            <Grid item xs={1}>
+              <label className="debitCreditNote-form-label">IGST:</label>
+            </Grid>
+            <Grid item xs={12} sm={1}>
+              <TextField
+                variant="outlined"
                 name="IGSTRate"
                 autoComplete="off"
                 value={formData.IGSTRate}
                 onChange={handleChange}
-                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                error={!!formErrors.IGSTRate}
+                helperText={formErrors.IGSTRate}
+                size="small"
+                inputProps={{
+                  sx: { textAlign: 'right' },
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-
-              <input
-                // tabIndex="19"
-                type="text"
-                className="ServiceBill-form-control"
+            </Grid>
+            <Grid item xs={12} sm={1}>
+              <TextField
+                variant="outlined"
                 name="IGSTAmount"
                 autoComplete="off"
                 value={formData.IGSTAmount}
                 onChange={handleChange}
-                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                error={!!formErrors.IGSTAmount}
+                helperText={formErrors.IGSTAmount}
+                size="small"
+                inputProps={{
+                  sx: { textAlign: 'right' },
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-            </div>
-          </div>
-         
-         
-          <label className="ServiceBill-form-label">Total:</label>
-          <div className="ServiceBill-col-Ewaybillno">
-            <div className="ServiceBill-form-group">
-              <input
-                type="text"
-                className="ServiceBill-form-control"
+            </Grid>
+          </Grid>
+
+          <Grid container spacing={1} alignItems="center" style={{ marginTop: '-6px' }} >
+            <Grid item xs={1}>
+              <label className="debitCreditNote-form-label">Total:</label>
+            </Grid>
+            <Grid item xs={12} sm={2}>
+              <TextField
+                variant="outlined"
                 name="Total"
                 autoComplete="off"
                 value={formData.Total}
                 onChange={handleChange}
-                // tabIndex="11"
                 disabled={!isEditing && addOneButtonEnabled}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                error={!!formErrors.Total}
+                helperText={formErrors.Total}
+                size="small"
+                inputProps={{
+                  sx: { textAlign: 'right' },
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-            </div>
-          </div>
+            </Grid>
+          </Grid>
 
-          <label className="ServiceBill-form-label">Round Off</label>
-          <div className="ServiceBill-col-Text">
-            <div className="ServiceBill-form-group">
-              <input
-                // tabIndex="18"
-                type="text"
-                className="ServiceBill-form-control"
+          <Grid container spacing={1} alignItems="center" style={{ marginTop: '-6px' }} >
+            <Grid item xs={1}>
+              <label className="debitCreditNote-form-label">Round Off:</label>
+            </Grid>
+            <Grid item xs={12} sm={2}>
+              <TextField
+                variant="outlined"
                 name="Round_Off"
                 autoComplete="off"
                 value={formData.Round_Off}
                 onChange={handleChange}
                 onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                error={!!formErrors.Round_Off}
+                helperText={formErrors.Round_Off}
+                size="small"
+                inputProps={{
+                  sx: { textAlign: 'right' },
+                }}
               />
-            </div>
-          </div>
-          <label className="ServiceBill-form-label">Final Amount:</label>
-          <div className="ServiceBill-col-Text">
-            <div className="ServiceBill-form-group">
-              <input
-                // tabIndex="21"
-                type="text"
-                className="ServiceBill-form-control"
+            </Grid>
+          </Grid>
+
+          <Grid container spacing={1} alignItems="center" style={{ marginTop: '-6px' }} >
+            <Grid item xs={1}>
+              <label className="debitCreditNote-form-label">Final Amount:</label>
+            </Grid>
+            <Grid item xs={12} sm={2}>
+              <TextField
+                variant="outlined"
                 name="Final_Amount"
                 autoComplete="off"
                 value={formData.Final_Amount}
                 onChange={handleChange}
                 onKeyDown={handleKeyDownCalculations}
-                style={{ color: "red", fontWeight: "bold" }}
                 disabled={!isEditing && addOneButtonEnabled}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                error={!!formErrors.Final_Amount}
+                helperText={formErrors.Final_Amount}
+                size="small"
+                inputProps={{
+                  sx: { textAlign: 'right' },
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-            </div>
-          </div>
-          <label className="ServiceBill-form-label">TCS %:</label>
-          <div className="ServiceBill-col-Text">
-            <div className="ServiceBill-form-group">
-              <input
-                // tabIndex="22"
-                type="text"
-                className="ServiceBill-form-control"
+            </Grid>
+          </Grid>
+
+          <Grid container spacing={1} alignItems="center" style={{ marginTop: '-6px' }} >
+            <Grid item xs={1}>
+              <label className="debitCreditNote-form-label">TCS %:</label>
+            </Grid>
+            <Grid item xs={12} sm={1}>
+              <TextField
+                variant="outlined"
                 name="TCS_Rate"
                 autoComplete="off"
                 value={formData.TCS_Rate}
                 onChange={handleChange}
                 onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                error={!!formErrors.TCS_Rate}
+                helperText={formErrors.TCS_Rate}
+                size="small"
+                inputProps={{
+                  sx: { textAlign: 'right' },
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-              <input
-                // tabIndex="23"
-                type="text"
-                className="ServiceBill-form-control"
+            </Grid>
+            <Grid item xs={12} sm={1}>
+              <TextField
+                variant="outlined"
                 name="TCS_Amt"
                 autoComplete="off"
                 value={formData.TCS_Amt}
                 onChange={handleChange}
                 onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                error={!!formErrors.TCS_Amt}
+                helperText={formErrors.TCS_Amt}
+                size="small"
+                inputProps={{
+                  sx: { textAlign: 'right' },
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-            </div>
-          </div>
+            </Grid>
+          </Grid>
 
-          <label className="ServiceBill-form-label">Net Payable:</label>
-          <div className="ServiceBill-col-Text">
-            <div className="ServiceBill-form-group">
-              <input
-                // tabIndex="24"
-                type="text"
-                className="ServiceBill-form-control"
+          <Grid container spacing={1} alignItems="center" style={{ marginTop: '-6px' }} >
+            <Grid item xs={1}>
+              <label className="debitCreditNote-form-label">Net Payable:</label>
+            </Grid>
+            <Grid item xs={12} sm={2}>
+              <TextField
+                variant="outlined"
                 name="TCS_Net_Payable"
                 autoComplete="off"
-                style={{ color: "red", fontWeight: "bold" }}
                 value={formData.TCS_Net_Payable}
                 onChange={handleChange}
                 onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                error={!!formErrors.TCS_Net_Payable}
+                helperText={formErrors.TCS_Net_Payable}
+                size="small"
+                inputProps={{
+                  sx: { textAlign: 'right' },
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-            </div>
-          </div>
-          
-          
-          
-          
-          
-          
-          
-    
-          
+            </Grid>
+          </Grid>
 
-          
-        <div className="ServiceBill-row">
-          
-
-        <label htmlFor="IsTDS" className="ServiceBill-form-label">
-            Is TDS Applicable
-          </label>
-          <div className="ServiceBill-col">
-            <div className="ServiceBill-form-group-type">
-              <select
-                id="IsTDS"
-                tabIndex="11"
-                name="IsTDS"
-                className="ServiceBill-custom-select"
-                value={formData.IsTDS}
-                onChange={handleChange}
-              >
-                <option value="Y">Yes</option>
-                <option value="N">No</option>
-              </select>
-            </div>
-          </div>
-
-          <label htmlFor="TDS_Ac" className="ServiceBill-form-label">
-            TDS A/C:
-          </label>
-          <div className="ServiceBill-col">
-            <div className="ServiceBill-form-group">
-              <AccountMasterHelp
-                onAcCodeClick={handleTDSAc}
-                CategoryName={billToName}
-                CategoryCode={billToCode}
-                name="TDS_Ac"
-                tabIndexHelp={1}
-                disabledFeild={!isEditing && addOneButtonEnabled}
-              />
-            </div>
-          </div>
-          <label className="ServiceBill-form-label">TDS %:</label>
-          <div className="ServiceBill-col-Text">
-            <div className="ServiceBill-form-group">
-              <input
-                // tabIndex="25"
-                type="text"
-                className="ServiceBill-form-control"
+          <Grid container spacing={1} alignItems="center" style={{ marginTop: '-6px' }} >
+            <Grid item xs={1}>
+              <label className="debitCreditNote-form-label">TDS %:</label>
+            </Grid>
+            <Grid item xs={12} sm={1}>
+              <TextField
+                variant="outlined"
                 name="TDS_Per"
                 autoComplete="off"
                 value={formData.TDS_Per}
                 onChange={handleChange}
                 onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                error={!!formErrors.TDS_Per}
+                helperText={formErrors.TDS_Per}
+                size="small"
+                inputProps={{
+                  sx: { textAlign: 'right' },
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-              <input
-                // tabIndex="26"
-                type="text"
-                className="ServiceBill-form-control"
+            </Grid>
+            <Grid item xs={12} sm={1}>
+              <TextField
+                variant="outlined"
                 name="TDSAmount"
                 autoComplete="off"
-                value={formData.TDSAmount !== null ? formData.TDSAmount : ""}
-                // value={formData.TDSAmount}
+                value={formData.TDSAmount}
                 onChange={handleChange}
                 onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                error={!!formErrors.TDSAmount}
+                helperText={formErrors.TDSAmount}
+                size="small"
+                inputProps={{
+                  sx: { textAlign: 'right' },
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
+            </Grid>
+          </Grid>
+          <br></br>
+          <br></br>
+          <div className="ServiceBill-row">
+            <label htmlFor="IsTDS" className="ServiceBill-form-label">
+              Is TDS Applicable
+            </label>
+            <div className="ServiceBill-col">
+              <div className="ServiceBill-form-group-type">
+                <select
+                  id="IsTDS"
+                  name="IsTDS"
+                  className="ServiceBill-custom-select"
+                  value={formData.IsTDS}
+                  onChange={handleChange}
+                >
+                  <option value="Y">Yes</option>
+                  <option value="N">No</option>
+                </select>
+              </div>
             </div>
           </div>
-
-          <label className="ServiceBill-form-label">EInvoice</label>
-          <div className="ServiceBill-col-Ewaybillno">
-            <div className="ServiceBill-form-group">
-              <input
-                type="text"
-                className="ServiceBill-form-control"
-                name="einvoiceno"
-                autoComplete="off"
-                value={formData.einvoiceno}
-                onChange={handleChange}
-                // tabIndex="11"
-                disabled={!isEditing && addOneButtonEnabled}
-              />
+          <div className="ServiceBill-row">
+            <label htmlFor="TDS_Ac" className="ServiceBill-form-label">
+              TDS A/C:
+            </label>
+            <div className="ServiceBill-col">
+              <div className="ServiceBill-form-group">
+                <AccountMasterHelp
+                  onAcCodeClick={handleTDSAc}
+                  CategoryName={billToName}
+                  CategoryCode={billToCode}
+                  name="TDS_Ac"
+                  disabledFeild={!isEditing && addOneButtonEnabled}
+                />
+              </div>
             </div>
           </div>
-
-          <label className="ServiceBill-form-label">ACK No:</label>
-          <div className="ServiceBill-col-Ewaybillno">
-            <div className="ServiceBill-form-group">
-              <input
-                type="text"
-                className="ServiceBill-form-control"
-                name="ackno"
-                autoComplete="off"
-                value={formData.ackno}
-                onChange={handleChange}
-                // tabIndex="11"
-                disabled={!isEditing && addOneButtonEnabled}
-              />
+          <div className="ServiceBill-row">
+            <label className="ServiceBill-form-label">EInvoice</label>
+            <div className="ServiceBill-col-Ewaybillno">
+              <div className="ServiceBill-form-group">
+                <input
+                  type="text"
+                  className="ServiceBill-form-control"
+                  name="einvoiceno"
+                  autoComplete="off"
+                  value={formData.einvoiceno}
+                  onChange={handleChange}
+                  disabled={!isEditing && addOneButtonEnabled}
+                />
+              </div>
+            </div>
+            <label className="ServiceBill-form-label">ACK No:</label>
+            <div className="ServiceBill-col-Ewaybillno">
+              <div className="ServiceBill-form-group">
+                <input
+                  type="text"
+                  className="ServiceBill-form-control"
+                  name="ackno"
+                  autoComplete="off"
+                  value={formData.ackno}
+                  onChange={handleChange}
+                  disabled={!isEditing && addOneButtonEnabled}
+                />
+              </div>
             </div>
           </div>
-         
-
-          
-          
-         
-
-          
-
-          
-        </div>
-        </div>
-
-        <div className="ServiceBill-row">
-          
         </div>
       </form>
     </>

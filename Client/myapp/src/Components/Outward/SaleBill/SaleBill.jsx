@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { TextField, Grid, InputLabel, FormControl, Select, MenuItem, FormControlLabel, Checkbox, TextareaAutosize, Button } from '@mui/material';
 import "bootstrap/dist/css/bootstrap.min.css";
 import AccountMasterHelp from "../../../Helper/AccountMasterHelp";
 import GSTRateMasterHelp from "../../../Helper/GSTRateMasterHelp";
@@ -15,20 +16,6 @@ import { HashLoader } from "react-spinners";
 import { z } from "zod";
 import SaleBillReport from './SaleBillReport'
 import EWayBillReport from "./EWayBillReport/EWayBillReport";
-// Validation Part Using Zod Library
-const stringToNumber = z
-  .string()
-  .refine((value) => !isNaN(Number(value)), {
-    message: "This field must be a number",
-  })
-  .transform((value) => Number(value));
-
-// Validation Schemas
-const SaleBillSchema = z.object({
-  //   texable_amount: stringToNumber.refine(value => value !== undefined && value >= 0),
-  //   bill_amount: stringToNumber.refine(value => value !== undefined && value >= 0),
-  //   TCS_Net_Payable: stringToNumber.refine(value => value !== undefined && value >= 0),
-});
 
 //Global Variables
 var newSaleid = "";
@@ -74,7 +61,7 @@ const SaleBill = () => {
   const [itemCodeAccoid, setItemCodeAccoid] = useState("");
   const [formDataDetail, setFormDataDetail] = useState({
     narration: "",
-    packing: 0,
+    packing: 50,
     Quantal: 0.0,
     bags: 0,
     rate: 0.0,
@@ -98,10 +85,8 @@ const SaleBill = () => {
   const [isChecked, setIsChecked] = useState(false);
   const [gstNo, setGstNo] = useState("");
 
-  //In utility page record doubleClicked that recod show for edit functionality
   const location = useLocation();
   const selectedRecord = location.state?.selectedRecord;
-  const permissions = location.state?.permissionsData;
   const navigate = useNavigate();
   const setFocusTaskdate = useRef(null);
   const [isHandleChange, setIsHandleChange] = useState(false);
@@ -194,38 +179,32 @@ const SaleBill = () => {
   const [GstRate, setGstRate] = useState(0.0);
   const [matchStatus, setMatchStatus] = useState(null);
 
+  const validateNumericInput = (e) => {
+    e.target.value = e.target.value.replace(/[^0-9.]/g, '');
+  };
+
   const handleChange = (event) => {
     const { name, value } = event.target;
-  
-    // Function to format the truck number
     const formatTruckNumber = (value) => {
       const cleanedValue = value.replace(/\s+/g, '').toUpperCase();
       return cleanedValue.length <= 10 ? cleanedValue : cleanedValue.substring(0, 10);
     };
-  
-    // Check if the field being updated is 'LORRYNO'
     const updatedValue = name === "LORRYNO" ? formatTruckNumber(value) : value;
-  
-    // Update the state with the formatted or unformatted value
     setFormData((prevData) => ({
       ...prevData,
       [name]: updatedValue,
     }));
   };
-  
+
 
   const handleKeyDownCalculations = async (event) => {
     if (event.key === "Tab") {
-      // event.preventDefault();
-
       const { name, value } = event.target;
-
-      // const matchStatus = await checkMatchStatus(
-      //   formData.Ac_Code,
-      //   companyCode,
-      //   Year_Code
-      // );
-
+      const matchStatus = await checkMatchStatus(
+        formData.Ac_Code,
+        companyCode,
+        Year_Code
+      );
       let gstRate = GstRate;
 
       if (!gstRate || gstRate === 0) {
@@ -235,7 +214,6 @@ const SaleBill = () => {
 
         gstRate = igstRate > 0 ? igstRate : cgstRate + sgstRate;
       }
-
       const updatedFormData = await calculateDependentValues(
         name,
         value,
@@ -243,9 +221,7 @@ const SaleBill = () => {
         matchStatus,
         gstRate
       );
-
       setFormData(updatedFormData);
-      validateField(name, value);
     }
   };
 
@@ -258,11 +234,11 @@ const SaleBill = () => {
         ...prevData,
         EWayBill_Chk: value,
       }));
-
       return newValue;
     });
   };
 
+  //handle the Date OnChange Values
   const handleDateChange = (event, fieldName) => {
     setFormData((prevFormData) => ({
       ...prevFormData,
@@ -276,38 +252,7 @@ const SaleBill = () => {
     }
   }, []);
 
-  // Validation Part
-  const validateField = (name, value) => {
-    try {
-      SaleBillSchema.pick({ [name]: true }).parse({ [name]: value });
-      setFormErrors((prevErrors) => {
-        const updatedErrors = { ...prevErrors };
-        delete updatedErrors[name];
-        return updatedErrors;
-      });
-    } catch (err) {
-      setFormErrors((prevErrors) => ({
-        ...prevErrors,
-        [name]: err.errors[0].message,
-      }));
-    }
-  };
-
-  const validateForm = () => {
-    try {
-      SaleBillSchema.parse(formData);
-      setFormErrors({});
-      return true;
-    } catch (err) {
-      const errors = {};
-      err.errors.forEach((error) => {
-        errors[error.path[0]] = error.message;
-      });
-      setFormErrors(errors);
-      return false;
-    }
-  };
-
+  //fetchLast Records to get the next doc no
   const fetchLastRecord = () => {
     fetch(
       `${API_URL}/get-next-doc-no?Company_Code=${companyCode}&Year_Code=${Year_Code}`
@@ -741,7 +686,7 @@ const SaleBill = () => {
     } else {
       handleAddOne();
     }
-    document.getElementById("Ac_Code").focus();
+    setFocusTaskdate.current.focus();
   }, [selectedRecord]);
 
   const handlerecordDoubleClicked = async () => {
@@ -942,6 +887,8 @@ const SaleBill = () => {
 
     const RoundOff = parseFloat(updatedFormData.RoundOff) || 0.0;
 
+    const cashAdvance = parseFloat(updatedFormData.cash_advance) || 0.0;
+
     const miscAmount = parseFloat(updatedFormData.OTHER_AMT) || 0.0;
     updatedFormData.Bill_Amount = (
       updatedFormData.TaxableAmount +
@@ -950,7 +897,8 @@ const SaleBill = () => {
       parseFloat(updatedFormData.IGSTAmount) +
       miscAmount +
       RateDiffAmt +
-      RoundOff
+      RoundOff +
+      cashAdvance
     ).toFixed(2);
 
     const tcsRate = parseFloat(updatedFormData.TCS_Rate) || 0.0;
@@ -982,7 +930,7 @@ const SaleBill = () => {
           Brand_Code: detail.Brand_Code,
           brand_name: detail.brand_name,
           ic: detail.ic,
-          id:detail.saledetailid,
+          id: detail.saledetailid,
           saledetailid: detail.saledetailid,
           narration: detail.narration,
           Quantal: detail.Quantal,
@@ -1375,7 +1323,7 @@ const SaleBill = () => {
       console.error("Error in handleBillFrom:", error);
     }
   };
-  const handleBillNo = () => {};
+  const handleBillNo = () => { };
 
   const handleBillTo = (code, accoid) => {
     setBillTo(code);
@@ -1439,7 +1387,7 @@ const SaleBill = () => {
       );
 
       setFormData(newFormData);
-    } catch (error) {}
+    } catch (error) { }
   };
   const handleTransport = (code, accoid, name, mobileNo) => {
     setTransport(code);
@@ -1465,7 +1413,6 @@ const SaleBill = () => {
       <ToastContainer />
       <form className="SaleBill-container" onSubmit={handleSubmit}>
         <h6 className="Heading">Sugar Bill For GST</h6>
-
         <div>
           <ActionButtonGroup
             handleAddOne={handleAddOne}
@@ -1481,10 +1428,7 @@ const SaleBill = () => {
             cancelButtonEnabled={cancelButtonEnabled}
             handleBack={handleBack}
             backButtonEnabled={backButtonEnabled}
-            permissions={permissions}
           />
-
-          {/* Navigation Buttons */}
           <NavigationButtons
             handleFirstButtonClick={handleFirstButtonClick}
             handlePreviousButtonClick={handlePreviousButtonClick}
@@ -1495,234 +1439,238 @@ const SaleBill = () => {
           />
         </div>
 
-        <SaleBillReport doc_no = {formData.doc_no}/>
-        <EWayBillReport doc_no={formData.doc_no}/>
+        <div style={{ marginBottom: '10px', marginRight: "10px" }}>
+          <SaleBillReport doc_no={formData.doc_no} disabledFeild={!addOneButtonEnabled} />
+          <EWayBillReport doc_no={formData.doc_no} disabledFeild={!addOneButtonEnabled} />
+        </div>
 
-        <div className="SaleBill-row">
-          <label className="SaleBill-form-label">Change No:</label>
-          <div className="SaleBill-col-Text">
-            <div className="SaleBill-form-group">
-              <input
-                type="text"
-                className="SaleBill-form-control"
+        <Grid container alignItems="center" spacing={2}>
+          <Grid item xs={12} sm={1}>
+            <FormControl fullWidth>
+              <TextField
+                label="Change No"
+                variant="outlined"
                 name="changeNo"
                 autoComplete="off"
                 onKeyDown={handleKeyDown}
                 disabled={!addOneButtonEnabled}
+                fullWidth
+                size="small"
               />
-            </div>
-          </div>
-          <label className="SaleBill-form-label">Bill No:</label>
-          <div className="SaleBill-col-Text">
-            <div className="SaleBill-form-group">
-              <input
-                ref={setFocusTaskdate}
-                type="text"
-                className="SaleBill-form-control"
+            </FormControl>
+          </Grid>
+
+          <Grid item xs={6} sm={2}>
+            <FormControl fullWidth>
+              <TextField
+                label="Bill No"
+                variant="outlined"
                 name="doc_no"
                 autoComplete="off"
                 value={formData.doc_no}
                 onChange={handleChange}
                 disabled
+                fullWidth
+                size="small"
               />
-            </div>
-          </div>
+            </FormControl>
+          </Grid>
 
-          <label className="SaleBill-form-label">Date:</label>
-          <div className="SaleBill-col">
-            <div className="SaleBill-form-group">
-              <input
-                tabIndex="1"
-                ref={setFocusTaskdate}
+          <Grid item xs={6} sm={2}>
+            <FormControl fullWidth>
+              <TextField
+                inputRef={setFocusTaskdate}
                 type="date"
-                className="SaleBill-form-control"
-                id="datePicker"
+                label="Date"
+                variant="outlined"
                 name="doc_date"
                 value={formData.doc_date}
                 onChange={handleChange}
                 disabled={!isEditing && addOneButtonEnabled}
+                fullWidth
+                size="small"
+                InputLabelProps={{
+                  shrink: true,
+                }}
               />
-            </div>
-          </div>
-        </div>
+            </FormControl>
+          </Grid>
+        </Grid>
 
-        <div className="SaleBill-row">
-          <label htmlFor="Ac_Code" className="SaleBill-form-label">
-            Bill From:
-          </label>
-          <div className="SaleBill-col">
-            <div className="SaleBill-form-group">
+        <Grid container spacing={1}>
+          <label htmlFor="From" style={{ marginTop: "45px" }}>Bill From:</label>
+          <Grid item xs={5} sx={{ mt: 4 }}>
+            <FormControl fullWidth variant="outlined" size="small" >
               <AccountMasterHelp
                 onAcCodeClick={handleBillFrom}
                 CategoryName={partyName}
                 CategoryCode={partyCode}
                 name="Ac_Code"
-                tabIndexHelp={1}
                 disabledFeild={!isEditing && addOneButtonEnabled}
               />
-            </div>
-          </div>
-        </div>
-        <div className="SaleBill-row">
-          <label htmlFor="Bill_To" className="SaleBill-form-label">
-            Bill To:
-          </label>
-          <div className="SaleBill-col">
-            <div className="SaleBill-form-group">
+            </FormControl>
+          </Grid>
+        </Grid>
+
+        <Grid container spacing={1}>
+          <label htmlFor="From" style={{ marginTop: "25px" }}> Bill To :</label>
+          <Grid item xs={5} sx={{ mt: 2 }}>
+            <FormControl fullWidth variant="outlined" size="small">
               <AccountMasterHelp
                 onAcCodeClick={handleBillTo}
                 CategoryName={billToName}
                 CategoryCode={billToCode}
                 name="Bill_To"
-                tabIndexHelp={2}
+
                 disabledFeild={!isEditing && addOneButtonEnabled}
               />
-            </div>
-          </div>
-        </div>
-        <div className="SaleBill-row">
-          <label htmlFor="Unit_Code" className="SaleBill-form-label">
-            Ship To:
-          </label>
-          <div className="SaleBill-col">
-            <div className="SaleBill-form-group">
+            </FormControl>
+          </Grid>
+        </Grid>
+
+        <Grid container spacing={1}>
+          <label htmlFor="From" style={{ marginTop: "25px" }}>Ship To:</label>
+          <Grid item xs={5} sx={{ mt: 2 }}>
+            <FormControl fullWidth variant="outlined" size="small">
               <AccountMasterHelp
                 onAcCodeClick={handleShipTo}
                 CategoryName={unitName}
                 CategoryCode={unitCode}
                 name="Unit_Code"
-                tabIndexHelp={3}
-                disabledFeild={!isEditing && addOneButtonEnabled}
-              />
-            </div>
-          </div>
-        </div>
-        <div className="SaleBill-row">
-          <label htmlFor="mill_code" className="SaleBill-form-label">
-            Mill:
-          </label>
-          <div className="SaleBill-col">
-            <div className="SaleBill-form-group">
-              <AccountMasterHelp
-                onAcCodeClick={handleMillData}
-                CategoryName={millName}
-                CategoryCode={millCode}
-                name="mill_code"
-                tabIndexHelp={4}
-                disabledFeild={!isEditing && addOneButtonEnabled}
-              />
-            </div>
-          </div>
-          <label className="SaleBill-form-label">From:</label>
-          <div className="SaleBill-col-Text">
-            <div className="SaleBill-form-group">
-              <input
-                type="text"
-                className="SaleBill-form-control"
-                name="FROM_STATION"
-                autoComplete="off"
-                value={formData.FROM_STATION}
-                onChange={handleChange}
-                disabled={!isEditing && addOneButtonEnabled}
-                tabIndex={5}
-              />
-            </div>
-          </div>
-          <label className="SaleBill-form-label">To:</label>
-          <div className="SaleBill-col-Text">
-            <div className="SaleBill-form-group">
-              <input
-                type="text"
-                className="SaleBill-form-control"
-                name="TO_STATION"
-                autoComplete="off"
-                value={formData.TO_STATION}
-                onChange={handleChange}
-                disabled={!isEditing && addOneButtonEnabled}
-                tabIndex={6}
-              />
-            </div>
-          </div>
-          <label className="SaleBill-form-label">Lorry No:</label>
-          <div className="SaleBill-col-Text">
-            <div className="SaleBill-form-group">
-              <input
-                type="text"
-                className="SaleBill-form-control"
-                name="LORRYNO"
-                autoComplete="off"
-                value={formData.LORRYNO}
-                onChange={handleChange}
-                disabled={!isEditing && addOneButtonEnabled}
-                tabIndex={7}
-              />
-            </div>
-          </div>
-          <label className="SaleBill-form-label">WareHouse:</label>
-          <div className="SaleBill-col-Text">
-            <div className="SaleBill-form-group">
-              <input
-                ref={setFocusTaskdate}
-                type="text"
-                className="SaleBill-form-control"
-                name="wearhouse"
-                autoComplete="off"
-                value={formData.wearhouse}
-                onChange={handleChange}
-                disabled={!isEditing && addOneButtonEnabled}
-                tabIndex={8}
-              />
-            </div>
-          </div>
-          <label htmlFor="BROKER" className="SaleBill-form-label">
-            Broker:
-          </label>
-          <div className="SaleBill-col">
-            <div className="SaleBill-form-group">
-              <AccountMasterHelp
-                onAcCodeClick={handleBroker}
-                CategoryName={brokerName}
-                CategoryCode={brokerCode}
-                name="BROKER"
-                tabIndexHelp={9}
-                disabledFeild={!isEditing && addOneButtonEnabled}
-              />
-            </div>
-          </div>
-          <label htmlFor="GstRateCode" className="SaleBill-form-label">
-            GST Rate Code:
-          </label>
-          <div className="SaleBill-col">
-            <div className="SaleBill-form-group">
-              <GSTRateMasterHelp
-                onAcCodeClick={handleGstCode}
-                GstRateName={gstName}
-                GstRateCode={gstRateCode}
-                name="GstRateCode"
-                tabIndexHelp={10}
-                disabledFeild={!isEditing && addOneButtonEnabled}
-              />
-            </div>
-          </div>
 
-          <label htmlFor="Insured" className="SaleBill-form-label">
-            Insured:
-          </label>
-          <div className="SaleBill-col">
-            <div className="SaleBill-form-group-type">
-              <select
-                id="Insured"
-                tabIndex="11"
-                name="Insured"
-                className="SaleBill-custom-select"
-                value={formData.Insured}
-                onChange={handleChange}
-              >
-                <option value="Y">Yes</option>
-                <option value="N">No</option>
-              </select>
+                disabledFeild={!isEditing && addOneButtonEnabled}
+              />
+            </FormControl>
+          </Grid>
+        </Grid>
+
+        <br></br>
+        <div className="SaleBill-row">
+          <Grid container spacing={1}>
+            <label className="SaleBill-form-label">
+              Mill:
+            </label>
+            <div className="SaleBill-col">
+              <div className="SaleBill-form-group">
+                <AccountMasterHelp
+                  onAcCodeClick={handleMillData}
+                  CategoryName={millName}
+                  CategoryCode={millCode}
+                  name="mill_code"
+
+                  disabledFeild={!isEditing && addOneButtonEnabled}
+                />
+              </div>
             </div>
-          </div>
+
+            <Grid item xs={6} sm={1}>
+              <FormControl fullWidth>
+                <TextField
+                  label="From:"
+                  name="FROM_STATION"
+                  autoComplete="off"
+                  value={formData.FROM_STATION}
+                  onChange={handleChange}
+                  disabled={!isEditing && addOneButtonEnabled}
+                  tabIndex={5}
+                  size="small"
+                />
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={6} sm={1}>
+              <FormControl fullWidth>
+                <TextField
+                  label="To:"
+                  name="TO_STATION"
+                  autoComplete="off"
+                  value={formData.TO_STATION}
+                  onChange={handleChange}
+                  disabled={!isEditing && addOneButtonEnabled}
+                  tabIndex={6}
+                  size="small"
+                />
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={6} sm={1}>
+              <FormControl fullWidth>
+                <TextField
+                  label="Lorry No:"
+                  name="LORRYNO"
+                  autoComplete="off"
+                  value={formData.LORRYNO}
+                  onChange={handleChange}
+                  disabled={!isEditing && addOneButtonEnabled}
+                  tabIndex={7}
+                  size="small"
+                />
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={6} sm={1}>
+              <FormControl fullWidth>
+                <TextField
+                  label="Warehouse:"
+                  name="wearhouse"
+                  autoComplete="off"
+                  value={formData.wearhouse}
+                  onChange={handleChange}
+                  disabled={!isEditing && addOneButtonEnabled}
+                  tabIndex={8}
+                  size="small"
+                />
+              </FormControl>
+            </Grid>
+
+            <label htmlFor="Transport_Code" className="SaleBill-form-label">
+              Broker:
+            </label>
+            <div className="SaleBill-col">
+              <div className="SaleBill-form-group">
+                <AccountMasterHelp
+                  onAcCodeClick={handleBroker}
+                  CategoryName={brokerName}
+                  CategoryCode={brokerCode}
+                  name="BROKER"
+
+                  disabledFeild={!isEditing && addOneButtonEnabled}
+                />
+              </div>
+            </div>
+
+            <label htmlFor="Transport_Code" className="SaleBill-form-label">
+              GST Rate Code:
+            </label>
+            <div className="SaleBill-col">
+              <div className="SaleBill-form-group">
+                <GSTRateMasterHelp
+                  onAcCodeClick={handleGstCode}
+                  GstRateName={gstName}
+                  GstRateCode={gstRateCode}
+                  name="GstRateCode"
+                  disabledFeild={!isEditing && addOneButtonEnabled}
+                />
+              </div>
+            </div>
+
+            <Grid item xs={6} sm={1} ml={1}>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="insured-label">Insured</InputLabel>
+                <Select
+                  labelId="insured-label"
+                  id="Insured"
+                  name="Insured"
+                  value={formData.Insured}
+                  onChange={handleChange}
+                  size="small"
+                >
+                  <MenuItem value="Y">Yes</MenuItem>
+                  <MenuItem value="N">No</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
         </div>
 
         {isLoading && (
@@ -1741,7 +1689,7 @@ const SaleBill = () => {
                 <div className="modal-content">
                   <div className="modal-header">
                     <h5 className="modal-title">
-                      {selectedUser.id ? "Edit User" : "Add User"}
+                      {selectedUser.id ? "Edit" : "Add"}
                     </h5>
                     <button
                       type="button"
@@ -1758,52 +1706,46 @@ const SaleBill = () => {
                   </div>
                   <div className="modal-body">
                     <form>
-                      <label>Item Code:</label>
-                      <div className="form-element">
-                        <ItemMasterHelp
-                          onAcCodeClick={handleItemCode}
-                          CategoryName={item_Name}
-                          CategoryCode={itemCode}
-                          SystemType="I"
-                          name="item_code"
-                          tabIndexHelp={14}
-                          className="account-master-help"
-                        />
+                      <div className="row">
+                        <div className="col-6">
+                          <label>Item Code:</label>
+                          <ItemMasterHelp
+                            onAcCodeClick={handleItemCode}
+                            CategoryName={item_Name}
+                            CategoryCode={itemCode}
+                            SystemType="I"
+                            name="item_code"
+                            className="account-master-help"
+                          />
+                        </div>
+                        <div className="col-6">
+                          <label>Brand Code:</label>
+                          <BrandMasterHelp
+                            onAcCodeClick={handleBrandCode}
+                            brandName={brand_name}
+                            brandCode={brand_code}
+                            name="Brand_Code"
+                            className="account-master-help"
+                          />
+                        </div>
                       </div>
-
-                      <label>Brand Code:</label>
-                      <div className="form-element">
-                        <BrandMasterHelp
-                          onAcCodeClick={handleBrandCode}
-                          brandName={brand_name}
-                          brandCode={brand_code}
-                          name="Brand_Code"
-                          tabIndexHelp={15}
-                          className="account-master-help"
-                        />
-                      </div>
-
-                      <label className="SaleBill-form-label">Quantal:</label>
-                      <div className="SaleBill-col-Ewaybillno">
-                        <div className="SaleBill-form-group">
+                      <div className="row mt-3">
+                        <div className="col-6">
+                          <label>Quantal:</label>
                           <input
                             type="text"
-                            tabIndex="16"
-                            className="SaleBill-form-control"
+                            className="form-control"
                             name="Quantal"
                             autoComplete="off"
                             value={formDataDetail.Quantal}
                             onChange={handleChangeDetail}
                           />
                         </div>
-                      </div>
-                      <label className="SaleBill-form-label">Packing:</label>
-                      <div className="SaleBill-col-Ewaybillno">
-                        <div className="SaleBill-form-group">
+                        <div className="col-6">
+                          <label>Packing:</label>
                           <input
                             type="text"
-                            tabIndex="17"
-                            className="SaleBill-form-control"
+                            className="form-control"
                             name="packing"
                             autoComplete="off"
                             value={formDataDetail.packing}
@@ -1811,27 +1753,23 @@ const SaleBill = () => {
                           />
                         </div>
                       </div>
-                      <label className="SaleBill-form-label">Bags:</label>
-                      <div className="SaleBill-col-Ewaybillno">
-                        <div className="SaleBill-form-group">
+                      <div className="row mt-3">
+                        <div className="col-6">
+                          <label>Bags:</label>
                           <input
                             type="text"
-                            tabIndex="18"
-                            className="SaleBill-form-control"
+                            className="form-control"
                             name="bags"
                             autoComplete="off"
                             value={formDataDetail.bags}
                             onChange={handleChangeDetail}
                           />
                         </div>
-                      </div>
-                      <label className="SaleBill-form-label">Rate:</label>
-                      <div className="SaleBill-col-Ewaybillno">
-                        <div className="SaleBill-form-group">
+                        <div className="col-6">
+                          <label>Rate:</label>
                           <input
                             type="text"
-                            tabIndex="19"
-                            className="SaleBill-form-control"
+                            className="form-control"
                             name="rate"
                             autoComplete="off"
                             value={formDataDetail.rate}
@@ -1839,29 +1777,23 @@ const SaleBill = () => {
                           />
                         </div>
                       </div>
-                      <label className="SaleBill-form-label">
-                        Item Amount:
-                      </label>
-                      <div className="SaleBill-col-Ewaybillno">
-                        <div className="SaleBill-form-group">
+                      <div className="row mt-3">
+                        <div className="col-6">
+                          <label>Item Amount:</label>
                           <input
                             type="text"
-                            tabIndex="20"
-                            className="SaleBill-form-control"
+                            className="form-control"
                             name="item_Amount"
                             autoComplete="off"
                             value={formDataDetail.item_Amount}
                             onChange={handleChangeDetail}
                           />
                         </div>
-                      </div>
-                      <label className="SaleBill-form-label">Narration:</label>
-                      <div className="SaleBill-col-Ewaybillno">
-                        <div className="SaleBill-form-group">
-                          <textarea
+                        <div className="col-6">
+                          <label>Narration:</label>
+                          <input
                             type="text"
-                            tabIndex="21"
-                            className="SaleBill-form-control"
+                            className="form-control"
                             name="narration"
                             autoComplete="off"
                             value={formDataDetail.narration}
@@ -1875,7 +1807,6 @@ const SaleBill = () => {
                     {selectedUser.id ? (
                       <button
                         className="btn btn-primary"
-                        tabIndex="22"
                         onClick={updateUser}
                         onKeyDown={(event) => {
                           if (event.key === "Enter") {
@@ -1883,15 +1814,14 @@ const SaleBill = () => {
                           }
                         }}
                       >
-                        Update 
+                        Update
                       </button>
                     ) : (
                       <button
                         className="btn btn-primary"
                         onClick={addUser}
-                        tabIndex="23"
                         onKeyDown={(event) => {
-                          if (event.key ===13) {
+                          if (event.key === 13) {
                             addUser();
                           }
                         }}
@@ -1902,7 +1832,6 @@ const SaleBill = () => {
                     <button
                       type="button"
                       className="btn btn-secondary"
-                      tabIndex="24"
                       onClick={closePopup}
                     >
                       Cancel
@@ -1912,6 +1841,7 @@ const SaleBill = () => {
               </div>
             </div>
           )}
+
           <div style={{ display: "flex" }}>
             <div
               style={{
@@ -1921,12 +1851,13 @@ const SaleBill = () => {
                 marginRight: "10px",
               }}
             >
+
               <button
                 className="btn btn-primary"
                 onClick={() => openPopup("add")}
                 tabIndex="12"
                 onKeyDown={(event) => {
-                  if (event.key === "Enter") {
+                  if (event.key === 13) {
                     openPopup("add");
                   }
                 }}
@@ -1941,6 +1872,7 @@ const SaleBill = () => {
               >
                 Close
               </button>
+
             </div>
             <table className="table mt-4 table-bordered">
               <thead>
@@ -1965,15 +1897,15 @@ const SaleBill = () => {
                   <tr key={user.id}>
                     <td>
                       {user.rowaction === "add" ||
-                      user.rowaction === "update" ||
-                      user.rowaction === "Normal" ? (
+                        user.rowaction === "update" ||
+                        user.rowaction === "Normal" ? (
                         <>
                           <button
                             className="btn btn-warning"
                             onClick={() => editUser(user)}
                             disabled={!isEditing}
                             onKeyDown={(event) => {
-                              if (event.key === "Enter") {
+                              if (event.key === 13) {
                                 editUser(user);
                               }
                             }}
@@ -2025,506 +1957,560 @@ const SaleBill = () => {
         </div>
 
         <div className="SaleBill-row">
-          <label className="SaleBill-form-label">Net Quantal</label>
-          <div className="SaleBill-col-Text">
-            <div className="SaleBill-form-group">
-              <input
-                // tabIndex="9"
-                type="text"
-                className="SaleBill-form-control"
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={1}>
+              <TextField
+                label="Net Quantal"
                 name="NETQNTL"
+                variant="outlined"
                 autoComplete="off"
                 value={formData.NETQNTL}
                 onChange={handleChange}
                 onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                fullWidth
+                size="small"
+                inputProps={{
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-            </div>
-          </div>
-          <label className="SaleBill-form-label">Due Days</label>
-          <div className="SaleBill-col-Text">
-            <div className="SaleBill-form-group">
-              <input
-                // tabIndex="9"
-                type="text"
-                className="SaleBill-form-control"
+            </Grid>
+
+            <Grid item xs={12} sm={1}>
+              <TextField
+                label="Due Days"
                 name="Due_Days"
+                variant="outlined"
                 autoComplete="off"
                 value={formData.Due_Days}
                 onChange={handleChange}
                 disabled={!isEditing && addOneButtonEnabled}
+                fullWidth
+                size="small"
+                inputProps={{
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-            </div>
-          </div>
+            </Grid>
 
-          <label className="SaleBill-form-label">ASN/GRN No:</label>
-          <div className="SaleBill-col-Text">
-            <div className="SaleBill-form-group">
-              <input
-                // tabIndex="9"
-                type="text"
-                className="SaleBill-form-control"
+            <Grid item xs={12} sm={1}>
+              <TextField
+                label="ASN/GRN No"
                 name="ASN_No"
+                variant="outlined"
                 autoComplete="off"
                 value={formData.ASN_No}
                 onChange={handleChange}
                 disabled={!isEditing && addOneButtonEnabled}
+                fullWidth
+                size="small"
               />
-            </div>
-          </div>
+            </Grid>
 
-          <label htmlFor="Transport_Code" className="SaleBill-form-label">
-            Transport:
-          </label>
-          <div className="SaleBill-col">
-            <div className="SaleBill-form-group">
-              <AccountMasterHelp
-                onAcCodeClick={handleTransport}
-                CategoryName={transportName}
-                CategoryCode={transportCode}
-                name="Transport_Code"
-                // tabIndexHelp={2}
-                disabledFeild={!isEditing && addOneButtonEnabled}
-              />
+            <label htmlFor="Transport_Code" className="SaleBill-form-label">
+              Transport:
+            </label>
+            <div className="SaleBill-col">
+              <div className="SaleBill-form-group">
+                <AccountMasterHelp
+                  onAcCodeClick={handleTransport}
+                  CategoryName={transportName}
+                  CategoryCode={transportCode}
+                  name="Transport_Code"
+                  disabledFeild={!isEditing && addOneButtonEnabled}
+                />
+              </div>
             </div>
-          </div>
 
-          <label className="SaleBill-form-label">Eway Bill No:</label>
-          <div className="SaleBill-col-Ewaybillno">
-            <div className="SaleBill-form-group">
-              <input
-                type="text"
-                className="SaleBill-form-control"
+            <Grid item xs={12} sm={1}>
+              <TextField
+                label="Eway Bill No"
                 name="EWay_Bill_No"
+                variant="outlined"
                 autoComplete="off"
                 value={formData.EWay_Bill_No}
                 onChange={handleChange}
-                // tabIndex="10"
                 disabled={!isEditing && addOneButtonEnabled}
+                fullWidth
+                size="small"
               />
-            </div>
-          </div>
-          <label className="SaleBill-form-label"></label>
-          <div className="SaleBill-col">
-            <div className="SaleBill-form-group">
-              <input
-                type="checkbox"
-                id="EWayBill_Chk"
-                checked={isChecked}
-                onChange={handleOnChange}
-                disabled={!isEditing && addOneButtonEnabled}
+            </Grid>
+
+            <Grid item xs={12} sm={1}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    id="EWayBill_Chk"
+                    checked={isChecked}
+                    onChange={handleOnChange}
+                    disabled={!isEditing && addOneButtonEnabled}
+                  />
+                }
+                label={isChecked ? millname || millName : "EWay Bill Checkbox"}
               />
-              {isChecked && (
-                <label id="IsmillName">{millname || millName}</label>
-              )}
-            </div>
-          </div>
-          <label className="SaleBill-form-label"></label>
-          <div className="SaleBill-col-Ewaybillno">
-            <div className="SaleBill-form-group">
-              <input
-                type="text"
-                className="SaleBill-form-control"
-                name="EWay_Bill_No"
-                autoComplete="off"
-                value={formData.EWay_Bill_No}
-                onChange={handleChange}
-                // tabIndex="10"
-                disabled={!isEditing && addOneButtonEnabled}
-              />
-            </div>
-          </div>
-          <label className="SaleBill-form-label">EWayBill Validate Date:</label>
-          <div className="SaleBill-col">
-            <div className="SaleBill-form-group">
-              <input
-                // tabIndex="4"
+            </Grid>
+
+            <Grid item xs={12} sm={1}>
+              <TextField
+                label="EWayBill Validate Date"
                 type="date"
-                className="SaleBill-form-control"
-                id="datePicker"
                 name="EwayBillValidDate"
                 value={formData.EwayBillValidDate}
                 onChange={(e) => handleDateChange(e, "EwayBillValidDate")}
                 disabled={!isEditing && addOneButtonEnabled}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                fullWidth
+                size="small"
               />
-            </div>
-          </div>
+            </Grid>
 
-          <label className="SaleBill-form-label">Party</label>
-          <div className="SaleBill-col-Ewaybillno">
-            <div className="SaleBill-form-group">
-              <input
-                type="text"
-                className="SaleBill-form-control"
+            <Grid item xs={12} sm={1}>
+              <TextField
+                label="Party"
                 name="partyMobNo"
+                variant="outlined"
                 autoComplete="off"
                 value={PartyMobNo || partyMobNo || 0}
                 onChange={handleChange}
-                // tabIndex="11"
                 disabled={!isEditing && addOneButtonEnabled}
+                fullWidth
+                size="small"
               />
-            </div>
-          </div>
-          <label className="SaleBill-form-label">Transport</label>
-          <div className="SaleBill-col-Ewaybillno">
-            <div className="SaleBill-form-group">
-              <input
-                type="text"
-                className="SaleBill-form-control"
+            </Grid>
+
+            <Grid item xs={12} sm={1}>
+              <TextField
+                label="Transport"
                 name="TransportMobNo"
+                variant="outlined"
                 autoComplete="off"
                 value={TransportMobNo || transportMob || 0}
                 onChange={handleChange}
-                // tabIndex="11"
                 disabled={!isEditing && addOneButtonEnabled}
+                fullWidth
+                size="small"
               />
-            </div>
-          </div>
-          <label className="SaleBill-form-label">Driver</label>
-          <div className="SaleBill-col-Ewaybillno">
-            <div className="SaleBill-form-group">
-              <input
-                type="text"
-                className="SaleBill-form-control"
+            </Grid>
+
+            <Grid item xs={12} sm={1}>
+              <TextField
+                label="Driver"
                 name="newsbno"
+                variant="outlined"
                 autoComplete="off"
                 value={formData.newsbno}
                 onChange={handleChange}
-                // tabIndex="11"
                 disabled={!isEditing && addOneButtonEnabled}
+                fullWidth
+                size="small"
               />
-            </div>
-          </div>
-          <label className="SaleBill-form-label">GST No</label>
-          <div className="SaleBill-col-Ewaybillno">
-            <div className="SaleBill-form-group">
-              <input
-                type="text"
-                className="SaleBill-form-control"
+            </Grid>
+
+            <Grid item xs={12} sm={1}>
+              <TextField
+                label="GST No"
                 name="GSTNo"
+                variant="outlined"
                 autoComplete="off"
                 value={isChecked ? millGSTNo || millgstno : gstNo}
-                // tabIndex="11"
                 disabled={!isEditing && addOneButtonEnabled}
+                fullWidth
+                size="small"
               />
-            </div>
-          </div>
-          <label className="SaleBill-form-label">Unit</label>
-          <div className="SaleBill-col-Ewaybillno">
-            <div className="SaleBill-form-group">
-              <input
-                type="text"
-                className="SaleBill-form-control"
-                name="newsbno"
+            </Grid>
+          </Grid>
+
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={1} >
+              <TextField
+                label="Unit"
+                name="UnitMobNo"
+                variant="outlined"
                 autoComplete="off"
                 value={UnitMobNo || shipToMobNo || 0}
                 onChange={handleChange}
-                // tabIndex="11"
                 disabled={!isEditing && addOneButtonEnabled}
+                fullWidth
+                size="small"
+                inputProps={{
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-            </div>
-          </div>
-          <div>
-            <button>SMS</button>
-          </div>
+            </Grid>
 
-          <label className="SaleBill-form-label">New SB No:</label>
-          <div className="SaleBill-col-Ewaybillno">
-            <div className="SaleBill-form-group">
-              <input
-                type="text"
-                className="SaleBill-form-control"
+            <Grid item xs={6} sm={1}>
+              <Button variant="contained" color="primary">
+                SMS
+              </Button>
+            </Grid>
+
+            <Grid item xs={12} sm={1}>
+              <TextField
+                label="New SB No"
                 name="newsbno"
+                variant="outlined"
                 autoComplete="off"
                 value={formData.newsbno}
                 onChange={handleChange}
-                // tabIndex="11"
                 disabled={!isEditing && addOneButtonEnabled}
+                fullWidth
+                size="small"
               />
-            </div>
-          </div>
-          <label className="SaleBill-form-label">EInvoice No:</label>
-          <div className="SaleBill-col-Ewaybillno">
-            <div className="SaleBill-form-group">
-              <input
-                type="text"
-                className="SaleBill-form-control"
+            </Grid>
+
+            <Grid item xs={12} sm={1}>
+              <TextField
+                label="EInvoice No"
                 name="einvoiceno"
+                variant="outlined"
                 autoComplete="off"
                 value={formData.einvoiceno}
                 onChange={handleChange}
-                // tabIndex="10"
                 disabled={!isEditing && addOneButtonEnabled}
+                fullWidth
+                size="small"
               />
-            </div>
-          </div>
+            </Grid>
 
-          <label className="SaleBill-form-label">ACK No:</label>
-          <div className="SaleBill-col-Ewaybillno">
-            <div className="SaleBill-form-group">
-              <input
-                type="text"
-                className="SaleBill-form-control"
+            <Grid item xs={12} sm={1}>
+              <TextField
+                label="ACK No"
                 name="ackno"
+                variant="outlined"
                 autoComplete="off"
                 value={formData.ackno}
                 onChange={handleChange}
-                // tabIndex="11"
                 disabled={!isEditing && addOneButtonEnabled}
+                fullWidth
+                size="small"
               />
-            </div>
-          </div>
+            </Grid>
 
-          <label className="SaleBill-form-label" style={{ fontWeight: "bold" }}>
-            SB Narration:
-          </label>
-          <div className="SaleBill-col">
-            <textarea
-              name="SBNarration"
-              value={formData.SBNarration}
-              onChange={handleChange}
-              autoComplete="off"
-              // tabIndex="12"
-              disabled={!isEditing && addOneButtonEnabled}
-            />
-          </div>
+            <label className="SaleBill-form-label" style={{ fontWeight: "bold" }}>SB Narration:</label>
+            <Grid item xs={6} sm={4} ml={2}>
+              <TextareaAutosize
+                name="SBNarration"
+                value={formData.SBNarration}
+                onChange={handleChange}
+                autoComplete="off"
+                disabled={!isEditing && addOneButtonEnabled}
+                minRows={1}
+              />
+            </Grid>
+          </Grid>
         </div>
+        <br></br>
+
         <div className="SaleBill-row">
-          <label className="SaleBill-form-label">SubTotal:</label>
-          <div className="SaleBill-col-Text">
-            <div className="SaleBill-form-group">
-              <input
-                // tabIndex="13"
+          <Grid container spacing={2}>
+            <Grid item xs={6} md={1}>
+              <TextField
                 type="text"
-                className="SaleBill-form-control"
+                fullWidth
+                label="SubTotal"
+                variant="outlined"
                 name="subTotal"
                 autoComplete="off"
                 value={formData.subTotal}
                 onChange={handleChange}
                 onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                inputProps={{
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-            </div>
-          </div>
-          <label className="SaleBill-form-label">Add Frt. Rs:</label>
-          <div className="SaleBill-col-Text">
-            <div className="SaleBill-form-group">
-              <input
-                // tabIndex="14"
-                type="text"
-                className="SaleBill-form-control"
-                name="LESS_FRT_RATE"
-                autoComplete="off"
-                value={formData.LESS_FRT_RATE}
-                onChange={handleChange}
-                onKeyDown={handleKeyDownCalculations}
-                disabled={!isEditing && addOneButtonEnabled}
-              />
+            </Grid>
 
-              <input
-                // tabIndex="15"
-                type="text"
-                className="SaleBill-form-control"
-                name="freight"
-                autoComplete="off"
-                value={formData.freight}
-                onChange={handleChange}
-                onKeyDown={handleKeyDownCalculations}
-                disabled={!isEditing && addOneButtonEnabled}
-              />
-            </div>
-          </div>
+            <Grid container spacing={1} item xs={6} md={2}>
+              <Grid item xs={6}>
+                <TextField
+                  type="text"
+                  fullWidth
+                  label="LESS_FRT_RATE"
+                  name="LESS_FRT_RATE"
+                  autoComplete="off"
+                  value={formData.LESS_FRT_RATE}
+                  onChange={handleChange}
+                  onKeyDown={handleKeyDownCalculations}
+                  disabled={!isEditing && addOneButtonEnabled}
+                  inputProps={{
+                    inputMode: 'decimal',
+                    pattern: '[0-9]*[.,]?[0-9]+',
+                    onInput: validateNumericInput,
+                  }}
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  type="text"
+                  fullWidth
+                  label="freight"
+                  name="freight"
+                  autoComplete="off"
+                  value={formData.freight}
+                  onChange={handleChange}
+                  onKeyDown={handleKeyDownCalculations}
+                  disabled={!isEditing && addOneButtonEnabled}
+                  inputProps={{
+                    inputMode: 'decimal',
+                    pattern: '[0-9]*[.,]?[0-9]+',
+                    onInput: validateNumericInput,
+                  }}
+                />
+              </Grid>
+            </Grid>
 
-          <label className="SaleBill-form-label">Taxable Amount:</label>
-          <div className="SaleBill-col-Text">
-            <div className="SaleBill-form-group">
-              <input
-                // tabIndex="13"
+            <Grid item xs={12} md={1}>
+
+              <TextField
                 type="text"
-                className="SaleBill-form-control"
+                fullWidth
+                label='TaxableAmount'
                 name="TaxableAmount"
                 autoComplete="off"
                 value={formData.TaxableAmount}
                 onChange={handleChange}
                 onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                inputProps={{
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-            </div>
-          </div>
+            </Grid>
 
-          <label className="SaleBill-form-label">CGST:</label>
-          <div className="SaleBill-col-Text">
-            <div className="SaleBill-form-group">
-              <input
-                // tabIndex="14"
-                type="text"
-                className="SaleBill-form-control"
-                name="CGSTRate"
-                autoComplete="off"
-                value={formData.CGSTRate}
-                onChange={handleChange}
-                onKeyDown={handleKeyDownCalculations}
-                disabled={!isEditing && addOneButtonEnabled}
-              />
+            <Grid item xs={12} md={2}>
+              <Grid container spacing={2}>
+                <Grid item xs={6} >
+                  <TextField
+                    type="text"
+                    fullWidth
+                    name="CGSTRate"
+                    label="CGST Rate"
+                    autoComplete="off"
+                    value={formData.CGSTRate}
+                    onChange={handleChange}
+                    onKeyDown={handleKeyDownCalculations}
+                    disabled={!isEditing && addOneButtonEnabled}
+                    inputProps={{
+                      inputMode: 'decimal',
+                      pattern: '[0-9]*[.,]?[0-9]+',
+                      onInput: validateNumericInput,
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <TextField
+                    type="text"
+                    fullWidth
+                    name="CGSTAmount"
+                    label="CGST Amount"
+                    autoComplete="off"
+                    value={formData.CGSTAmount}
+                    onChange={handleChange}
+                    onKeyDown={handleKeyDownCalculations}
+                    disabled={!isEditing && addOneButtonEnabled}
+                    inputProps={{
+                      inputMode: 'decimal',
+                      pattern: '[0-9]*[.,]?[0-9]+',
+                      onInput: validateNumericInput,
+                    }}
+                  />
+                </Grid>
+              </Grid>
+            </Grid>
 
-              <input
-                // tabIndex="15"
-                type="text"
-                className="SaleBill-form-control"
-                name="CGSTAmount"
-                autoComplete="off"
-                value={formData.CGSTAmount}
-                onChange={handleChange}
-                onKeyDown={handleKeyDownCalculations}
-                disabled={!isEditing && addOneButtonEnabled}
-              />
-            </div>
-          </div>
+            <Grid item xs={12} md={2}>
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <TextField
+                    type="text"
+                    fullWidth
+                    name="SGSTRate"
+                    label="SGST Rate"
+                    autoComplete="off"
+                    value={formData.SGSTRate}
+                    onChange={handleChange}
+                    onKeyDown={handleKeyDownCalculations}
+                    disabled={!isEditing && addOneButtonEnabled}
+                    inputProps={{
+                      inputMode: 'decimal',
+                      pattern: '[0-9]*[.,]?[0-9]+',
+                      onInput: validateNumericInput,
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <TextField
+                    type="text"
+                    fullWidth
+                    name="SGSTAmount"
+                    label="SGST Amount"
+                    autoComplete="off"
+                    value={formData.SGSTAmount}
+                    onChange={handleChange}
+                    onKeyDown={handleKeyDownCalculations}
+                    disabled={!isEditing && addOneButtonEnabled}
+                    inputProps={{
+                      inputMode: 'decimal',
+                      pattern: '[0-9]*[.,]?[0-9]+',
+                      onInput: validateNumericInput,
+                    }}
+                  />
+                </Grid>
+              </Grid>
+            </Grid>
 
-          <label className="SaleBill-form-label">SGST:</label>
-          <div className="SaleBill-col-Text">
-            <div className="SaleBill-form-group">
-              <input
-                // tabIndex="16"
-                type="text"
-                className="SaleBill-form-control"
-                name="SGSTRate"
-                autoComplete="off"
-                value={formData.SGSTRate}
-                onChange={handleChange}
-                onKeyDown={handleKeyDownCalculations}
-                disabled={!isEditing && addOneButtonEnabled}
-              />
+            <Grid item xs={12} md={2}>
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <TextField
+                    type="text"
+                    fullWidth
+                    name="IGSTRate"
+                    label="IGST Rate"
+                    autoComplete="off"
+                    value={formData.IGSTRate}
+                    onChange={handleChange}
+                    onKeyDown={handleKeyDownCalculations}
+                    disabled={!isEditing && addOneButtonEnabled}
+                    inputProps={{
+                      inputMode: 'decimal',
+                      pattern: '[0-9]*[.,]?[0-9]+',
+                      onInput: validateNumericInput,
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <TextField
+                    type="text"
+                    fullWidth
+                    name="IGSTAmount"
+                    label="IGST Amount"
+                    autoComplete="off"
+                    value={formData.IGSTAmount}
+                    onChange={handleChange}
+                    onKeyDown={handleKeyDownCalculations}
+                    disabled={!isEditing && addOneButtonEnabled}
+                    inputProps={{
+                      inputMode: 'decimal',
+                      pattern: '[0-9]*[.,]?[0-9]+',
+                      onInput: validateNumericInput,
+                    }}
+                  />
+                </Grid>
+              </Grid>
+            </Grid>
 
-              <input
-                // tabIndex="17"
-                type="text"
-                className="SaleBill-form-control"
-                name="SGSTAmount"
-                autoComplete="off"
-                value={formData.SGSTAmount}
-                onChange={handleChange}
-                onKeyDown={handleKeyDownCalculations}
-                disabled={!isEditing && addOneButtonEnabled}
-              />
-            </div>
-          </div>
+            <Grid item xs={12} md={2}>
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <TextField
+                    type="text"
+                    fullWidth
+                    label='RateDiff'
+                    name="RateDiff"
+                    autoComplete="off"
+                    value={formData.RateDiff}
+                    onChange={handleChange}
+                    onKeyDown={handleKeyDownCalculations}
+                    disabled={!isEditing && addOneButtonEnabled}
+                    inputProps={{
+                      inputMode: 'decimal',
+                      pattern: '[0-9]*[.,]?[0-9]+',
+                      onInput: validateNumericInput,
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <TextField
+                    type="text"
+                    fullWidth
+                    label='RateDiffAmount'
+                    name="RateDiffAmount"
+                    autoComplete="off"
+                    value={calculateRateDiffAmount()}
+                    disabled={!isEditing && addOneButtonEnabled}
+                    inputProps={{
+                      inputMode: 'decimal',
+                      pattern: '[0-9]*[.,]?[0-9]+',
+                      onInput: validateNumericInput,
+                    }}
+                  />
+                </Grid>
+              </Grid>
+            </Grid>
+          </Grid>
 
-          <label className="SaleBill-form-label">IGST:</label>
-          <div className="SaleBill-col-Text">
-            <div className="SaleBill-form-group">
-              <input
-                // tabIndex="18"
+          <Grid container spacing={1} item xs={12} mt={1}>
+            <Grid item xs={6} md={1}>
+              <TextField
                 type="text"
-                className="SaleBill-form-control"
-                name="IGSTRate"
-                autoComplete="off"
-                value={formData.IGSTRate}
-                onChange={handleChange}
-                onKeyDown={handleKeyDownCalculations}
-                disabled={!isEditing && addOneButtonEnabled}
-              />
-
-              <input
-                // tabIndex="19"
-                type="text"
-                className="SaleBill-form-control"
-                name="IGSTAmount"
-                autoComplete="off"
-                value={formData.IGSTAmount}
-                onChange={handleChange}
-                onKeyDown={handleKeyDownCalculations}
-                disabled={!isEditing && addOneButtonEnabled}
-              />
-            </div>
-          </div>
-
-          <label className="SaleBill-form-label">Rate Diff:</label>
-          <div className="SaleBill-col-Text">
-            <div className="SaleBill-form-group">
-              <input
-                // tabIndex="18"
-                type="text"
-                className="SaleBill-form-control"
-                name="RateDiff"
-                autoComplete="off"
-                value={formData.RateDiff}
-                onChange={handleChange}
-                onKeyDown={handleKeyDownCalculations}
-                disabled={!isEditing && addOneButtonEnabled}
-              />
-
-              <input
-                // tabIndex="19"
-                type="text"
-                className="SaleBill-form-control"
-                name="RateDiffAmount"
-                autoComplete="off"
-                value={calculateRateDiffAmount()}
-                // onChange={handleChange}
-                //  onKeyDown={handleKeyDownCalculations}
-                disabled={!isEditing && addOneButtonEnabled}
-              />
-            </div>
-          </div>
-
-          <label className="SaleBill-form-label">MISC:</label>
-          <div className="SaleBill-col-Text">
-            <div className="SaleBill-form-group">
-              <input
-                // tabIndex="20"
-                type="text"
-                className="SaleBill-form-control"
+                fullWidth
+                label='OTHER_AMT'
                 name="OTHER_AMT"
                 autoComplete="off"
                 value={formData.OTHER_AMT}
                 onChange={handleChange}
                 onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                inputProps={{
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-            </div>
-          </div>
-          <label className="SaleBill-form-label">Cash Advance</label>
-          <div className="SaleBill-col-Text">
-            <div className="SaleBill-form-group">
-              <input
-                // tabIndex="18"
+            </Grid>
+
+            <Grid item xs={6} md={1}>
+              <TextField
                 type="text"
-                className="SaleBill-form-control"
+                fullWidth
                 name="cash_advance"
+                label='cash_advance'
                 autoComplete="off"
                 value={formData.cash_advance}
                 onChange={handleChange}
                 onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                inputProps={{
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-            </div>
-          </div>
+            </Grid>
 
-          <label className="SaleBill-form-label">Round Off</label>
-          <div className="SaleBill-col-Text">
-            <div className="SaleBill-form-group">
-              <input
-                // tabIndex="18"
+            <Grid item xs={6} md={1}>
+              <TextField
                 type="text"
-                className="SaleBill-form-control"
+                fullWidth
                 name="RoundOff"
+                label='RoundOff'
                 autoComplete="off"
                 value={formData.RoundOff}
                 onChange={handleChange}
                 onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
               />
-            </div>
-          </div>
+            </Grid>
 
-          <label className="SaleBill-form-label">Bill Amount:</label>
-          <div className="SaleBill-col-Text">
-            <div className="SaleBill-form-group">
-              <input
-                // tabIndex="21"
+            <Grid item xs={6} md={2}>
+              <TextField
                 type="text"
-                className="SaleBill-form-control"
+                fullWidth
+                label='Bill_Amount'
                 name="Bill_Amount"
                 autoComplete="off"
                 value={formData.Bill_Amount}
@@ -2532,45 +2518,60 @@ const SaleBill = () => {
                 onKeyDown={handleKeyDownCalculations}
                 style={{ color: "red", fontWeight: "bold" }}
                 disabled={!isEditing && addOneButtonEnabled}
+                inputProps={{
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-            </div>
-          </div>
+            </Grid>
 
-          <label className="SaleBill-form-label">TCS %:</label>
-          <div className="SaleBill-col-Text">
-            <div className="SaleBill-form-group">
-              <input
-                // tabIndex="22"
-                type="text"
-                className="SaleBill-form-control"
-                name="TCS_Rate"
-                autoComplete="off"
-                value={formData.TCS_Rate}
-                onChange={handleChange}
-                onKeyDown={handleKeyDownCalculations}
-                disabled={!isEditing && addOneButtonEnabled}
-              />
-              <input
-                // tabIndex="23"
-                type="text"
-                className="SaleBill-form-control"
-                name="TCS_Amt"
-                autoComplete="off"
-                value={formData.TCS_Amt}
-                onChange={handleChange}
-                onKeyDown={handleKeyDownCalculations}
-                disabled={!isEditing && addOneButtonEnabled}
-              />
-            </div>
-          </div>
+            <Grid item xs={12} md={2}>
+              <Grid container spacing={1}>
+                <Grid item xs={6}>
+                  <TextField
+                    type="text"
+                    label='TCS_Rate'
+                    fullWidth
+                    name="TCS_Rate"
+                    autoComplete="off"
+                    value={formData.TCS_Rate}
+                    onChange={handleChange}
+                    onKeyDown={handleKeyDownCalculations}
+                    disabled={!isEditing && addOneButtonEnabled}
+                    inputProps={{
+                      inputMode: 'decimal',
+                      pattern: '[0-9]*[.,]?[0-9]+',
+                      onInput: validateNumericInput,
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <TextField
+                    type="text"
+                    fullWidth
+                    label='TCS_Amt'
+                    name="TCS_Amt"
+                    autoComplete="off"
+                    value={formData.TCS_Amt}
+                    onChange={handleChange}
+                    onKeyDown={handleKeyDownCalculations}
+                    disabled={!isEditing && addOneButtonEnabled}
+                    inputProps={{
+                      inputMode: 'decimal',
+                      pattern: '[0-9]*[.,]?[0-9]+',
+                      onInput: validateNumericInput,
+                    }}
+                  />
+                </Grid>
+              </Grid>
+            </Grid>
 
-          <label className="SaleBill-form-label">Net Payable:</label>
-          <div className="SaleBill-col-Text">
-            <div className="SaleBill-form-group">
-              <input
-                // tabIndex="24"
+            <Grid item xs={12} md={2}>
+              <TextField
                 type="text"
-                className="SaleBill-form-control"
+                fullWidth
+                label='TCS_Net_Payable'
                 name="TCS_Net_Payable"
                 autoComplete="off"
                 style={{ color: "red", fontWeight: "bold" }}
@@ -2578,40 +2579,55 @@ const SaleBill = () => {
                 onChange={handleChange}
                 onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                inputProps={{
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-            </div>
-          </div>
-        </div>
+            </Grid>
 
-        <div className="SaleBill-row">
-          <label className="SaleBill-form-label">TDS %:</label>
-          <div className="SaleBill-col-Text">
-            <div className="SaleBill-form-group">
-              <input
-                // tabIndex="25"
-                type="text"
-                className="SaleBill-form-control"
-                name="TDS_Rate"
-                autoComplete="off"
-                value={formData.TDS_Rate}
-                onChange={handleChange}
-                onKeyDown={handleKeyDownCalculations}
-                disabled={!isEditing && addOneButtonEnabled}
-              />
-              <input
-                // tabIndex="26"
-                type="text"
-                className="SaleBill-form-control"
-                name="TDS_Amt"
-                autoComplete="off"
-                value={formData.TDS_Amt !== null ? formData.TDS_Amt : ""}
-                // value={formData.TDS_Amt}
-                onChange={handleChange}
-                onKeyDown={handleKeyDownCalculations}
-                disabled={!isEditing && addOneButtonEnabled}
-              />
-            </div>
-          </div>
+            <Grid item xs={12} md={2}>
+              <Grid container spacing={1}>
+                <Grid item xs={6}>
+                  <TextField
+                    type="text"
+                    label='TDS_Rate'
+                    fullWidth
+                    name="TDS_Rate"
+                    autoComplete="off"
+                    value={formData.TDS_Rate}
+                    onChange={handleChange}
+                    onKeyDown={handleKeyDownCalculations}
+                    disabled={!isEditing && addOneButtonEnabled}
+                    inputProps={{
+                      inputMode: 'decimal',
+                      pattern: '[0-9]*[.,]?[0-9]+',
+                      onInput: validateNumericInput,
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <TextField
+                    type="text"
+                    label='TDS_Amt'
+                    fullWidth
+                    name="TDS_Amt"
+                    autoComplete="off"
+                    value={formData.TDS_Amt !== null ? formData.TDS_Amt : ""}
+                    onChange={handleChange}
+                    onKeyDown={handleKeyDownCalculations}
+                    disabled={!isEditing && addOneButtonEnabled}
+                    inputProps={{
+                      inputMode: 'decimal',
+                      pattern: '[0-9]*[.,]?[0-9]+',
+                      onInput: validateNumericInput,
+                    }}
+                  />
+                </Grid>
+              </Grid>
+            </Grid>
+          </Grid>
         </div>
       </form>
     </>

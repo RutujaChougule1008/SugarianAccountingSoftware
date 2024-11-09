@@ -10,10 +10,9 @@ from sqlalchemy import text
 from sqlalchemy import func
 from sqlalchemy.orm.exc import StaleDataError
 from werkzeug.utils import secure_filename
+
 import os
-
-
-
+API_URL= os.getenv('API_URL')
 
 # Initialize schema
 company_schema = CompanyCreationSchema()
@@ -36,7 +35,7 @@ def serialize_company(company):
 
 
 # Get data from the Company table
-@app.route("/get_company_data_All", methods=["GET"])
+@app.route(API_URL+"/get_company_data_All", methods=["GET"])
 def get_company_data():
     try:
         companies = CompanyCreation.query.all()
@@ -48,7 +47,7 @@ def get_company_data():
 
 
 # Get the maximum Company_Code
-@app.route("/get_last_company_code", methods=["GET"])
+@app.route(API_URL+"/get_last_company_code", methods=["GET"])
 def get_last_company_code():
     try:
         max_company_code = db.session.query(func.max(CompanyCreation.Company_Code)).scalar()
@@ -57,7 +56,7 @@ def get_last_company_code():
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
     
 # GET endpoint to retrieve data for the last company code along with all its associated data
-@app.route("/get_last_company_data", methods=["GET"])
+@app.route(API_URL+"/get_last_company_data", methods=["GET"])
 def get_last_company_data():
     try:
         max_company_code = db.session.query(func.max(CompanyCreation.Company_Code)).scalar()
@@ -75,7 +74,7 @@ def get_last_company_data():
 
 
     
-@app.route("/get_company_by_code", methods=["GET"])
+@app.route(API_URL+"/get_company_by_code", methods=["GET"])
 def get_company_by_code():
     company_code = request.args.get("company_code")
     if not company_code:
@@ -89,7 +88,7 @@ def get_company_by_code():
     return jsonify(data), 200
 
 # GET endpoint to retrieve previous data for a specific company by Company_Code(this API use for that last some record are deleted that time show previous record avilable on datatabse)
-@app.route("/get_previous_company_data", methods=["GET"])
+@app.route(API_URL+"/get_previous_company_data", methods=["GET"])
 def get_previous_company_data():
     try:
         company_code = request.args.get("company_code")
@@ -110,7 +109,7 @@ def get_previous_company_data():
 
     
 # POST endpoint to create a new company with logo and signature uploads
-@app.route('/create_company', methods=['POST'])
+@app.route(API_URL+'/create_company', methods=['POST'])
 def create_company():
     if 'logo' not in request.files or 'signature' not in request.files:
         return jsonify({"error": "Missing logo or signature file"}), 400
@@ -169,7 +168,7 @@ def create_company():
 
 
 #Update Company By Company Code
-@app.route("/update_company", methods=["PUT"])
+@app.route(API_URL+"/update_company", methods=["PUT"])
 def update_company():
     company_code = request.args.get('company_code')
     if not company_code:
@@ -202,7 +201,7 @@ def update_company():
         return jsonify({"error": "Failed to update company", "message": str(e)}), 500
     
 # Lock Record update call
-@app.route("/lock_unlock_record", methods=["PUT"])
+@app.route(API_URL+"/lock_unlock_record", methods=["PUT"])
 def lock_unlock_record():
     try:
         company_code = request.args.get('company_code')
@@ -231,7 +230,7 @@ def lock_unlock_record():
 
 
 #Delete Company
-@app.route("/delete_company", methods=["DELETE"])
+@app.route(API_URL+"/delete_company", methods=["DELETE"])
 def delete_company():
     try:
         company_code = request.args.get('company_code')
@@ -258,7 +257,7 @@ def delete_company():
     
 
 #Navigation APIS
-@app.route("/get_first_navigation", methods=["GET"])
+@app.route(API_URL+"/get_first_navigation", methods=["GET"])
 def get_first_navigation():
     try:
         # Retrieve the first company entry based on ascending order of Company_Code
@@ -273,7 +272,7 @@ def get_first_navigation():
         return jsonify({'error': 'Internal server error', 'message': str(e)}), 500
     
 
-@app.route("/get_last_navigation", methods=["GET"])
+@app.route(API_URL+"/get_last_navigation", methods=["GET"])
 def get_last_navigation():
     try:
         last_company = CompanyCreation.query.order_by(CompanyCreation.Company_Code.desc()).first()
@@ -285,7 +284,7 @@ def get_last_navigation():
     except Exception as e:
         return jsonify({'error': 'Internal server error', 'message': str(e)}), 500
 
-@app.route("/get_previous_navigation", methods=["GET"])
+@app.route(API_URL+"/get_previous_navigation", methods=["GET"])
 def get_previous_navigation():
     current_company_code = request.args.get('current_company_code')
     if not current_company_code:
@@ -299,7 +298,7 @@ def get_previous_navigation():
     data = serialize_company(previous_company)
     return jsonify(data), 200
 
-@app.route("/get_next_navigation", methods=["GET"])
+@app.route(API_URL+"/get_next_navigation", methods=["GET"])
 def get_next_navigation():
     current_company_code = request.args.get('current_company_code')
     if not current_company_code:

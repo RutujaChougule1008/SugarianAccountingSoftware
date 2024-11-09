@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import "../Navbar/Navbar.css"; // Ensure the CSS path is correct
+import "../Navbar/Navbar.css";
 import { Link } from "react-router-dom";
 import Cookies from 'js-cookie';
 
@@ -10,7 +10,6 @@ const Navbar = () => {
   const [hoveredSubMenuItem, setHoveredSubMenuItem] = useState("");
   const navbarRef = useRef(null); 
 
-  // Handle mouse enter on menu items
   const handleMouseEnter = (menuName) => {
     setActiveMenu(menuName);
     if (!clickedMenu) {
@@ -22,7 +21,6 @@ const Navbar = () => {
     setActiveSubMenu(subMenuName);
   };
 
-  // Handle mouse leave on the navbar
   const handleMouseLeave = (event) => {
     if (navbarRef.current && !navbarRef.current.contains(event.target)) {
       setActiveMenu("");
@@ -43,16 +41,6 @@ const Navbar = () => {
     }
   };
 
-  const handleSubMenuItemClick = (subMenuName, event) => {
-    event.stopPropagation();
-    setActiveSubMenu(subMenuName);
-  };
-
-  const handleSubMenuItemEnter = (itemName) => {
-    setHoveredSubMenuItem(itemName);
-  };
-
-  // Effect to handle clicks outside of the navbar to close submenus
   useEffect(() => {
     const handleOutsideClick = (event) => {
       if (navbarRef.current && !navbarRef.current.contains(event.target)) {
@@ -69,10 +57,7 @@ const Navbar = () => {
   }, []);
 
   const handleLogOut = () => {
-    // Clear session storage
     sessionStorage.clear();
-
-    // Clear cookies
     const cookies = Object.keys(Cookies.get());
     cookies.forEach(cookie => {
       Cookies.remove(cookie);
@@ -103,10 +88,10 @@ const Navbar = () => {
               <a className="submenu-item"><Link to="/select-company">Select Company</Link></a>
             </div>
             <div className="submenu-item">
-              <a href="/create-accounting-year">Create Accounting Year</a>
+              <a><Link to="/create-accounting-year">Create Accounting Year</Link></a>
             </div>
             <div className="submenu-item">
-              <a href="/select-accounting-year">Select Accounting Year</a>
+              <a><Link to="/select-accounting-year">Select Accounting Year</Link></a>
             </div>
           </div>
         )}
@@ -128,29 +113,29 @@ const Navbar = () => {
               {activeSubMenu === "accountInfo" && (
                 <div className="submenu1">
                   <div className="submenu-item1">
-                    <a href="/AccountMaster-utility">Account Master</a>
+                    <a><Link to="/AccountMaster-utility">Account Master</Link></a>
                   </div>
                   <div className="submenu-item1">
-                    <a href="/customer-limits">Customer Limits</a>
+                    <a><Link to="/customer-limits">Customer Limits</Link></a>
                   </div>
                   <div className="submenu-item1">
-                    <a href="/financial-groups-utility">Financial Groups</a>
+                    <a><Link to="/financial-groups-utility">Financial Groups</Link></a>
                   </div>
                   <div className="submenu-item1">
-                    <a href="/city-master-utility">City Master</a>
+                    <a ><Link to="/city-master-utility">City Master</Link></a>
                   </div>
                   <div className="submenu-item1">
-                    <a href="/PartyUnitMaster-utility">
+                    <a><Link to="/PartyUnitMaster-utility">
                       Corporate Customer Unit/Godown Declaration
-                    </a>
+                      </Link></a>
                   </div>
                   <div className="submenu-item1">
-                    <a href="/ac-master-declaration">
+                    <a><Link to="/ac-master-declaration">
                       Account Master Declaration
-                    </a>
+                      </Link></a>
                   </div>
                   <div className="submenu-item1">
-                    <a href="/bank-details">Bank Details</a>
+                    <a><Link to="/bank-details">Bank Details</Link></a>
                   </div>
                 </div>
               )}
@@ -163,40 +148,40 @@ const Navbar = () => {
               {activeSubMenu === "Other_Master" && (
                 <div className="submenu1">
                   <div className="submenu-item1">
-                    <a href="/syetem-masterutility">System Master</a>
+                    <a><Link to="/syetem-masterutility">System Master</Link></a>
                   </div>
                   <div className="submenu-item1">
-                    <a href="/brand-master-utility">Brand Master</a>
+                    <a><Link to="/brand-master-utility">Brand Master</Link></a>
                   </div>
                   <div className="submenu-item1">
-                    <a href="/gst-rate-masterutility">GST Rate Master</a>
+                    <a><Link to="/gst-rate-masterutility">GST Rate Master</Link></a>
                   </div>
                   <div className="submenu-item1">
-                    <a href="/gst-state-master-utility">GST State Master</a>
+                    <a><Link to="/gst-state-master-utility">GST State Master</Link></a>
                   </div>
                   <div className="submenu-item1">
-                    <a href="/hsn-asc-master">HSN or ASC Code Master</a>
+                    <a><Link to="/hsn-asc-master">HSN or ASC Code Master</Link></a>
                   </div>
                   <div className="submenu-item1">
-                    <a href="/company-related-accounting-Parameter">
+                    <a><Link to="/company-related-accounting-Parameter">
                       Company Related Accounting Parameter
-                    </a>
+                      </Link></a>
                   </div>
                 </div>
               )}
             </div>
 
             <div className="submenu-item">
-              <a href="/eway-bill-setting">E-Way Bill Setting</a>
+              <a><Link to="/eway-bill-setting">E-Way Bill Setting</Link></a>
             </div>
             <div className="submenu-item">
-              <a href="/company-parameter">Company Parameter</a>
+              <a><Link to="/company-parameter">Company Parameter</Link></a>
             </div>
             <div className="submenu-item">
-              <a href="/jaggery-company-parameter">Jaggery Company Parameter</a>
+              <a><Link to="/jaggery-company-parameter">Jaggery Company Parameter</Link></a>
             </div>
             <div className="submenu-item">
-              <a href="/whatsapp-api">WhatsApp API Integration</a>
+              <a><Link to="/whatsapp-api">WhatsApp API Integration</Link></a>
             </div>
           </div>
         )}
@@ -214,28 +199,29 @@ const Navbar = () => {
               <a ><Link to="/sugarpurchasebill-utility">Purchase Bill</Link></a>
             </div>
             <div className="submenu-item">
-              <a href="/OtherGSTInput-utility">Other GST Input</a>
+              <a href="/OtherGSTInput-utility"><Link to="/OtherGSTInput-utility">Other GST Input</Link></a>
             </div>
             <div className="submenu-item">
-              <a href="/reverse-charge">Reverse Charge</a>
+              <a href="/reverse-charge"><Link to="/reverse-charge">Reverse Charge</Link></a>
             </div>
             <div className="submenu-item">
-              <a href="/cold-storage-inward">Cold Storage Inward</a>
+              <a href="/cold-storage-inward"><Link to="/cold-storage-inward">Cold Storage Inward</Link></a>
             </div>
             <div className="submenu-item">
-              <a href="/sugar-sale-return-purchase-utility">
+              <a href="/sugar-sale-return-purchase-utility"><Link to="/sugar-sale-return-purchase-utility">
                 Sugar Sale Return Purchase
-              </a>
+                </Link></a>
             </div>
             <div className="submenu-item">
-              <a href="/rawangi-book">Rawangi Book</a>
+              <a href="/rawangi-book"><Link to="/rawangi-book">Rawangi Book</Link></a>
             </div>
             <div className="submenu-item">
-              <a href="/retail-purchase">Retail Purchase</a>
+              <a href="/retail-purchase"><Link to="/retail-purchase">Retail Purchase</Link></a>
             </div>
           </div>
         )}
       </div>
+      
       <div
         className="nav-item"
         onMouseEnter={() => handleMouseEnter("transactions")}
@@ -245,16 +231,16 @@ const Navbar = () => {
         {activeMenu === "transactions" && (
           <div className="submenu">
             <div className="submenu-item">
-              <a href="/RecieptPaymentUtility">Receipt/Payment</a>
+              <a href="/RecieptPaymentUtility"><Link to="/RecieptPaymentUtility">Receipt/Payment</Link></a>
             </div>
             <div className="submenu-item">
-              <a href="/JournalVoucher_Utility">Journal Vouchar</a>
+              <a href="/JournalVoucher_Utility">J<Link to="/JournalVoucher_Utility">ournal Vouchar</Link></a>
             </div>
             <div className="submenu-item">
-              <a href="/utrentry-Utility">UTR Entry</a>
+              <a href="/utrentry-Utility"><Link to="/utrentry-Utility">UTR Entry</Link></a>
             </div>
             <div className="submenu-item">
-              <a href="/debitcreditnote-utility">Debit/Credit Note</a>
+              <a href="/debitcreditnote-utility"><Link to="/debitcreditnote-utility">Debit/Credit Note</Link></a>
             </div>
             <div className="submenu-item">
               <a href="/multiple-sale-bill-against-single-payment">
@@ -262,9 +248,9 @@ const Navbar = () => {
               </a>
             </div>
             <div className="submenu-item">
-              <a href="/other-purchaseutility">
+              <a href="/other-purchaseutility"><Link to="/other-purchaseutility">
                 Other Purchase
-              </a>
+                </Link></a>
             </div>
             <div className="submenu-item">
               <a href="/gst3b">GST3B</a>
@@ -472,6 +458,11 @@ const Navbar = () => {
           </div>
         )}
       </div>
+
+
+
+
+
       <div
         className="nav-item"
         onMouseEnter={() => handleMouseEnter("utilities")}
@@ -489,7 +480,7 @@ const Navbar = () => {
               <a href="/general-info-sms">General Info Throghout SMS</a>
             </div>
             <div className="submenu-item">
-              <a href="/user-permission-utility">User Creation</a>
+              <a href="/user-creation">User Creation</a>
             </div>
             <div className="submenu-item">
               <a href="/group-user-creation">Group User Creation</a>

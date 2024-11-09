@@ -3,9 +3,12 @@ from flask import jsonify, request
 from app import app, db
 from app.models.Company.AccountingYearModels.AccountingYearModels import AccountingYear
 from sqlalchemy import func,desc
+import os
+
+API_URL= os.getenv('API_URL')
 
 # Get all accounting years for a specific company code
-@app.route("/get_accounting_years", methods=["GET"])
+@app.route(API_URL+"/get_accounting_years", methods=["GET"])
 def get_accounting_years():
     company_code = request.args.get('Company_Code')
     if not company_code:
@@ -26,7 +29,7 @@ def get_accounting_years():
     } for a in accounting_years]), 200
 
 #Create a New Accounting Year API
-@app.route("/create_accounting_year", methods=["POST"])
+@app.route(API_URL+"/create_accounting_year", methods=["POST"])
 def create_accounting_year():
     company_code = request.args.get('Company_Code')
     if not company_code:
@@ -65,7 +68,7 @@ def create_accounting_year():
         return jsonify({'error': str(e)}), 500
     
 #Update Accounting year API
-@app.route("/update_accounting_year", methods=["PUT"])
+@app.route(API_URL+"/update_accounting_year", methods=["PUT"])
 def update_accounting_year():
     # Retrieve 'yearCode' and 'Company_Code' from query parameters
     year_code = request.args.get('yearCode')
@@ -102,7 +105,7 @@ def update_accounting_year():
         return jsonify({'error': str(e)}), 500
     
 #Delete Accounting Year from database
-@app.route("/delete_accounting_year", methods=["DELETE"])
+@app.route(API_URL+"/delete_accounting_year", methods=["DELETE"])
 def delete_accounting_year():
     # Retrieve 'yearCode' and 'Company_Code' from query parameters
     year_code = request.args.get('yearCode')
@@ -134,7 +137,7 @@ def delete_accounting_year():
         return jsonify({'error': str(e)}), 500
     
 
-@app.route("/get_latest_accounting_year", methods=["GET"])
+@app.route(API_URL+"/get_latest_accounting_year", methods=["GET"])
 def get_latest_accounting_year():
     company_code = request.args.get('Company_Code')
 
@@ -163,7 +166,7 @@ def get_latest_accounting_year():
 
 
 #Navigation APIS
-@app.route("/get_first_navigationData", methods=["GET"])
+@app.route(API_URL+"/get_first_navigationData", methods=["GET"])
 def get_first_navigationData():
     company_code = request.args.get('Company_Code')
     

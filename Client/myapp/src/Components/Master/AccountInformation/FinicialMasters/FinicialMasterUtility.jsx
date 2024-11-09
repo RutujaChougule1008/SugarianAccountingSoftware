@@ -33,7 +33,7 @@ function FinicialGroups() {
     const [perPage, setPerPage] = useState(15);
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
-    const [filterValue, setFilterValue] = useState("");
+    const [filterValue, setFilterValue] = useState("B");
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -129,7 +129,8 @@ function FinicialGroups() {
     };
 
     const handleClick = () => {
-        navigate("/financial-groups");
+        const type = filterValue
+        navigate("/financial-groups", { state: { type } });
     };
 
     const handleRowClick = (group_Code) => {
@@ -139,7 +140,7 @@ function FinicialGroups() {
     };
 
     const handleSearchClick = () => {
-        setFilterValue("");
+        //setFilterValue("");
     };
 
     const handleBack = () => {
@@ -147,31 +148,28 @@ function FinicialGroups() {
     }
 
     return (
-        <div className="App container">
+        <div>
             <Grid container spacing={3}>
-                <Grid item xs={0}>
-                    <Button variant="contained" style={{ marginTop: "20px" }} onClick={handleClick}>
+                <Grid container mt={5} ml={5} alignItems="center">
+                <Grid item>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={handleClick}>
                         Add
                     </Button>
                 </Grid>
-                <Grid item xs={0}>
-                    <Button variant="contained" style={{ marginTop: "20px" }} onClick={handleBack}>
+                <Grid item ml={1}>
+                    <Button variant="contained" color="secondary" onClick={handleBack}>
                         Back
                     </Button>
                 </Grid>
-
-                <Grid item xs={12} sm={12}>
-                    <SearchBar
-                        value={searchTerm}
-                        onChange={handleSearchTermChange}
-                        onSearchClick={handleSearchClick}
-                    />
-                </Grid>
-                <Grid item xs={12} sm={8} style={{ marginTop: "-80px", marginLeft: "-150px" }}>
+                <Grid item ml={1}>
                     <PerPageSelect value={perPage} onChange={handlePerPageChange} />
                 </Grid>
 
-                <FormControl sx={{ marginLeft: "80px", width: "20%", marginTop: "-55px" }}>
+                <Grid item xs={12} sm={4}>
+                <FormControl >
                     <InputLabel  >Filter by Type:</InputLabel>
                     <Select
                         labelId="filterSelect-label"
@@ -186,10 +184,20 @@ function FinicialGroups() {
                         <MenuItem value="P">Profit & Loss</MenuItem>
                     </Select>
                 </FormControl>
+                </Grid>
+
+                <Grid item xs={12} sm={4}>
+                <SearchBar
+                        value={searchTerm}
+                        onChange={handleSearchTermChange}
+                        onSearchClick={handleSearchClick}
+                    />
+                </Grid>
+                </Grid>
 
 
                 <Grid item xs={12}>
-                    <Paper elevation={3}>
+                    <Paper elevation={20}>
                         <TableContainer>
                             <Table>
                                 <TableHead>

@@ -5,6 +5,15 @@ from app.models.Outword.ServiceBill.ServiceBillModel import ServiceBillHead, Ser
 from sqlalchemy import text, func
 from sqlalchemy.exc import SQLAlchemyError
 import os
+from app.models.Outword.ServiceBill.ServiceBillSchema import ServiceBillHeadSchema, ServiceBillDetailSchema
+from app.utils.CommonGLedgerFunctions import fetch_company_parameters, get_accoid, getSaleAc, get_acShort_Name,create_gledger_entry,send_gledger_entries
+import requests
+
+service_bill_head_schema = ServiceBillHeadSchema()
+service_bill_head_schemas = ServiceBillHeadSchema(many=True)
+
+service_bill_detail_schema = ServiceBillDetailSchema()
+service_bill_detail_schemas = ServiceBillDetailSchema(many=True)
 
 # Get the base URL from environment variables
 API_URL = os.getenv('API_URL')
@@ -21,22 +30,78 @@ LEFT OUTER JOIN dbo.nt_1_systemmaster AS item ON dbo.nt_1_rentbilldetails.ic = i
 ON dbo.nt_1_rentbillhead.rbid = dbo.nt_1_rentbilldetails.rbid
 WHERE (item.System_Type = 'I') and dbo.nt_1_rentbillhead.rbid = :rbid
 '''
-
-# Import schemas from the schemas module
-from app.models.Outword.ServiceBill.ServiceBillSchema import ServiceBillHeadSchema, ServiceBillDetailSchema
-from app.utils.CommonGLedgerFunctions import fetch_company_parameters, get_accoid, getSaleAc, get_acShort_Name
-import requests
-
-service_bill_head_schema = ServiceBillHeadSchema()
-service_bill_head_schemas = ServiceBillHeadSchema(many=True)
-
-service_bill_detail_schema = ServiceBillDetailSchema()
-service_bill_detail_schemas = ServiceBillDetailSchema(many=True)
-
+#format Dates
 def format_dates(task):
     return {
         "Date": task.Date.strftime('%Y-%m-%d') if task.Date else None,
     }
+
+#Create a GLedger Entries
+ac_code=0
+ordercode=0
+doc_no=0
+narration=''
+trans_type='RB'
+
+def add_gledger_entry(entries, data, amount, drcr, ac_code, accoid,ordercode,narration):
+    if amount > 0:
+        entries.append(create_gledger_entry(data, amount, drcr, ac_code, accoid,ordercode,trans_type,doc_no,narration))
+
+#GLedger Effects 
+def generate_gledger_entries(head_data, company_parameters, detail_data):
+    gledger_entries = []
+    
+    igst_amount = float(head_data.get('IGSTAmount', 0) or 0)
+    final_amount = float(head_data.get('Final_Amount', 0) or 0)
+    sgst_amount = float(head_data.get('SGSTAmount', 0) or 0)
+    cgst_amount = float(head_data.get('CGSTAmount', 0) or 0)
+    TCS_Amt = float(head_data.get('TCS_Amt', 0) or 0)
+    TDS_Amt = float(head_data.get('TDS', 0) or 0)
+    
+    def add_tax_entry(amount, drcr, ac_code, accoid):
+        add_gledger_entry(gledger_entries, head_data, amount, drcr, ac_code, accoid,ordercode,narration)
+    
+    if igst_amount > 0:
+        ac_code = company_parameters.IGSTAc
+        accoid = get_accoid(ac_code, head_data['Company_Code'])
+        add_tax_entry(igst_amount, "C", ac_code, accoid)
+    
+    if cgst_amount > 0:
+        ac_code = company_parameters.CGSTAc
+        accoid = get_accoid(ac_code, head_data['Company_Code'])
+        add_tax_entry(cgst_amount, "C", ac_code, accoid)
+    
+    if sgst_amount > 0:
+        ac_code = company_parameters.SGSTAc
+        accoid = get_accoid(ac_code, head_data['Company_Code'])
+        add_tax_entry(sgst_amount, "C", ac_code, accoid)
+
+    if TCS_Amt > 0:
+        ac_code = head_data['Customer_Code']
+        accoid = get_accoid(ac_code, head_data['Company_Code'])
+        add_tax_entry(TCS_Amt, 'D', ac_code, accoid)
+        ac_code = company_parameters.SaleTCSAc
+        accoid = get_accoid(ac_code, head_data['Company_Code'])
+        add_tax_entry(TCS_Amt, 'C', ac_code, accoid)
+
+    if TDS_Amt > 0:
+        ac_code = head_data['Customer_Code']
+        accoid = get_accoid(ac_code, head_data['Company_Code'])
+        add_tax_entry(TDS_Amt, 'C', ac_code, accoid)
+        ac_code = company_parameters.SaleTDSAc
+        accoid = get_accoid(ac_code, head_data['Company_Code'])
+        add_tax_entry(TDS_Amt, 'D', ac_code, accoid)
+
+    add_tax_entry(final_amount, "D", head_data['Customer_Code'], get_accoid(head_data['Customer_Code'], head_data['Company_Code']))
+    
+    for item in detail_data:
+        item_amount = float(item.get('Amount', 0) or 0)
+        if item_amount > 0:
+            ac_code = getSaleAc(item.get('ic'))
+            accoid = get_accoid(ac_code, head_data['Company_Code'])
+            add_tax_entry(item_amount, 'C', ac_code, accoid)
+
+    return gledger_entries
 
 # Get data from both tables ServiceBillHead and ServiceBillDetail
 @app.route(API_URL + "/getdata-servicebill", methods=["GET"])
@@ -74,7 +139,6 @@ def getdata_servicebill():
             }
 
             all_records_data.append(record_response)
-
         response = {
             "all_data_servicebill": all_records_data
         }
@@ -120,39 +184,6 @@ def getservicebillByid():
 # Insert record for ServiceBillHead and ServiceBillDetail
 @app.route(API_URL + "/insert-servicebill", methods=["POST"])
 def insert_servicebill():
-    tran_type = "RB"
-    def create_gledger_entry(data, amount, drcr, ac_code, accoid):
-        partyName = get_acShort_Name(data['Customer_Code'],data['Company_Code'])
-        return {
-            "TRAN_TYPE": tran_type,
-            "DOC_NO": new_doc_no,
-            "DOC_DATE": data['Date'],
-            "AC_CODE": ac_code,
-            "AMOUNT": amount,
-            "COMPANY_CODE": data['Company_Code'],
-            "YEAR_CODE": data['Year_Code'],
-            "ORDER_CODE": 12,
-            "DRCR": drcr,
-            "UNIT_Code": 0,
-            "NARRATION": "Service Bill No"+ str(data['Doc_No']) + partyName ,
-            "TENDER_ID": 0,
-            "TENDER_ID_DETAIL": 0,
-            "VOUCHER_ID": 0,
-            "DRCR_HEAD": 0,
-            "ADJUSTED_AMOUNT": 0,
-            "Branch_Code": 1,
-            "SORT_TYPE": tran_type,
-            "SORT_NO": new_doc_no,
-            "vc": 0,
-            "progid": 0,
-            "tranid": 0,
-            "saleid": 0,
-            "ac": accoid
-        }
-
-    def add_gledger_entry(entries, data, amount, drcr, ac_code, accoid):
-        if amount > 0:
-            entries.append(create_gledger_entry(data, amount, drcr, ac_code, accoid))
     try:
         data = request.get_json()
         head_data = data['head_data']
@@ -160,7 +191,6 @@ def insert_servicebill():
 
         max_doc_no = db.session.query(func.max(ServiceBillHead.Doc_No)).scalar() or 0
 
-       
         new_doc_no = max_doc_no + 1
         head_data['Doc_No'] = new_doc_no
 
@@ -193,71 +223,17 @@ def insert_servicebill():
                     db.session.delete(detail_to_delete)
                     deletedDetailIds.append(rbdid)
 
-        
-
         db.session.commit()
 
-        igst_amount = float(head_data.get('IGSTAmount', 0) or 0)
-        final_amount = float(head_data.get('Final_Amount', 0) or 0)
-        sgst_amount = float(head_data.get('SGSTAmount', 0) or 0)
-        cgst_amount = float(head_data.get('CGSTAmount', 0) or 0)
-        TCS_Amt = float(head_data.get('TCS_Amt', 0) or 0)
-        TDS_Amt = float(head_data.get('TDS', 0) or 0)
-
+        # Fetch company parameters and generate ledger entries
         company_parameters = fetch_company_parameters(head_data['Company_Code'], head_data['Year_Code'])
-
-        gledger_entries = []
-
-        if igst_amount > 0:
-            ac_code = company_parameters.IGSTAc
-            accoid = get_accoid(company_parameters.IGSTAc,head_data['Company_Code'])
-            add_gledger_entry(gledger_entries, head_data, igst_amount, "C", ac_code, accoid)
-
-        if cgst_amount > 0:
-            ac_code = company_parameters.CGSTAc
-            accoid = get_accoid(company_parameters.CGSTAc,head_data['Company_Code'])
-            add_gledger_entry(gledger_entries, head_data, cgst_amount, "C", ac_code, accoid)
-
-        if sgst_amount > 0:
-            ac_code = company_parameters.SGSTAc
-            accoid = get_accoid(company_parameters.SGSTAc,head_data['Company_Code'])
-            add_gledger_entry(gledger_entries, head_data, sgst_amount, "C", ac_code, accoid)
-        
-        if TCS_Amt > 0:
-            ac_code = head_data['Customer_Code']
-            accoid = get_accoid(ac_code,head_data['Company_Code'])
-            add_gledger_entry(gledger_entries, head_data, TCS_Amt, 'D', ac_code, accoid)
-            ac_code = company_parameters.SaleTCSAc
-            accoid = get_accoid(ac_code,head_data['Company_Code'])
-            add_gledger_entry(gledger_entries, head_data, TCS_Amt, 'D', ac_code, accoid)
-
-        if TDS_Amt > 0:
-            ac_code = head_data['Customer_Code']
-            accoid = get_accoid(ac_code,head_data['Company_Code'])
-            add_gledger_entry(gledger_entries, head_data, TDS_Amt, 'C', ac_code, accoid)
-            ac_code = company_parameters.SaleTDSAc
-            accoid = get_accoid(ac_code,head_data['Company_Code'])
-            add_gledger_entry(gledger_entries, head_data, TDS_Amt, 'C', ac_code, accoid)
-
-
-
-
-
-        add_gledger_entry(gledger_entries, head_data, final_amount, "D", head_data['Customer_Code'], get_accoid(head_data['Customer_Code'],head_data['Company_Code']))
-
-        for item in detail_data:
-            Item_amount = float(item.get('Amount', 0) or 0)
-            ic = item.get('ic')
-
-            if Item_amount>0:
-                ac_code = getSaleAc(ic)
-                add_gledger_entry(gledger_entries, head_data, Item_amount, 'C', ac_code, get_accoid(ac_code,head_data['Company_Code'])) 
-                
+        gledger_entries = generate_gledger_entries(head_data, company_parameters, detail_data)
+     
         query_params = {
             'Company_Code': head_data['Company_Code'],
             'DOC_NO': new_doc_no,
             'Year_Code': head_data['Year_Code'],
-            'TRAN_TYPE': tran_type
+            'TRAN_TYPE': trans_type
         }
 
         response = requests.post("http://localhost:8080/api/sugarian/create-Record-gLedger", params=query_params, json=gledger_entries)
@@ -283,39 +259,6 @@ def insert_servicebill():
 # Update record for ServiceBillHead and ServiceBillDetail
 @app.route(API_URL + "/update-servicebill", methods=["PUT"])
 def update_servicebill():
-    tran_type = "RB"
-    def create_gledger_entry(data, amount, drcr, ac_code, accoid):
-        partyName = get_acShort_Name(data['Customer_Code'],data['Company_Code'])
-        return {
-            "TRAN_TYPE": tran_type,
-            "DOC_NO": updated_head.Doc_No,
-            "DOC_DATE": data['Date'],
-            "AC_CODE": ac_code,
-            "AMOUNT": amount,
-            "COMPANY_CODE": data['Company_Code'],
-            "YEAR_CODE": data['Year_Code'],
-            "ORDER_CODE": 12,
-            "DRCR": drcr,
-            "UNIT_Code": 0,
-            "NARRATION":  "Service Bill No"+ str(data['Doc_No']) + partyName ,
-            "TENDER_ID": 0,
-            "TENDER_ID_DETAIL": 0,
-            "VOUCHER_ID": 0,
-            "DRCR_HEAD": 0,
-            "ADJUSTED_AMOUNT": 0,
-            "Branch_Code": 1,
-            "SORT_TYPE": tran_type,
-            "SORT_NO": updated_head.Doc_No,
-            "vc": 0,
-            "progid": 0,
-            "tranid": 0,
-            "saleid": 0,
-            "ac": accoid
-        }
-
-    def add_gledger_entry(entries, data, amount, drcr, ac_code, accoid):
-        if amount > 0:
-            entries.append(create_gledger_entry(data, amount, drcr, ac_code, accoid))
     try:
         rbid = request.args.get('rbid')
         if not all([rbid]):
@@ -325,7 +268,6 @@ def update_servicebill():
         head_data = data['head_data']
         detail_data = data['detail_data']
 
-        
         updated_head_counts=db.session.query(ServiceBillHead).filter(ServiceBillHead.rbid == rbid).update(head_data)
         updated_head = ServiceBillHead.query.filter_by(rbid=rbid).first()
 
@@ -359,69 +301,15 @@ def update_servicebill():
 
         db.session.commit()
 
-        igst_amount = float(head_data.get('IGSTAmount', 0) or 0)
-        final_amount = float(head_data.get('Final_Amount', 0) or 0)
-        sgst_amount = float(head_data.get('SGSTAmount', 0) or 0)
-        cgst_amount = float(head_data.get('CGSTAmount', 0) or 0)
-        TCS_Amt = float(head_data.get('TCS_Amt', 0) or 0)
-        TDS_Amt = float(head_data.get('TDS', 0) or 0)
-
-        print(TDS_Amt)
-
+        # Fetch company parameters and generate ledger entries
         company_parameters = fetch_company_parameters(head_data['Company_Code'], head_data['Year_Code'])
-
-        gledger_entries = []
-
-        if igst_amount > 0:
-            ac_code = company_parameters.IGSTAc
-            accoid = get_accoid(company_parameters.IGSTAc,head_data['Company_Code'])
-            add_gledger_entry(gledger_entries, head_data, igst_amount, "C", ac_code, accoid)
-
-        if cgst_amount > 0:
-            ac_code = company_parameters.CGSTAc
-            accoid = get_accoid(company_parameters.CGSTAc,head_data['Company_Code'])
-            add_gledger_entry(gledger_entries, head_data, cgst_amount, "C", ac_code, accoid)
-
-        if sgst_amount > 0:
-            ac_code = company_parameters.SGSTAc
-            accoid = get_accoid(company_parameters.SGSTAc,head_data['Company_Code'])
-            add_gledger_entry(gledger_entries, head_data, sgst_amount, "C", ac_code, accoid)
+        gledger_entries = generate_gledger_entries(head_data, company_parameters, detail_data)
         
-        if TCS_Amt > 0:
-            ac_code = head_data['Customer_Code']
-            accoid = get_accoid(ac_code,head_data['Company_Code'])
-            add_gledger_entry(gledger_entries, head_data, TCS_Amt, 'D', ac_code, accoid)
-            ac_code = company_parameters.SaleTCSAc
-            accoid = get_accoid(ac_code,head_data['Company_Code'])
-            add_gledger_entry(gledger_entries, head_data, TCS_Amt, 'D', ac_code, accoid)
-
-        if TDS_Amt > 0:
-            ac_code = head_data['Customer_Code']
-            accoid = get_accoid(ac_code,head_data['Company_Code'])
-            add_gledger_entry(gledger_entries, head_data, TDS_Amt, 'C', ac_code, accoid)
-            ac_code = company_parameters.SaleTDSAc
-            accoid = get_accoid(ac_code,head_data['Company_Code'])
-            add_gledger_entry(gledger_entries, head_data, TDS_Amt, 'C', ac_code, accoid)
-
-
-
-
-
-        add_gledger_entry(gledger_entries, head_data, final_amount, "D", head_data['Customer_Code'], get_accoid(head_data['Customer_Code'],head_data['Company_Code']))
-
-        for item in detail_data:
-            Item_amount = float(item.get('Amount', 0) or 0)
-            ic = item.get('ic')
-
-            if Item_amount>0:
-                ac_code = getSaleAc(ic)
-                add_gledger_entry(gledger_entries, head_data, Item_amount, 'C', ac_code, get_accoid(ac_code,head_data['Company_Code'])) 
-                
         query_params = {
             'Company_Code': head_data['Company_Code'],
             'DOC_NO': updated_head.Doc_No,
             'Year_Code': head_data['Year_Code'],
-            'TRAN_TYPE': tran_type
+            'TRAN_TYPE': trans_type
         }
 
         response = requests.post("http://localhost:8080/api/sugarian/create-Record-gLedger", params=query_params, json=gledger_entries)
@@ -453,7 +341,6 @@ def delete_data_by_rbid():
         doc_no = request.args.get('doc_no')
         Year_Code = request.args.get('Year_Code')
 
-        # Check if the required parameters are provided
         if not all([rbid, Company_Code, doc_no, Year_Code]):
             return jsonify({"error": "Missing required parameters"}), 400
        
@@ -461,7 +348,6 @@ def delete_data_by_rbid():
             
             deleted_detail_rows = ServiceBillDetail.query.filter_by(rbid=rbid).delete()
 
-            
             deleted_head_rows = ServiceBillHead.query.filter_by(rbid=rbid).delete()
 
         if deleted_detail_rows > 0 and deleted_head_rows > 0:
@@ -472,16 +358,12 @@ def delete_data_by_rbid():
                 'TRAN_TYPE': "",
             }
 
-            # Make the external request
             response = requests.delete("http://localhost:8080/api/sugarian/delete-Record-gLedger", params=query_params)
             
             if response.status_code != 200:
                 raise Exception("Failed to create record in gLedger")
 
-
-        
         db.session.commit()
-
         return jsonify({
             "message": f"Deleted {deleted_head_rows} head row(s) and {deleted_detail_rows} detail row(s) successfully"
         }), 200
@@ -682,26 +564,18 @@ def get_nextservicebill_navigation():
 @app.route(API_URL + "/get-next-bill-no", methods=["GET"])
 def get_next_bill_no():
     try:
-        # Get the company_code and year_code from the request parameters
         company_code = request.args.get('Company_Code')
         year_code = request.args.get('Year_Code')
 
-        # Validate required parameters
         if not company_code or not year_code:
             return jsonify({"error": "Missing 'Company_Code' or 'Year_Code' parameter"}), 400
 
-        # Query the database for the maximum doc_no in the specified company and year
         max_doc_no = db.session.query(func.max(ServiceBillHead.Doc_No)).filter_by(Company_Code=company_code, Year_Code=year_code).scalar()
-
-        # If no records found, set doc_no to 1
         next_doc_no = max_doc_no + 1 if max_doc_no else 1
-
-        # Prepare the response data
         response = {
             "next_doc_no": next_doc_no
         }
 
-        # Return the next doc_no
         return jsonify(response), 200
 
     except Exception as e:

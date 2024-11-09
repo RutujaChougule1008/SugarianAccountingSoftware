@@ -6,8 +6,9 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError 
 from sqlalchemy import func
 import os
+import traceback
 import requests
-from app.utils.CommonGLedgerFunctions import fetch_company_parameters,get_accoid,getPurchaseAc,create_gledger_entry
+from app.utils.CommonGLedgerFunctions import fetch_company_parameters,get_accoid,getPurchaseAc,create_gledger_entry,send_gledger_entries
 from app.models.Inword.PurchaseBill.PurchaseBillSchemas import SugarPurchaseHeadSchema, SugarPurchaseDetailSchema
 
 # Define schemas
@@ -19,6 +20,7 @@ Sugar_detail_Schemas = SugarPurchaseDetailSchema(many=True)
 
 # Get the base URL from environment variables
 API_URL= os.getenv('API_URL')
+API_URL_SERVER = os.getenv('API_URL_SERVER')
 
 #format date Function
 def format_dates(task):
@@ -34,10 +36,11 @@ DRCRDetail ="D"
 ac_code=0
 ordercode=0
 new_doc_no=0
+narration=''
 
 def add_gledger_entry(entries, data, amount, drcr, ac_code, accoid,ordercode):
     if amount > 0:
-        entries.append(create_gledger_entry(data, amount, drcr, ac_code, accoid,ordercode,trans_typeNew,new_doc_no))
+        entries.append(create_gledger_entry(data, amount, drcr, ac_code, accoid,ordercode,trans_typeNew,new_doc_no,narration))
 
 #Create GLedger Enteries
 def create_gledger_entries(headData, detailData, doc_no):
@@ -98,26 +101,10 @@ def create_gledger_entries(headData, detailData, doc_no):
                 "Company_Code": headData.get('Company_Code'),
                 "Year_Code": headData.get('Year_Code'),
                 "Narration": "aaaa",
-            }, float(item.get('item_Amount', 0) or 0), DRCRDetail, purchase_ac_code, get_accoid(purchase_ac_code, headData.get('Company_Code')), ordercode, trans_typeNew, doc_no)
+            }, float(item.get('item_Amount', 0) or 0), DRCRDetail, purchase_ac_code, get_accoid(purchase_ac_code, headData.get('Company_Code')), ordercode, trans_typeNew, doc_no,narration)
             gledger_entries.append(detailLedger_entry)
 
     return gledger_entries
-
-#Create a GLedger API Call.
-def send_gledger_entries(headData, gledger_entries):
-    query_params = {
-        'Company_Code': headData.get('Company_Code'),
-        'DOC_NO': headData.get('doc_no'),
-        'Year_Code': headData.get('Year_Code'),
-        'TRAN_TYPE': trans_typeNew,
-    }
-
-    response = requests.post("http://localhost:8080/api/sugarian/create-Record-gLedger", params=query_params, json=gledger_entries)
-    
-    if response.status_code != 201:
-        raise Exception(f"Failed to send Gledger entries: {response.status_code}, {response.text}")
-    
-    return response
 
 # Global SQL Query
 TASK_DETAILS_QUERY = '''
@@ -218,6 +205,27 @@ def getsugarpurchasebyid():
     except Exception as e:
         print(e)
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
+    
+#GET THE next doc no from the sugar purchase
+@app.route(API_URL + "/get-next-doc-no-purchaseBill", methods=["GET"])
+def get_next_doc_no_purchaseBill():
+    try:
+        company_code = request.args.get('Company_Code')
+        year_code = request.args.get('Year_Code')
+
+        if not company_code or not year_code:
+            return jsonify({"error": "Missing 'Company_Code' or 'Year_Code' parameter"}), 400
+
+        max_doc_no = db.session.query(func.max(SugarPurchase.doc_no)).filter_by(Company_Code=company_code, Year_Code=year_code).scalar()
+
+        next_doc_no = max_doc_no + 1 if max_doc_no else 1
+        response = {
+            "next_doc_no": next_doc_no
+        }
+        return jsonify(response), 200
+    except Exception as e:
+        print(e)
+        return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
 #INSERT record into the puchase Bill
 @app.route(API_URL + "/insert_SugarPurchase", methods=["POST"])
@@ -227,12 +235,10 @@ def insert_SugarPurchase():
         headData = data['headData']
         detailData = data['detailData']
 
-        # Get the new document number
         max_doc_no = db.session.query(func.max(SugarPurchase.doc_no)).scalar() or 0
         new_doc_no = max_doc_no + 1
         headData['doc_no'] = new_doc_no
 
-        # Create a new SugarPurchase (head)
         new_head = SugarPurchase(**headData)
         db.session.add(new_head)
 
@@ -262,10 +268,11 @@ def insert_SugarPurchase():
 
         gledger_entries = create_gledger_entries(headData, detailData, new_doc_no)
 
-        response = send_gledger_entries(headData, gledger_entries)
+        response = send_gledger_entries(headData, gledger_entries,trans_typeNew)
 
         if response.status_code != 201:
             db.session.rollback()
+            
             return jsonify({"error": "Failed to create gLedger record", "details": response.json()}), response.status_code
 
         return jsonify({
@@ -278,6 +285,7 @@ def insert_SugarPurchase():
 
     except Exception as e:
         db.session.rollback()
+        print("Traceback", traceback.format_exc())
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
 #Update records in the purchase Bill
@@ -335,10 +343,8 @@ def update_SugarPurchase():
         db.session.commit()
     
         gledger_entries = create_gledger_entries(headData, detailData, doc_no)
-        print('gledger_entries',gledger_entries)
 
-        response = send_gledger_entries(headData, gledger_entries)
-        print('response',response)
+        response = send_gledger_entries(headData, gledger_entries,trans_typeNew)
 
         if response.status_code != 201:
             db.session.rollback()
@@ -565,23 +571,4 @@ def getnextsugarpurchase_navigation():
     except Exception as e:
         return jsonify({"error": "Internal server error", "message": str(e)}), 500
 
-#GET THE next doc no from the sugar purchase
-@app.route(API_URL + "/get-next-doc-no-purchaseBill", methods=["GET"])
-def get_next_doc_no_purchaseBill():
-    try:
-        company_code = request.args.get('Company_Code')
-        year_code = request.args.get('Year_Code')
 
-        if not company_code or not year_code:
-            return jsonify({"error": "Missing 'Company_Code' or 'Year_Code' parameter"}), 400
-
-        max_doc_no = db.session.query(func.max(SugarPurchase.doc_no)).filter_by(Company_Code=company_code, Year_Code=year_code).scalar()
-
-        next_doc_no = max_doc_no + 1 if max_doc_no else 1
-        response = {
-            "next_doc_no": next_doc_no
-        }
-        return jsonify(response), 200
-    except Exception as e:
-        print(e)
-        return jsonify({"error": "Internal server error", "message": str(e)}), 500

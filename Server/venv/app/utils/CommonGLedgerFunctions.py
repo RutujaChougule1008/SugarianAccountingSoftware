@@ -1,5 +1,9 @@
 from sqlalchemy import text
 from app import app, db
+import os
+import requests
+
+API_URL_SERVER = os.getenv('API_URL_SERVER')
 
 def fetch_company_parameters(company_code, year_code):
         query = """
@@ -90,11 +94,12 @@ FROM  dbo.nt_1_companyparameters
         return result
 
 #Create GLegder Effects
-def create_gledger_entry(data, amount, drcr, ac_code, accoid,ordercode,trans_type,doc_no):
+def create_gledger_entry(data, amount, drcr, ac_code, accoid,ordercode,trans_type,doc_no,narration):
+        doc_date = data.get('doc_date', data.get('Date'))
         return {
             "TRAN_TYPE": trans_type,
             "DOC_NO": doc_no,
-            "DOC_DATE": data['doc_date'],
+            "DOC_DATE": doc_date,
             "AC_CODE": ac_code,
             "AMOUNT": amount,
             "COMPANY_CODE": data['Company_Code'],
@@ -102,7 +107,7 @@ def create_gledger_entry(data, amount, drcr, ac_code, accoid,ordercode,trans_typ
             "ORDER_CODE": ordercode,
             "DRCR": drcr,
             "UNIT_Code": 0,
-            "NARRATION": "aaaa",
+            "NARRATION": narration,
             "TENDER_ID": 0,
             "TENDER_ID_DETAIL": 0,
             "VOUCHER_ID": 0,
@@ -118,6 +123,21 @@ def create_gledger_entry(data, amount, drcr, ac_code, accoid,ordercode,trans_typ
             "ac": accoid
         }
 
+#GLedger 
+def send_gledger_entries(headData, gledger_entries,trans_type):
+    query_params = {
+        'Company_Code': headData.get('Company_Code'),
+        'DOC_NO': headData.get('doc_no'),
+        'Year_Code': headData.get('Year_Code'),
+        'TRAN_TYPE': trans_type,
+    }
+    print("DOC_NO",headData.get('doc_no'))
+
+    response = requests.post(API_URL_SERVER + "/create-Record-gLedger", params=query_params, json=gledger_entries)
+    if response.status_code != 201:
+        raise Exception(f"Failed to send Gledger entries: {response.status_code}, {response.text}")
+    return response
+      
 
 
       

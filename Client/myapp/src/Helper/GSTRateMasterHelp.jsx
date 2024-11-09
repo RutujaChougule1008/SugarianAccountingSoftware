@@ -8,7 +8,7 @@ import "../App.css";
 var lActiveInputFeild = "";
 const CompanyCode = sessionStorage.getItem("Company_Code")
 
-const GSTRateMasterHelp = ({ onAcCodeClick, name, GstRateName,GstRateCode,disabledFeild,tabIndexHelp}) => {
+const GSTRateMasterHelp = ({ onAcCodeClick, name, GstRateName, GstRateCode, disabledFeild, tabIndexHelp }) => {
 
     const [showModal, setShowModal] = useState(false);
     const [popupContent, setPopupContent] = useState([]);
@@ -26,7 +26,7 @@ const GSTRateMasterHelp = ({ onAcCodeClick, name, GstRateName,GstRateCode,disabl
         try {
             const response = await axios.get(`http://localhost:8080/api/sugarian/gst_rate_master?Company_Code=${CompanyCode}`);
             const data = response.data;
-            const filteredData = data.filter(item => 
+            const filteredData = data.filter(item =>
                 item.GST_Name.toLowerCase().includes(searchTerm.toLowerCase())
             );
             setPopupContent(filteredData);
@@ -68,34 +68,34 @@ const GSTRateMasterHelp = ({ onAcCodeClick, name, GstRateName,GstRateCode,disabl
     };
 
     //handle onChange event for Mill Code,Broker Code and Bp Account
-    const handleAcCodeChange = async (event) => {
+    const handleAcCodeChange = (event) => {
         const { value } = event.target;
         setEnteredAcCode(value);
-        setEnteredAcName(""); // Reset Ac_Name while the data is being fetched
 
-        try {
-            // Assuming `apiURL` is defined somewhere in your code
-            const response = await axios.get(`http://localhost:8080/api/sugarian/gst_rate_master?Company_Code=${CompanyCode}`);
-            const data = response.data;
-            setPopupContent(data);
-            setApiDataFetched(true);
+        if (value === "") {
+            setEnteredAcName("");
 
-            const matchingItem = data.find((item) => item.Doc_no === parseInt(value, 10));
+        }
 
+    };
+
+    const handleKeyDown = async (event) => {
+        if (event.key === "Tab" && event.target.id === name) {
+
+            if (!apiDataFetched) {
+                await fetchAndOpenPopup();
+            }
+
+            const matchingItem = popupContent.find(item => item.Doc_no.toString() === enteredAcCode);
             if (matchingItem) {
-              
-                setGstRate(matchingItem.Rate);
                 setEnteredAcName(matchingItem.GST_Name);
 
                 if (onAcCodeClick) {
-                    onAcCodeClick(matchingItem.Doc_no, matchingItem.Rate,matchingItem.GST_Name, value);
+                    onAcCodeClick(matchingItem.Doc_no, matchingItem.Rate, matchingItem.GST_Name);
                 }
             } else {
-                setEnteredAcName("");
-                setGstRate("");
+
             }
-        } catch (error) {
-            console.error("Error fetching data:", error);
         }
     };
 
@@ -107,7 +107,7 @@ const GSTRateMasterHelp = ({ onAcCodeClick, name, GstRateName,GstRateCode,disabl
             setEnteredAcName(item.GST_Name);
 
             if (onAcCodeClick) {
-                onAcCodeClick(item.Doc_no,item.Rate, enteredAcName, enteredAcCode);
+                onAcCodeClick(item.Doc_no, item.Rate, enteredAcName, enteredAcCode);
             }
         }
 
@@ -183,26 +183,27 @@ const GSTRateMasterHelp = ({ onAcCodeClick, name, GstRateName,GstRateCode,disabl
             <div className="d-flex ">
                 <div className="d-flex">
                     <input
-                       
+
                         type="text"
                         className="form-control ms-2"
                         id={name}
                         autoComplete="off"
                         value={enteredAcCode !== '' ? enteredAcCode : GstRateCode}
                         onChange={handleAcCodeChange}
+                        onKeyDown={handleKeyDown}
                         style={{ width: "150px", height: "35px" }}
                         disabled={disabledFeild}
                         tabIndex={tabIndexHelp}
 
                     />
                     <Button
-                      
+
                         variant="primary"
                         onClick={handleMillCodeButtonClick}
                         className="ms-1"
                         style={{ width: "30px", height: "35px" }}
                         disabled={disabledFeild}
-                       
+
                     >
                         ...
                     </Button>

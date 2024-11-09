@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import "./invoice.css";
-import logo from "../../../Assets/jklogo.png";
-import Sign from "../../../Assets/jklogo.png";
+import logo from "../../../../Assets/jklogo.png";
+import Sign from "../../../../Assets/jklogo.png";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 
@@ -9,11 +8,9 @@ const API_URL = process.env.REACT_APP_API;
 const companyCode = sessionStorage.getItem("Company_Code");
 const Year_Code = sessionStorage.getItem("Year_Code");
 
-const SaleBillReport = ({ doc_no, disabledFeild }) => {
+const YourComponent = ({ doc_no, disabledFeild }) => {
   const [invoiceData, setInvoiceData] = useState([]);
-
-  console.log("doc_no.....", doc_no)
-
+  
   const numberToWords = (num) => {
     const belowTwenty = [
       "Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
@@ -64,7 +61,7 @@ const SaleBillReport = ({ doc_no, disabledFeild }) => {
 
   const fetchData = async () => {
     try {
-      const response = await fetch(`${API_URL}/generating_saleBill_report?Company_Code=${companyCode}&Year_Code=${Year_Code}&doc_no=${doc_no}`);
+      const response = await fetch(`${API_URL}/generating_saleBill_report?Company_Code=${companyCode}&Year_Code=${Year_Code}&doc_no=5`);
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
@@ -283,4 +280,4 @@ const SaleBillReport = ({ doc_no, disabledFeild }) => {
   );
 };
 
-export default SaleBillReport;
+export default YourComponent;

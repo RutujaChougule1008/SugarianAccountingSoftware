@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import TableUtility from "../../../Common/UtilityCommon/TableUtility"; 
 
-const API_URL = process.env.REACT_APP_API_URL;
+const API_URL = process.env.REACT_APP_API;
 
 const columns = [
   { label: "Company Code", key: "Company_Code" },
@@ -23,6 +23,7 @@ function CompanyUtility() {
       addUrl="/create-company"
       detailUrl="/create-company" 
       utilityUrl="/company-list"
+      permissionUrl='/create-utility'
     />
   );
 }

@@ -1,17 +1,32 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import { AiOutlineUser, AiOutlineLock, AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
-import './Login.css';
+import { 
+  TextField, 
+  IconButton, 
+  Button, 
+  Container, 
+  Typography, 
+  Box, 
+  Grid 
+} from '@mui/material';
+import { 
+  AiOutlineUser, 
+  AiFillEye, 
+  AiFillEyeInvisible,
+  AiFillLock
+} from 'react-icons/ai';
 import { useNavigate } from 'react-router-dom';
-import logo from "../../Assets/companylogo.jpg"
+import logo from "../../Assets/jklogo.png";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import './Login.css';
+
+const API_URL = process.env.REACT_APP_API;
 
 const LoginForm = () => {
   const navigate = useNavigate();
   const UsernameRef = useRef(null);
   const [passwordVisible, setPasswordVisible] = useState(false);
-
   const [loginData, setLoginData] = useState({
     Login_Name: '',
     Password: '',
@@ -32,7 +47,7 @@ const LoginForm = () => {
       return;
     }
     try {
-      const response = await axios.post('http://localhost:8080/api/login', loginData);
+      const response = await axios.post(`${API_URL}/login`, loginData);
       const { user_data, access_token } = response.data;
       sessionStorage.setItem('user_type', user_data.UserType);
       sessionStorage.setItem('access_token', access_token);
@@ -52,7 +67,6 @@ const LoginForm = () => {
     }
   };
 
-  // Focus the username input when the component mounts
   useEffect(() => {
     UsernameRef.current.focus();
   }, []);
@@ -61,59 +75,67 @@ const LoginForm = () => {
     setPasswordVisible(!passwordVisible);
   };
 
-
-
   return (
-    <div className="login-container">
+    <Container className="login-container">
       <ToastContainer />
-      <img src={logo} alt='' />
-      <form onSubmit={handleSubmit} className="login-form">
-        <div className="form-group">
-          <AiOutlineUser className="icon" size={30} />
-          <label htmlFor="loginName" className="form-label">
-            Username
-          </label>
-          <input
-            type="text"
-            className="form-control"
-            id="loginName"
-            name="Login_Name"
-            value={loginData.Login_Name}
-            onChange={handleChange}
-     
-            ref={UsernameRef}
-          />
-        </div>
-        <div className="form-group">
-          <AiOutlineLock className="icon" size={30} />
-          <label htmlFor="password" className="form-label">
-            Password
-          </label>
-          <div className="password-input-container">
-            <input
-              type={passwordVisible ? "text" : "password"}
-              className="form-control"
-              id="password"
+      <Box display="flex" flexDirection="column" alignItems="center" mb={3}>
+        <img src={logo} alt='' width={100} />
+        <Typography variant="h5" gutterBottom>SignIn</Typography>
+      </Box>
+      <form onSubmit={handleSubmit}>
+        <Grid container justifyContent="center" alignItems="center" spacing={2}>
+          <Grid item xs={7}>
+            <TextField
+              variant="outlined"
+              fullWidth
+              label="Username"
+              name="Login_Name"
+              value={loginData.Login_Name}
+              onChange={handleChange}
+              inputRef={UsernameRef}
+              autoComplete='off'
+              InputProps={{
+                startAdornment: (
+                  <IconButton>
+                    <AiOutlineUser />
+                  </IconButton>
+                ),
+              }}
+            />
+          </Grid>
+          <Grid item xs={7}>
+            <TextField
+              variant="outlined"
+              fullWidth
+              label="Password"
               name="Password"
+              autoComplete='off'
+              type={passwordVisible ? "text" : "password"}
               value={loginData.Password}
               onChange={handleChange}
-         
+              InputProps={{
+                startAdornment: (
+                  <IconButton>
+                    <AiFillLock />
+                  </IconButton>
+                ),
+                endAdornment: (
+                  <IconButton onClick={togglePasswordVisibility}>
+                    {passwordVisible ? <AiFillEyeInvisible /> : <AiFillEye />}
+                  </IconButton>
+                ),
+              }}
             />
-            {passwordVisible ? (
-              <AiFillEyeInvisible className="icon eye-icon" onClick={togglePasswordVisibility} />
-            ) : (
-              <AiFillEye className="icon eye-icon" onClick={togglePasswordVisibility} />
-            )}
-          </div>
-        </div>
-        <button type="submit" className="loginButton">
-          Login
-        </button>
+          </Grid>
+          <Grid item xs={6} style={{ textAlign: 'center' }}>
+            <button className="Login-button" type="submit">
+              SignIn
+            </button>
+          </Grid>
+        </Grid>
       </form>
-      <div className="developed-by">
-        Developed by | <a href="https://latasoftware.co.in/" target="_blank" rel="noopener noreferrer"><strong>Lata Software Consultancy</strong></a>
-      </div>
-    </div>
+     
+    </Container>
   );
 };
 

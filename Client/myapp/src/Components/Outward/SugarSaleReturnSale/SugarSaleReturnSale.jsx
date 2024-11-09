@@ -3,7 +3,6 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import AccountMasterHelp from "../../../Helper/AccountMasterHelp";
 import GSTRateMasterHelp from "../../../Helper/GSTRateMasterHelp";
 import ItemMasterHelp from "../../../Helper/SystemmasterHelp";
-import BrandMasterHelp from "../../../Helper/BrandMasterHelp";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import ActionButtonGroup from "../../../Common/CommonButtons/ActionButtonGroup";
@@ -12,101 +11,9 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./SugarSaleReturnSale.css";
 import { HashLoader } from "react-spinners";
-import { z } from "zod";
-import PuchNoFromReturnPurchaseHelp from "../../../Helper/PuchNoFromReturnPurchaseHelp";
 import PurcNoFromReturnSaleHelp from "../../../Helper/PurcNoFromReturnSaleHelp";
-import jsPDF from "jspdf";
-import "jspdf-autotable";
-
-// Validation Part Using Zod Library
-const stringToNumber = z
-  .string()
-  .refine((value) => !isNaN(Number(value)), {
-    message: "This field must be a number",
-  })
-  .transform((value) => Number(value));
-
-// Validation Schemas
-const SugarSaleReturnSaleSchema = z.object({
-  //PURCNO: z.preprocess((val) => (val === '' ? undefined : parseFloat(val)), z.number().optional()),
-  //PurcTranType: z.string().optional(),
-  Ac_Code: z
-  .number({
-    required_error: "This field is required", // This shows when the field is empty
-  })
-  .refine((val) => !isNaN(val) && val !== "", {
-    message: "Only numbers accepted", // This shows when the input is not a number
-  }),
-  
- // Unit_Code: z.preprocess((val) => (val === "" || val === null ? undefined : parseFloat(val)), z.number().optional()),
-
-  mill_code: z
-  .number({
-    required_error: "This field is required", // This shows when the field is empty
-  })
-  .refine((val) => !isNaN(val) && val !== "", {
-    message: "Only numbers accepted", // This shows when the input is not a number
-  }),
-  // FROM_STATION: z.string().optional(),
-  // TO_STATION: z.string().optional(),
-  // LORRYNO: z.string().optional(),
-  // BROKER: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
-  // wearhouse: z.string().optional(),
-  LESS_FRT_RATE: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
-  freight: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
-  cash_advance: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
-  bank_commission: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
-  OTHER_AMT: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
-  Bill_Amount: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
-  Due_Days: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
-  NETQNTL: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
-  CGSTRate: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
-  CGSTAmount: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
-  SGSTRate: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
-  SGSTAmount: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
-  IGSTRate: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
-  IGSTAmount: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
-  GstRateCode: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
-  // PO_Details: z.string().optional(),
-  // ASN_No: z.string().optional(),
-  // Eway_Bill_No: z.string().optional(),
-  TCS_Rate: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
-  TCS_Amt: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
-  TCS_Net_Payable: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
-  // einvoiceno: z.string().optional(),
-  // ackno: z.string().optional(),
-  TDS_Rate: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
-  TDS_Amt: z.preprocess((val) => (isNaN(parseFloat(val)) ? undefined : parseFloat(val)), z.number().optional()),
-});
-
-// Zod validation schema for the detail section
-const DetailValidationSchema = z.object({
-  // item_code: z.number({
-  //   required_error: "Item Code is required", // Mandatory field
-  // }),
-  Quantal: z.number({
-    required_error: "Quantal is required", // Mandatory field
-  }).refine(val => val > 0, {
-    message: "Quantal must be greater than 0",
-  }),
-  bags: z.number({
-    required_error: "Bags are required", // Mandatory field
-  }).refine(val => val > 0, {
-    message: "Bags must be greater than 0",
-  }),
-  rate: z.number({
-    required_error: "Rate is required", // Mandatory field
-  }).refine(val => val > 0, {
-    message: "Rate must be greater than 0",
-  }),
-  item_Amount: z.number({
-    required_error: "Item Amount is required", // Mandatory field
-  }).refine(val => val > 0, {
-    message: "Item Amount must be greater than 0",
-  }),
-});
-
-
+import { TextField, Grid } from '@mui/material';
+import SugarSaleReturnReport from "../SugarSaleReturnSale/report/SugarSaleReturn"
 
 //Global Variables
 var newsrid = "";
@@ -170,10 +77,6 @@ const SugarSaleReturnSale = () => {
   const [gstNo, setGstNo] = useState("");
   const [purchNo, setPurchno] = useState("");
   const [saleBillDataDetails, setSaleBillDataDetials] = useState({});
-  const [nextId, setNextId] = useState(1);
- 
-
-  //In utility page record doubleClicked that recod show for edit functionality
   const location = useLocation();
   const selectedRecord = location.state?.selectedRecord;
   const navigate = useNavigate();
@@ -263,67 +166,35 @@ const SugarSaleReturnSale = () => {
   const [matchStatus, setMatchStatus] = useState(null);
   const [type, setType] = useState("");
 
+  const formatTruckNumber = (value) => {
+    const cleanedValue = value.replace(/\s+/g, '').toUpperCase();
+    return cleanedValue.length <= 10 ? cleanedValue : cleanedValue.substring(0, 10);
+  };
+
   const handleChange = async (event) => {
     const { name, value } = event.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-    
-    // Validate field as user types
-    validateField(name, value);
-    // const matchStatus = await checkMatchStatus(
-    //   formData.Ac_Code,
-    //   companyCode,
-    //   Year_Code
-    // );
-
-    // let gstRate = GstRate;
-
-    // if (!gstRate || gstRate === 0) {
-    //   const cgstRate = parseFloat(formData.CGSTRate) || 0;
-    //   const sgstRate = parseFloat(formData.SGSTRate) || 0;
-    //   const igstRate = parseFloat(formData.IGSTRate) || 0;
-
-    //   gstRate = igstRate > 0 ? igstRate : cgstRate + sgstRate;
-    // }
-
-    // // Calculate dependent values and update form data
-    // const updatedFormData = await calculateDependentValues(
-    //   name,
-    //   value,
-    //   formData,
-    //   matchStatus,
-    //   gstRate
-    // );
-
-    // setFormData(updatedFormData);
-    // validateField(name, value);
+    const updatedValue = name === "LORRYNO" ? formatTruckNumber(value) : value;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: updatedValue,
+    }));
   };
 
   const handleKeyDownCalculations = async (event) => {
     if (event.key === "Tab") {
-      // event.preventDefault();
-
       const { name, value } = event.target;
-
-      // const matchStatus = await checkMatchStatus(
-      //   formData.Ac_Code,
-      //   companyCode,
-      //   Year_Code
-      // );
-
+      const matchStatus = await checkMatchStatus(
+        formData.Ac_Code,
+        companyCode,
+        Year_Code
+      );
       let gstRate = GstRate;
-
       if (!gstRate || gstRate === 0) {
         const cgstRate = parseFloat(formData.CGSTRate) || 0;
         const sgstRate = parseFloat(formData.SGSTRate) || 0;
         const igstRate = parseFloat(formData.IGSTRate) || 0;
-  
         gstRate = igstRate > 0 ? igstRate : cgstRate + sgstRate;
       }
-  
-      // Calculate dependent values and update form data
       const updatedFormData = await calculateDependentValues(
         name,
         value,
@@ -331,13 +202,9 @@ const SugarSaleReturnSale = () => {
         matchStatus,
         gstRate
       );
-  
       setFormData(updatedFormData);
-      validateField(name, value);
     }
   };
-
-  
 
   const handleDateChange = (event, fieldName) => {
     setFormData((prevFormData) => ({
@@ -353,96 +220,6 @@ const SugarSaleReturnSale = () => {
     setFocusTaskdate.current.focus();
   }, []);
 
-  // Validation Part
-  const validateField = (name, value) => {
-
-    let parsedValue = value;
-
-  // Manually convert to number if the field expects a number
-  if (name === "NETQNTL" && typeof value === "string") {
-    parsedValue = parseFloat(value); // Convert string to number
-  }
-
-    try {
-      // Validate the specific field against the schema
-      SugarSaleReturnSaleSchema.pick({ [name]: true }).parse({
-        [name]: value,
-      });
-  
-      // If no error, remove any existing errors for that field
-      setFormErrors((prevErrors) => {
-        const updatedErrors = { ...prevErrors };
-        delete updatedErrors[name];
-        return updatedErrors;
-      });
-    } catch (err) {
-      // Check if Zod errors exist and handle them
-      if (err.errors && err.errors.length > 0) {
-        setFormErrors((prevErrors) => ({
-          ...prevErrors,
-          [name]: err.errors[0].message, // Show the first error message
-        }));
-      } else {
-        setFormErrors((prevErrors) => ({
-          ...prevErrors,
-          [name]: "An unexpected error occurred", // Fallback error message
-        }));
-      }
-    }
-  };
-  
-  const validateForm = () => {
-    try {
-      // Parse the formData against the schema
-      SugarSaleReturnSaleSchema.parse(formData);
-  
-      // If validation passes, clear form errors and return true
-      setFormErrors({});
-      return true;
-    } catch (err) {
-      const errors = {};
-  
-      // Loop through all errors returned by the schema
-      err.errors.forEach((error) => {
-        let errorMessage = error.message;
-  
-        // Customize the error message for required fields and numbers
-        if (error.message.includes("required")) {
-          errorMessage = "This field is required"; // Show if field is empty
-        } else if (error.message.includes("number")) {
-          errorMessage = "Only numbers accepted"; // Show if not a valid number
-        }
-  
-        // Assign the error message to the corresponding field
-        errors[error.path[0]] = errorMessage;
-      });
-  
-      // Set the form errors state
-      setFormErrors(errors);
-      return false;
-    }
-  };
-  
-  const validateDetailForm = () => {
-    try {
-      // Parse the formDataDetail against the schema
-      DetailValidationSchema.parse(formDataDetail);
-      
-      // Clear errors if validation passes
-      setFormErrors({});
-      return true;
-    } catch (err) {
-      const errors = {};
-      err.errors.forEach((error) => {
-        errors[error.path[0]] = error.message; // Assign the error message to the corresponding field
-      });
-  
-      // Set form errors for the detail form
-      setFormErrors(errors);
-      return false;
-    }
-  };
-  
   const fetchLastRecord = () => {
     fetch(
       `${API_URL}/getNextDocNo_SugarSaleReturnSale?Company_Code=${companyCode}&Year_Code=${Year_Code}`
@@ -463,8 +240,6 @@ const SugarSaleReturnSale = () => {
       });
   };
 
-
-  
   const handleAddOne = async () => {
     setAddOneButtonEnabled(false);
     setSaveButtonEnabled(true);
@@ -508,39 +283,12 @@ const SugarSaleReturnSale = () => {
   };
 
   const handleSaveOrUpdate = async () => {
-    if (!validateForm()) {
-      toast.error("Please Check the validations");
-      return;
-    }
     setIsEditing(true);
     setIsLoading(true);
 
-    
+
 
     const {
-      // Bill_To,
-      // Bill_No,
-      // DO_No,
-      // Delivery_type,
-      // DoNarrtion,
-      // EWayBill_Chk,
-      // EWay_Bill_No,
-      // EwayBillValidDate,
-      // Insured,
-      // IsDeleted,
-      // MillInvoiceNo,
-      //RateDiff,
-      // RoundOff,
-      // newsbdate,
-      // newsbno,
-      // saleid,
-      // Purcid,
-      // SBNarration,
-      // TaxableAmount,
-      // Transport_Code,
-      // saleidnew,
-      // bk,
-      // tc,
       Bill_No,
       Bill_To,
       prid,
@@ -550,17 +298,12 @@ const SugarSaleReturnSale = () => {
       ...filteredFormData
     } = formData;
 
-    console.log("formData before constructing headData:", formData);
-
     const headData = {
       ...initialFormData,
       ...filteredFormData,
       PURCNO: purchaseNo,
       bill_to: Bill_To || formData.bill_to,
-
       GstRateCode: gstCode || gstRateCode,
-      //   Company_Code: companyCode || saleBillDataDetails.Company_Code,
-      // Year_Code: Year_Code || saleBillDataDetails.Year_Code,
       Tran_Type: "RS" || type
     };
 
@@ -573,9 +316,7 @@ const SugarSaleReturnSale = () => {
     console.log("Users state before API call:", users);
 
     const detailData = users.map((user) => {
-      const isNew = !user.detail_id; // If there's no detail_id, it's a new entry
-      console.log("Mapping user:", user, "isNew:", isNew); // Log each user and whether it's new
-
+      const isNew = !user.detail_id;
       return {
         rowaction: isNew ? "add" : user.rowaction || "Normal",
         srdtid: user.srdtid,
@@ -600,12 +341,7 @@ const SugarSaleReturnSale = () => {
       headData,
       detailData,
     };
-
-    console.log("Request Data:", requestData);
-
     try {
-
-      
       if (isEditMode) {
         const updateApiUrl = `${API_URL}/update-sugarsalereturn?srid=${newsrid}`;
         const response = await axios.put(updateApiUrl, requestData);
@@ -651,7 +387,6 @@ const SugarSaleReturnSale = () => {
       setSaveButtonEnabled(false);
       setCancelButtonEnabled(false);
       setIsLoading(true);
-
       try {
         const deleteApiUrl = `${API_URL}/delete-sugarsalereturn?srid=${newsrid}&Company_Code=${companyCode}&doc_no=${formData.doc_no}&Year_Code=${Year_Code}&tran_type=${formData.Tran_Type}`;
         const response = await axios.delete(deleteApiUrl);
@@ -686,7 +421,6 @@ const SugarSaleReturnSale = () => {
     setSaveButtonEnabled(false);
     setCancelButtonEnabled(false);
     setCancelButtonClicked(true);
-
     try {
       const response = await axios.get(
         `${API_URL}/get-last-sugarsalereturn?Company_Code=${companyCode}&Year_Code=${Year_Code}`
@@ -697,8 +431,6 @@ const SugarSaleReturnSale = () => {
         console.log("Full Response Data:", data);
 
         const { last_head_data, detail_data, last_labels_data } = data;
-
-        // Ensure detail_data is an array
         const detailsArray = Array.isArray(detail_data) ? detail_data : [];
 
         newsrid = last_head_data.srid;
@@ -726,17 +458,11 @@ const SugarSaleReturnSale = () => {
           }
           return map;
         }, {});
-
-        // Enrich detail_data with itemname
         const enrichedDetails = detailsArray.map((detail) => ({
           ...detail,
           itemname: itemNameMap[detail.item_code] || "Unknown Item",
         }));
 
-        // Log enriched details
-        console.log("Enriched Details:", enrichedDetails);
-
-        // Updating state
         setFormData((prevData) => ({
           ...prevData,
           ...last_head_data,
@@ -768,8 +494,6 @@ const SugarSaleReturnSale = () => {
       if (response.status === 200) {
         const data = response.data;
         const { first_head_data, detail_data, first_labels_data } = data;
-
-        // Ensure detail_data is an array
         const detailsArray = Array.isArray(detail_data) ? detail_data : [];
 
         newsrid = first_head_data.srid;
@@ -789,7 +513,6 @@ const SugarSaleReturnSale = () => {
         brokerName = first_labels_data[0].brokername;
         purchaseNo = first_head_data.PURCNO
 
-        // Create a mapping for itemname based on item_code
         const itemNameMap = first_labels_data.reduce((map, label) => {
           if (label.item_code !== undefined && label.itemname) {
             map[label.item_code] = label.itemname;
@@ -797,16 +520,10 @@ const SugarSaleReturnSale = () => {
           return map;
         }, {});
 
-        // Enrich detail_data with itemname
         const enrichedDetails = detailsArray.map((detail) => ({
           ...detail,
           itemname: itemNameMap[detail.item_code] || "Unknown Item",
         }));
-
-        // Log enriched details
-        console.log("Enriched Details:", enrichedDetails);
-
-        // Updating state
         setFormData((prevData) => ({
           ...prevData,
           ...first_head_data,
@@ -835,7 +552,6 @@ const SugarSaleReturnSale = () => {
         const data = response.data;
         const { next_head_data, detail_data, next_labels_data } = data;
 
-        // Ensure detail_data is an array
         const detailsArray = Array.isArray(detail_data) ? detail_data : [];
 
         newsrid = next_head_data.srid;
@@ -855,7 +571,6 @@ const SugarSaleReturnSale = () => {
         brokerName = next_labels_data[0].brokername;
         purchaseNo = next_head_data.purchNo;
 
-        // Create a mapping for itemname based on item_code
         const itemNameMap = next_labels_data.reduce((map, label) => {
           if (label.item_code !== undefined && label.itemname) {
             map[label.item_code] = label.itemname;
@@ -863,16 +578,10 @@ const SugarSaleReturnSale = () => {
           return map;
         }, {});
 
-        // Enrich detail_data with itemname
         const enrichedDetails = detailsArray.map((detail) => ({
           ...detail,
           itemname: itemNameMap[detail.item_code] || "Unknown Item",
         }));
-
-        // Log enriched details
-        console.log("Enriched Details:", enrichedDetails);
-
-        // Updating state
         setFormData((prevData) => ({
           ...prevData,
           ...next_head_data,
@@ -901,8 +610,6 @@ const SugarSaleReturnSale = () => {
       if (response.status === 200) {
         const data = response.data;
         const { previous_head_data, detail_data, previous_labels_data } = data;
-
-        // Ensure detail_data is an array
         const detailsArray = Array.isArray(detail_data) ? detail_data : [];
 
         newsrid = previous_head_data.srid;
@@ -922,7 +629,6 @@ const SugarSaleReturnSale = () => {
         brokerName = previous_labels_data[0].brokername;
         purchaseNo = previous_head_data.PURCNO
 
-        // Create a mapping for itemname based on item_code
         const itemNameMap = previous_labels_data.reduce((map, label) => {
           if (label.item_code !== undefined && label.itemname) {
             map[label.item_code] = label.itemname;
@@ -930,16 +636,11 @@ const SugarSaleReturnSale = () => {
           return map;
         }, {});
 
-        // Enrich detail_data with itemname
         const enrichedDetails = detailsArray.map((detail) => ({
           ...detail,
           itemname: itemNameMap[detail.item_code] || "Unknown Item",
         }));
 
-        // Log enriched details
-        console.log("Enriched Details:", enrichedDetails);
-
-        // Updating state
         setFormData((prevData) => ({
           ...prevData,
           ...previous_head_data,
@@ -990,7 +691,6 @@ const SugarSaleReturnSale = () => {
         const data = response.data;
         const { last_head_data, detail_data, last_labels_data } = data;
 
-        // Ensure detail_data is an array
         const detailsArray = Array.isArray(detail_data) ? detail_data : [];
 
         newsrid = last_head_data.srid;
@@ -1009,7 +709,6 @@ const SugarSaleReturnSale = () => {
         brokerCode = last_head_data.BROKER;
         brokerName = last_labels_data[0].brokername;
         purchaseNo = last_head_data.PURCNO
-        // Create a mapping for itemname based on item_code
         const itemNameMap = last_labels_data.reduce((map, label) => {
           if (label.item_code !== undefined && label.itemname) {
             map[label.item_code] = label.itemname;
@@ -1017,16 +716,11 @@ const SugarSaleReturnSale = () => {
           return map;
         }, {});
 
-        // Enrich detail_data with itemname
         const enrichedDetails = detailsArray.map((detail) => ({
           ...detail,
           itemname: itemNameMap[detail.item_code] || "Unknown Item",
         }));
 
-        // Log enriched details
-        console.log("Enriched Details:", enrichedDetails);
-
-        // Updating state
         setFormData((prevData) => ({
           ...prevData,
           ...last_head_data,
@@ -1056,9 +750,7 @@ const SugarSaleReturnSale = () => {
         const data = response.data;
         const { last_head_data, detail_data, last_labels_data } = data;
 
-        // Ensure detail_data is an array
         const detailsArray = Array.isArray(detail_data) ? detail_data : [];
-
         newsrid = last_head_data.srid;
         partyName = last_labels_data[0].partyname;
         partyCode = last_head_data.Ac_Code;
@@ -1076,7 +768,6 @@ const SugarSaleReturnSale = () => {
         brokerName = last_labels_data[0].brokername;
         purchaseNo = last_head_data.PURCNO
 
-        // Create a mapping for itemname based on item_code
         const itemNameMap = last_labels_data.reduce((map, label) => {
           if (label.item_code !== undefined && label.itemname) {
             map[label.item_code] = label.itemname;
@@ -1084,16 +775,11 @@ const SugarSaleReturnSale = () => {
           return map;
         }, {});
 
-        // Enrich detail_data with itemname
         const enrichedDetails = detailsArray.map((detail) => ({
           ...detail,
           itemname: itemNameMap[detail.item_code] || "Unknown Item",
         }));
 
-        // Log enriched details
-        console.log("Enriched Details:", enrichedDetails);
-
-        // Updating state
         setFormData((prevData) => ({
           ...prevData,
           ...last_head_data,
@@ -1151,12 +837,6 @@ const SugarSaleReturnSale = () => {
       .reduce((sum, user) => sum + parseFloat(user.item_Amount || 0), 0);
   };
 
-  // const calculateRateDiffAmount = () => {
-  //   const NETQNTL = Number(formData.NETQNTL);
-  //   const RateDiff = Number(formData.RateDiff);
-  //   return !isNaN(NETQNTL) && !isNaN(RateDiff) ? NETQNTL * RateDiff : 0;
-  // };
-
   const calculateDependentValues = async (
     name,
     input,
@@ -1164,10 +844,7 @@ const SugarSaleReturnSale = () => {
     matchStatus,
     gstRate
   ) => {
-    // Clone the formData and update the specific field
     const updatedFormData = { ...formData, [name]: input };
-
-    // Parsing and handling potential NaN values by defaulting to 0
     const subtotal = parseFloat(updatedFormData.subTotal) || 0.0;
     const rate = parseFloat(gstRate) || 0.0;
     const netQntl = parseFloat(updatedFormData.NETQNTL) || 0.0;
@@ -1178,10 +855,8 @@ const SugarSaleReturnSale = () => {
     const tcsRate = parseFloat(updatedFormData.TCS_Rate) || 0.0;
     const tdsRate = parseFloat(updatedFormData.TDS_Rate) || 0.0;
 
-    // Calculating freight
     updatedFormData.freight = (netQntl * freightRate).toFixed(2);
 
-    // Setting GST rates and amounts based on matchStatus
     if (matchStatus === "TRUE") {
       updatedFormData.CGSTRate = (rate / 2).toFixed(2);
       updatedFormData.SGSTRate = (rate / 2).toFixed(2);
@@ -1209,7 +884,6 @@ const SugarSaleReturnSale = () => {
       updatedFormData.SGSTAmount = 0.0;
     }
 
-    // Calculating the Bill Amount
     updatedFormData.Bill_Amount = (
       subtotal +
       parseFloat(updatedFormData.CGSTAmount) +
@@ -1221,7 +895,6 @@ const SugarSaleReturnSale = () => {
       cashAdvance
     ).toFixed(2);
 
-    // Calculating TCS and Net Payable
     updatedFormData.TCS_Amt = (
       (parseFloat(updatedFormData.Bill_Amount) * tcsRate) /
       100
@@ -1232,14 +905,13 @@ const SugarSaleReturnSale = () => {
       parseFloat(updatedFormData.TCS_Amt)
     ).toFixed(2);
 
-    // Calculating TDS
     updatedFormData.TDS_Amt = ((subtotal * tdsRate) / 100).toFixed(2);
 
     return updatedFormData;
   };
 
   const saleBillHeadData = (data) => {
-    console.log("saleBillHeadData",data);
+    console.log("saleBillHeadData", data);
 
     partyCode = data.Ac_Code || "";
     unitCode = data.Unit_Code || "";
@@ -1248,12 +920,7 @@ const SugarSaleReturnSale = () => {
     millCode = data.mill_code || "";
     brokerCode = data.BROKER || "";
     purchaseNo = data.doc_no || "";
-
-    console.log("BillTo", billToCode)
-
-    // Update form data with new values
     setFormData((prevData) => {
-      // Avoid overwriting entire data, spread necessary fields and exclude unwanted ones
       const { doc_no, doc_date, ...remainingData } = data;
 
       return {
@@ -1263,63 +930,10 @@ const SugarSaleReturnSale = () => {
       };
     });
 
-    // Store the received sale bill head data for further use
     setLastTenderData(data || {});
-    setLastTenderDetails(data.details_data || []); // Only update if details_data is available
+    setLastTenderDetails(data.details_data || []);
   };
 
-  // const saleBillDetailData = (details) => {
-  //   console.log("Sale Bill Details Received:", details);
-
-  //   // Extract necessary details like partyName, unitName, etc.
-  //   partyName = details.partyname;
-  //   unitName = details.unitname;
-  //   billToName = details.billtoname;
-  //   gstName = details.GSTName;
-  //   millName = details.millname;
-  //   itemName = details.itemname;
-  //   brokerName = details.brokername;
-
-  //   // Extract existing detail_ids from users
-  //   const existingDetailIds = users.map(user => user.detail_id).filter(id => id != null);
-
-  //   // Determine if the current detail is an existing entry
-  //   const isExisting = users.some(user => user.detail_id === details.detail_id);
-
-  //   // Assign a new detail_id if it's a new entry
-  //   const newDetailId = existingDetailIds.length > 0 ? Math.max(...existingDetailIds) + 1 : 1;
-
-  //   // Assign a unique id for rendering purposes
-  //   const newUserId = users.length > 0 ? Math.max(...users.map(user => user.id)) + 1 : 1;
-
-  //   // Prepare the new detail data to be added or updated
-  //   const newDetailData = {
-  //     item_code: details.item_code || 0,
-  //     itemname: details.itemname || "Unknown Item",
-  //     id: newUserId,  // Ensure id is assigned here for rendering in JSX
-  //     ic: details.ic || 0,
-  //     narration: details.narration || "",
-  //     Quantal: parseFloat(details.Quantal) || 0,
-  //     bags: details.bags || 0,
-  //     packing: details.packing || 0,
-  //     rate: parseFloat(details.rate) || 0,
-  //     item_Amount: parseFloat(details.item_Amount) || 0,
-  //     detail_id: isExisting ? details.detail_id : newDetailId,
-  //     rowaction: isExisting ? "update" : "add",
-  //     ...(isExisting && details.srdtid ? { srdtid: details.srdtid } : {}),
-  //   };
-
-  //   console.log("New Detail Data Before State Update:", newDetailData);
-
-  //   // Update the state
-  //   setUsers((prevUsers) => {
-  //     const updatedUsers = isExisting
-  //       ? prevUsers.map(user => user.detail_id === details.detail_id ? newDetailData : user)
-  //       : [...prevUsers, newDetailData];
-
-  //     return [...updatedUsers];  // Return a new array to ensure re-render
-  //   });
-  // };
 
   const saleBillDetailData = (details) => {
     debugger;
@@ -1330,7 +944,6 @@ const SugarSaleReturnSale = () => {
       return;
     }
 
-    // Extract necessary details like partyName, unitName, etc.
     partyName = details.partyname;
     unitName = details.unitname;
     billToName = details.billtoname;
@@ -1339,29 +952,24 @@ const SugarSaleReturnSale = () => {
     itemName = details.itemname;
     brokerName = details.brokername;
 
-    // Extract existing detail_ids from users
     const existingDetailIds = users
       .map((user) => user.detail_id)
       .filter((id) => id != null);
 
-    // Determine if the current detail is an existing entry
     const isExisting = users.some(
       (user) => user.detail_id === details.detail_id
     );
 
-    // Assign a new detail_id if it's a new entry
     const newDetailId =
       existingDetailIds.length > 0 ? Math.max(...existingDetailIds) + 1 : 1;
 
-    // Assign a unique id for rendering purposes
     const newUserId =
       users.length > 0 ? Math.max(...users.map((user) => user.id)) + 1 : 1;
 
-    // Prepare the new detail data to be added or updated
     const newDetailData = {
       item_code: details.item_code || 0,
       item_Name: details.itemname || "Unknown Item",
-      id: newUserId, // Ensure id is assigned here for rendering in JSX
+      id: newUserId,
       ic: details.ic || 0,
       narration: details.narration || "",
       Quantal: parseFloat(details.Quantal) || 0,
@@ -1373,8 +981,6 @@ const SugarSaleReturnSale = () => {
       rowaction: isExisting ? "update" : "add",
       ...(isExisting && details.srdtid ? { srdtid: details.srdtid } : {}),
     };
-
-    console.log("New Detail Data Before State Update:", newDetailData);
 
     setUsers((prevUsers) => [...prevUsers, newDetailData]);
 
@@ -1404,36 +1010,12 @@ const SugarSaleReturnSale = () => {
     }
   }, [selectedRecord, lastTenderDetails]);
 
-  // useEffect(() => {
-  //   debugger;
-  //   const updatedUsers = lastTenderDetails.map((detail) => ({
-  //     id: detail.srdtid,
-  //     srdtid: detail.srdtid,
-  //     narration: detail.narration,
-  //     Quantal: detail.Quantal,
-  //     bags: detail.bags,
-  //     packing: detail.packing,
-  //     rate: detail.rate,
-  //     item_Amount: detail.item_Amount,
-  //     item_code: detail.item_code,
-  //     item_Name: detail.itemname,
-  //     ic: detail.ic,
-  //     rowaction: "Normal",
-  //     detail_id: detail.srdtid,
-  //   }));
-  //   setUsers(updatedUsers);
-  //   console.log(updatedUsers);
-  // }, [lastTenderDetails]);
-
   useEffect(() => {
     if (lastTenderDetails.length > 0) {
       const updatedUsers = lastTenderDetails.map((detail) => {
-        // Find existing user with the same detail_id in the current users
         const existingUser = users.find(
           (user) => user.detail_id === detail.srdtid
         );
-
-        // Merge the existing user with the new detail data or create new if not found
         return {
           id: detail.srdtid,
           srdtid: detail.srdtid,
@@ -1450,9 +1032,7 @@ const SugarSaleReturnSale = () => {
           detail_id: detail.srdtid,
         };
       });
-
       setUsers(updatedUsers);
-      console.log("Updated users:", updatedUsers);
     }
   }, [lastTenderDetails]);
 
@@ -1480,7 +1060,6 @@ const SugarSaleReturnSale = () => {
       };
 
       setFormErrors({})
-
       const { Quantal, packing, rate } = updatedDetail;
       const { bags, item_Amount } = calculateDetails(Quantal, packing, rate);
 
@@ -1499,15 +1078,12 @@ const SugarSaleReturnSale = () => {
     selectedItems.forEach(async (details) => {
       const millName = details.MillName;
       const itemName = details.ItemName;
-
-      // Determine if the detail is new or existing based on `detail_id`
       const isExisting = users.some(
         (user) => user.detail_id === details.detail_id
       );
 
-      // Create new or updated detail data
       const newDetailData = {
-        ...formDataDetail, // Spread the form data details if needed
+        ...formDataDetail,
         item_code: details.item_code || 0,
         itemname: itemName || "Unknown Item",
         id:
@@ -1515,40 +1091,32 @@ const SugarSaleReturnSale = () => {
         ic: details.ic || 0,
         narration: details.narration || "",
         Quantal: parseFloat(totalQuintal) || 0,
-        bags: parseFloat(totalQuintal)/50 * 100 ,
-        packing:50,
+        bags: parseFloat(totalQuintal) / 50 * 100,
+        packing: 50,
         rate: parseFloat(details.rate) || 0,
         item_Amount: parseFloat(totalAmount) || 0,
         rowaction: isExisting ? "update" : "add",
         detail_id: isExisting
           ? details.detail_id
           : users.length > 0
-          ? Math.max(...users.map((user) => user.detail_id || 0)) + 1
-          : 1,
+            ? Math.max(...users.map((user) => user.detail_id || 0)) + 1
+            : 1,
       };
-
-      // Update or add to `users` state
       const updatedUsers = isExisting
         ? users.map((user) =>
-            user.detail_id === details.detail_id ? newDetailData : user
-          )
+          user.detail_id === details.detail_id ? newDetailData : user
+        )
         : [...users, newDetailData];
 
       setUsers(updatedUsers);
-
-      // Calculate net quantal and subtotal
       const netQuantal = calculateNetQuantal(updatedUsers);
       const subtotal = calculateTotalItemAmount(updatedUsers);
-
-      // Update form data with calculated values
       let updatedFormData = {
         ...formData,
         NETQNTL: parseFloat(netQuantal),
         subTotal: parseFloat(subtotal),
         PURCNO: 0
       };
-
-      // Check match status and calculate GST rate
       const matchStatus = await checkMatchStatus(
         updatedFormData.Ac_Code,
         companyCode,
@@ -1562,8 +1130,6 @@ const SugarSaleReturnSale = () => {
         const igstRate = parseFloat(formData.IGSTRate) || 0;
         gstRate = igstRate > 0 ? igstRate : cgstRate + sgstRate;
       }
-
-      // Calculate dependent values based on GST rate
       updatedFormData = await calculateDependentValues(
         "GstRateCode",
         gstRate,
@@ -1571,26 +1137,16 @@ const SugarSaleReturnSale = () => {
         matchStatus,
         gstRate
       );
-
-      // Update form data state
       setFormData(updatedFormData);
-
-      // Optional: close the popup if needed
-      // closePopup();
     });
   };
 
   const addUser = async () => {
-    if (!validateDetailForm()) {
-      toast.error("Please fix the errors before adding.");
-      return;
-    }
     const newUser = {
       id: users.length > 0 ? Math.max(...users.map((user) => user.id)) + 1 : 1,
       item_code: itemCode,
       item_Name: item_Name,
       ic: itemCodeAccoid,
-
       ...formDataDetail,
       rowaction: "add",
     };
@@ -1630,7 +1186,6 @@ const SugarSaleReturnSale = () => {
     );
 
     setFormData(updatedFormData);
-
     closePopup();
   };
 
@@ -1684,15 +1239,14 @@ const SugarSaleReturnSale = () => {
     }
 
     updatedFormData = await calculateDependentValues(
-      "GstRateCode", // Pass the name of the field being changed
-      gstRate, // Pass the correct gstRate
+      "GstRateCode",
+      gstRate,
       updatedFormData,
       matchStatus,
-      gstRate // Pass gstRate explicitly to calculateDependentValues
+      gstRate
     );
 
     setFormData(updatedFormData);
-
     closePopup();
   };
 
@@ -1747,13 +1301,12 @@ const SugarSaleReturnSale = () => {
     }
 
     updatedFormData = await calculateDependentValues(
-      "GstRateCode", // Pass the name of the field being changed
-      gstRate, // Pass the correct gstRate
+      "GstRateCode",
+      gstRate,
       updatedFormData,
       matchStatus,
-      gstRate // Pass gstRate explicitly to calculateDependentValues
+      gstRate
     );
-
     setFormData(updatedFormData);
   };
 
@@ -1798,11 +1351,11 @@ const SugarSaleReturnSale = () => {
     }
 
     updatedFormData = await calculateDependentValues(
-      "GstRateCode", // Pass the name of the field being changed
-      gstRate, // Pass the correct gstRate
+      "GstRateCode",
+      gstRate,
       updatedFormData,
       matchStatus,
-      gstRate // Pass gstRate explicitly to calculateDependentValues
+      gstRate
     );
 
     setFormData(updatedFormData);
@@ -1859,7 +1412,7 @@ const SugarSaleReturnSale = () => {
     setItemCode(code);
     setItemName(name);
     setItemCodeAccoid(accoid);
-   
+
   };
 
   //Head Section help Functions to manage the Ac_Code and accoid
@@ -1895,8 +1448,6 @@ const SugarSaleReturnSale = () => {
 
         gstRate = igstRate > 0 ? igstRate : cgstRate + sgstRate;
       }
-
-      // Perform the calculation after setting BillFrom
       updatedFormData = await calculateDependentValues(
         "GstRateCode",
         GstRate,
@@ -1910,7 +1461,7 @@ const SugarSaleReturnSale = () => {
     }
     setFormErrors((prevErrors) => ({
       ...prevErrors,
-      Ac_Code: "", // Clear the error for this field
+      Ac_Code: "",
     }));
   };
   const handlePurchaseNo = (purchaseNo, type) => {
@@ -1918,8 +1469,8 @@ const SugarSaleReturnSale = () => {
     setType(type);
     setFormData({
       ...formData,
-       PURCNO: purchaseNo,
-       Tran_Type: type,
+      PURCNO: purchaseNo,
+      Tran_Type: type,
     });
   };
 
@@ -1945,7 +1496,7 @@ const SugarSaleReturnSale = () => {
     });
     setFormErrors((prevErrors) => ({
       ...prevErrors,
-      mill_code: "", 
+      mill_code: "",
     }));
   };
 
@@ -1990,17 +1541,16 @@ const SugarSaleReturnSale = () => {
       );
       setMatchStatus(matchStatusResult);
 
-      // Calculate the dependent values based on the match status
       const newFormData = await calculateDependentValues(
         "GstRateCode",
         rate,
         updatedFormData,
-        matchStatusResult, // Use the matchStatusResult
-        rate // Explicitly pass the gstRate
+        matchStatusResult,
+        rate
       );
 
       setFormData(newFormData);
-    } catch (error) {}
+    } catch (error) { }
   };
 
   const handleBroker = (code, accoid) => {
@@ -2012,89 +1562,16 @@ const SugarSaleReturnSale = () => {
     });
   };
 
-  const handlePrint = async () => {
-    try {
-      const pdf = new jsPDF({
-        orientation: "portrait",
-      });
-
-      // Setting the font size for the text
-      pdf.setFontSize(10);
-
-      // Header section
-      pdf.text(`Salary No:`, 15, 10);
-      pdf.text(`Employee Code: ${cancelButtonClicked}`, 15, 15);
-      pdf.text(`Employee Name: ${cancelButtonClicked}`, 15, 20);
-      pdf.text(`Salary Date: `, pdf.internal.pageSize.width - 80, 10);
-      pdf.text(
-        `Days In Month: ${cancelButtonClicked}`,
-        pdf.internal.pageSize.width - 80,
-        15
-      );
-
-      // Add data from the API to the PDF
-      const apiData = {}; // Replace with your actual API data
-      Object.keys(apiData).forEach((key, index) => {
-        const value = apiData[key];
-        pdf.text(`${key}: ${value}`, 15, 25 + index * 5);
-      });
-
-      // Add table headers
-      const headers = [
-        "Late(min)",
-        "Day",
-        "Date",
-        "D/HRS",
-        "R/HRS",
-        "PDS",
-        "Deduction",
-        ...Array.from({ length: 5 }, (_, idx) => [
-          `In ${idx + 1}`,
-          `Out ${idx + 1}`,
-        ]).flat(),
-      ];
-
-      // Example data to be added to the table
-      const data = [
-        [15, "Mon", "2024-08-01", "8H", "7H", "PDS1", "$10"],
-        [10, "Tue", "2024-08-02", "8H", "7H", "PDS2", "$8"],
-      ];
-
-      // Using autoTable plugin to add the table
-      pdf.autoTable({
-        head: [headers],
-        body: data,
-        startY: 30,
-      });
-
-      // Summary information
-      const finalY = pdf.autoTable.previous.finalY;
-      pdf.setFontSize(10);
-      pdf.text(`\u2022 Total Monthly Working Hours= 160 Hr`, 15, finalY + 10);
-      pdf.text(`\u2022 Total Sunday Deduction= 2`, 15, finalY + 15);
-      pdf.text(`\u2022 Total Monthly Leave's = 5`, 15, finalY + 20);
-      pdf.text(`\u2022 Total Monthly Sunday Leave's = 2`, 15, finalY + 25);
-      pdf.text(`\u2022 Total Monthly Late Minutes= 120 min`, 15, finalY + 30);
-      pdf.text(`\u2022 Total Monthly Late Days= 3 days`, 15, finalY + 35);
-
-      // Total salary
-      pdf.setFontSize(14);
-      pdf.text(`Total: $1000/-`, pdf.internal.pageSize.width - 80, finalY + 50);
-
-      // Save the PDF
-      pdf.save(`salary_details.pdf`);
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-    }
+  //Validation checks funtion 
+  const validateNumericInput = (e) => {
+    e.target.value = e.target.value.replace(/[^0-9.]/g, '');
   };
 
   return (
     <>
       <ToastContainer />
-
       <form className="SugarSaleReturnSale-container" onSubmit={handleSubmit}>
-        <h6 className="Heading">Sale Return</h6>
-
+        <h5 className="Heading">Sugar Sale Return</h5>
         <div>
           <ActionButtonGroup
             handleAddOne={handleAddOne}
@@ -2111,8 +1588,6 @@ const SugarSaleReturnSale = () => {
             handleBack={handleBack}
             backButtonEnabled={backButtonEnabled}
           />
-
-          {/* Navigation Buttons */}
           <NavigationButtons
             handleFirstButtonClick={handleFirstButtonClick}
             handlePreviousButtonClick={handlePreviousButtonClick}
@@ -2122,106 +1597,102 @@ const SugarSaleReturnSale = () => {
             isEditing={isEditing}
           />
         </div>
-        <button onClick={handlePrint}>Print</button>
+        <div>
+          <SugarSaleReturnReport doc_no={formData.doc_no} disabledFeild={!addOneButtonEnabled}/>
+        </div>
         <div className="SugarSaleReturnSale-row">
-          <label className="SugarSaleReturnSale-form-label">Change No:</label>
-          <div className="SugarSaleReturnSale-col-Text">
-            <div className="SugarSaleReturnSale-form-group">
-              <input
-                type="text"
-                className="SugarSaleReturnSale-form-control"
+          <Grid container spacing={2} className="SugarSaleReturnSale-row">
+            <Grid item xs={12} md={1}>
+              <TextField
+                label="Change No"
+                variant="outlined"
+                fullWidth
                 name="changeNo"
                 autoComplete="off"
                 onKeyDown={handleKeyDown}
                 disabled={!addOneButtonEnabled}
+                size="small"
               />
-            </div>
-          </div>
-          <label className="SugarSaleReturnSale-form-label">Bill No:</label>
-          <div className="SugarSaleReturnSale-col-Text">
-            <div className="SugarSaleReturnSale-form-group">
-              <input
-                ref={setFocusTaskdate}
-                type="text"
-                className="SugarSaleReturnSale-form-control"
+            </Grid>
+            <Grid item xs={12} md={1}>
+              <TextField
+                inputRef={setFocusTaskdate}
+                label="Bill No"
+                variant="outlined"
+                fullWidth
                 name="doc_no"
                 autoComplete="off"
                 value={formData.doc_no}
                 onChange={handleChange}
                 disabled
+                size="small"
               />
+            </Grid>
+            <label style={{ marginTop: "25px", marginLeft: "20px" }} >
+              Purchase No
+            </label>
+            <div style={{ marginTop: "25px" }}>
+              <div >
+                <PurcNoFromReturnSaleHelp
+                  onAcCodeClick={handlePurchaseNo}
+                  purchaseNo={purchaseNo}
+                  name="PURCNO"
+                  OnSaleBillHead={saleBillHeadData}
+                  OnSaleBillDetail={saleBillDetailData}
+                  tabIndexHelp={2}
+                  disabledFeild={!isEditing && addOneButtonEnabled}
+                  Type={type}
+                  sugarSaleReturnSale={sugarSaleReturnSale}
+                />
+              </div>
             </div>
-          </div>
-
-          <label htmlFor="PURCNO" className="SugarSaleReturnSale-form-label">
-            Purchase No
-          </label>
-          <div className="SugarSaleReturnSale-col">
-            <div className="SugarSaleReturnSale-form-group">
-              <PurcNoFromReturnSaleHelp
-                onAcCodeClick={handlePurchaseNo}
-                purchaseNo={purchaseNo}
-                name="PURCNO"
-                OnSaleBillHead={saleBillHeadData}
-                OnSaleBillDetail={saleBillDetailData}
-                tabIndexHelp={2}
-                disabledFeild={!isEditing && addOneButtonEnabled}
-                Type={type}
-                sugarSaleReturnSale={sugarSaleReturnSale}
-              />
-            </div>
-          </div>
-
-          <label className="SugarSaleReturnSale-form-label">Year</label>
-          <div className="SugarSaleReturnSale-col-Text">
-            <div className="SugarSaleReturnSale-form-group">
-              <input
-                ref={setFocusTaskdate}
-                type="text"
-                className="SugarSaleReturnSale-form-control"
+            <Grid item xs={12} md={1}>
+              <TextField
+                inputRef={setFocusTaskdate}
+                label="Year"
+                variant="outlined"
+                fullWidth
                 name="Year_Code"
                 autoComplete="off"
                 value={formData.Year_Code}
                 onChange={handleChange}
-                disabled
+                size="small"
+                disabled={!isEditing && addOneButtonEnabled}
+                InputLabelProps={{ shrink: true }}
               />
-            </div>
-          </div>
-
-          <label className="SugarSaleReturnSale-form-label">Date:</label>
-          <div className="SugarSaleReturnSale-col">
-            <div className="SugarSaleReturnSale-form-group">
-              <input
-                tabIndex="1"
-                ref={setFocusTaskdate}
+            </Grid>
+            <Grid item xs={12} md={1}>
+              <TextField
+                label="Date"
+                variant="outlined"
+                fullWidth
                 type="date"
-                className="SugarSaleReturnSale-form-control"
-                id="datePicker"
                 name="doc_date"
                 value={formData.doc_date}
                 onChange={(e) => handleDateChange(e, "doc_date")}
                 disabled={!isEditing && addOneButtonEnabled}
+                InputLabelProps={{ shrink: true }}
+                size="small"
               />
-            </div>
-          </div>
-        </div>
+            </Grid>
 
+          </Grid>
+        </div>
+        <br></br>
         <div className="SugarSaleReturnSale-row">
-          <label htmlFor="Ac_Code" className="SugarSaleReturnSale-form-label">
+          <label >
             From A/C:
           </label>
-          <div className="SugarSaleReturnSale-col">
+          <div >
             <div className="SugarSaleReturnSale-form-group">
               <AccountMasterHelp
                 onAcCodeClick={handleBillFrom}
                 CategoryName={partyName}
                 CategoryCode={partyCode}
                 name="Ac_Code"
-                tabIndexHelp={2}
                 disabledFeild={!isEditing && addOneButtonEnabled}
               />
             </div>
-            {formErrors.Ac_Code && <p className="error-message">{formErrors.Ac_Code}</p>}
           </div>
         </div>
         <div className="SugarSaleReturnSale-row">
@@ -2235,7 +1706,6 @@ const SugarSaleReturnSale = () => {
                 CategoryName={billToName}
                 CategoryCode={billToCode}
                 name="bill_to"
-                tabIndexHelp={5}
                 disabledFeild={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -2243,7 +1713,7 @@ const SugarSaleReturnSale = () => {
         </div>
         <div className="SugarSaleReturnSale-row">
           <label htmlFor="Unit_Code" className="SugarSaleReturnSale-form-label">
-            Unit:
+            Unit :
           </label>
           <div className="SugarSaleReturnSale-col">
             <div className="SugarSaleReturnSale-form-group">
@@ -2252,7 +1722,6 @@ const SugarSaleReturnSale = () => {
                 CategoryName={unitName}
                 CategoryCode={unitCode}
                 name="Unit_Code"
-                tabIndexHelp={7}
                 disabledFeild={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -2269,102 +1738,98 @@ const SugarSaleReturnSale = () => {
                 CategoryName={millName}
                 CategoryCode={millCode}
                 name="mill_code"
-                tabIndexHelp={6}
                 disabledFeild={!isEditing && addOneButtonEnabled}
               />
             </div>
-            {formErrors.mill_code && <p className="error-message">{formErrors.mill_code}</p>}
           </div>
           <div className="SugarSaleReturnSale-row">
-            <label className="SugarSaleReturnSale-form-label">From:</label>
-            <div className="SugarSaleReturnSale-col-Text">
-              <div className="SugarSaleReturnSale-form-group">
-                <input
-                  type="text"
-                  className="SugarSaleReturnSale-form-control"
+            <Grid container spacing={2} className="SugarSaleReturnSale-row">
+              <Grid item xs={12} md={2} ml={1}>
+                <TextField
+                  label="From"
+                  variant="outlined"
+                  fullWidth
                   name="FROM_STATION"
                   autoComplete="off"
                   value={formData.FROM_STATION}
                   onChange={handleChange}
                   disabled={!isEditing && addOneButtonEnabled}
+                  size="small"
                 />
-              </div>
-            </div>
-            <label className="SugarSaleReturnSale-form-label">To:</label>
-            <div className="SugarSaleReturnSale-col-Text">
-              <div className="SugarSaleReturnSale-form-group">
-                <input
-                  type="text"
-                  className="SugarSaleReturnSale-form-control"
+              </Grid>
+              <Grid item xs={12} md={2}>
+                <TextField
+                  label="To"
+                  variant="outlined"
+                  fullWidth
                   name="TO_STATION"
                   autoComplete="off"
                   value={formData.TO_STATION}
                   onChange={handleChange}
                   disabled={!isEditing && addOneButtonEnabled}
+                  size="small"
                 />
-              </div>
-            </div>
-            <label className="SugarSaleReturnSale-form-label">Lorry No:</label>
-            <div className="SugarSaleReturnSale-col-Text">
-              <div className="SugarSaleReturnSale-form-group">
-                <input
-                  type="text"
-                  className="SugarSaleReturnSale-form-control"
+              </Grid>
+              <Grid item xs={12} md={2}>
+                <TextField
+                  label="Lorry No"
+                  variant="outlined"
+                  fullWidth
                   name="LORRYNO"
                   autoComplete="off"
                   value={formData.LORRYNO}
                   onChange={handleChange}
                   disabled={!isEditing && addOneButtonEnabled}
+                  size="small"
                 />
-              </div>
-            </div>
-            <label className="SugarSaleReturnSale-form-label">WareHouse:</label>
-            <div className="SugarSaleReturnSale-col-Text">
-              <div className="SugarSaleReturnSale-form-group">
-                <input
-                  type="text"
-                  className="SugarSaleReturnSale-form-control"
+              </Grid>
+              <Grid item xs={12} md={1}>
+                <TextField
+                  label="Warehouse"
+                  variant="outlined"
+                  fullWidth
                   name="wearhouse"
                   autoComplete="off"
                   value={formData.wearhouse}
                   onChange={handleChange}
                   disabled={!isEditing && addOneButtonEnabled}
+                  size="small"
+
                 />
+              </Grid>
+              <label htmlFor="BROKER" className="SugarSaleReturnSale-form-label">
+                Broker:
+              </label>
+              <div className="SugarSaleReturnSale-col">
+                <div className="SugarSaleReturnSale-form-group">
+                  <AccountMasterHelp
+                    onAcCodeClick={handleBroker}
+                    CategoryName={brokerName}
+                    CategoryCode={brokerCode}
+                    name="BROKER"
+                    disabledFeild={!isEditing && addOneButtonEnabled}
+                  />
+                </div>
               </div>
-            </div>
-            <label htmlFor="BROKER" className="SugarSaleReturnSale-form-label">
-              Broker:
-            </label>
-            <div className="SugarSaleReturnSale-col">
-              <div className="SugarSaleReturnSale-form-group">
-                <AccountMasterHelp
-                  onAcCodeClick={handleBroker}
-                  CategoryName={brokerName}
-                  CategoryCode={brokerCode}
-                  name="BROKER"
-                  tabIndexHelp={2}
-                  disabledFeild={!isEditing && addOneButtonEnabled}
-                />
+              <label
+                htmlFor="GstRateCode"
+                className="SugarSaleReturnSale-form-label"
+              >
+                GST Rate Code:
+              </label>
+              <div className="SugarSaleReturnSale-col">
+                <div className="SugarSaleReturnSale-form-group">
+                  <GSTRateMasterHelp
+                    onAcCodeClick={handleGstCode}
+                    GstRateName={gstName}
+                    GstRateCode={gstRateCode}
+                    name="GstRateCode"
+                    disabledFeild={!isEditing && addOneButtonEnabled}
+                  />
+                </div>
               </div>
-            </div>
-            <label
-              htmlFor="GstRateCode"
-              className="SugarSaleReturnSale-form-label"
-            >
-              GST Rate Code:
-            </label>
-            <div className="SugarSaleReturnSale-col">
-              <div className="SugarSaleReturnSale-form-group">
-                <GSTRateMasterHelp
-                  onAcCodeClick={handleGstCode}
-                  GstRateName={gstName}
-                  GstRateCode={gstRateCode}
-                  name="GstRateCode"
-                  tabIndexHelp={8}
-                  disabledFeild={!isEditing && addOneButtonEnabled}
-                />
-              </div>
-            </div>
+
+            </Grid>
           </div>
         </div>
 
@@ -2376,6 +1841,7 @@ const SugarSaleReturnSale = () => {
           </div>
         )}
 
+        <br></br>
         {/*detail part popup functionality and Validation part Grid view */}
         <div className="">
           {showPopup && (
@@ -2384,7 +1850,7 @@ const SugarSaleReturnSale = () => {
                 <div className="modal-content">
                   <div className="modal-header">
                     <h5 className="modal-title">
-                      {selectedUser.id ? "Edit User" : "Add User"}
+                      {selectedUser.id ? "Edit" : "Add"}
                     </h5>
                     <button
                       type="button"
@@ -2414,11 +1880,9 @@ const SugarSaleReturnSale = () => {
                         />
                       </div>
 
-                      <label className="SugarSaleReturnSale-form-label">
-                        Quantal:
-                      </label>
-                      <div className="SugarSaleReturnSale-col-Ewaybillno">
-                        <div className="SugarSaleReturnSale-form-group">
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label className="SugarSaleReturnSale-form-label">Quantal:</label>
                           <input
                             type="text"
                             tabIndex="5"
@@ -2427,16 +1891,11 @@ const SugarSaleReturnSale = () => {
                             autoComplete="off"
                             value={formDataDetail.Quantal}
                             onChange={handleChangeDetail}
-                          
                           />
+                          {formErrors.Quantal && <p className="error-message">{formErrors.Quantal}</p>}
                         </div>
-                        {formErrors.Quantal && <p className="error-message">{formErrors.Quantal}</p>}
-                      </div>
-                      <label className="SugarSaleReturnSale-form-label">
-                        Packing:
-                      </label>
-                      <div className="SugarSaleReturnSale-col-Ewaybillno">
-                        <div className="SugarSaleReturnSale-form-group">
+                        <div className="form-group">
+                          <label className="SugarSaleReturnSale-form-label">Packing:</label>
                           <input
                             type="text"
                             tabIndex="5"
@@ -2446,14 +1905,13 @@ const SugarSaleReturnSale = () => {
                             value={formDataDetail.packing}
                             onChange={handleChangeDetail}
                           />
+                          {formErrors.packing && <p className="error-message">{formErrors.packing}</p>}
                         </div>
-                        {formErrors.packing && <p className="error-message">{formErrors.packing}</p>}
                       </div>
-                      <label className="SugarSaleReturnSale-form-label">
-                        Bags:
-                      </label>
-                      <div className="SugarSaleReturnSale-col-Ewaybillno">
-                        <div className="SugarSaleReturnSale-form-group">
+
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label className="SugarSaleReturnSale-form-label">Bags:</label>
                           <input
                             type="text"
                             tabIndex="5"
@@ -2463,14 +1921,10 @@ const SugarSaleReturnSale = () => {
                             value={formDataDetail.bags}
                             onChange={handleChangeDetail}
                           />
+                          {formErrors.bags && <p className="error-message">{formErrors.bags}</p>}
                         </div>
-                        {formErrors.bags && <p className="error-message">{formErrors.bags}</p>}
-                      </div>
-                      <label className="SugarSaleReturnSale-form-label">
-                        Rate:
-                      </label>
-                      <div className="SugarSaleReturnSale-col-Ewaybillno">
-                        <div className="SugarSaleReturnSale-form-group">
+                        <div className="form-group">
+                          <label className="SugarSaleReturnSale-form-label">Rate:</label>
                           <input
                             type="text"
                             tabIndex="5"
@@ -2480,14 +1934,12 @@ const SugarSaleReturnSale = () => {
                             value={formDataDetail.rate}
                             onChange={handleChangeDetail}
                           />
+                          {formErrors.rate && <p className="error-message">{formErrors.rate}</p>}
                         </div>
-                        {formErrors.rate && <p className="error-message">{formErrors.rate}</p>}
                       </div>
-                      <label className="SugarSaleReturnSale-form-label">
-                        Item Amount:
-                      </label>
-                      <div className="SugarSaleReturnSale-col-Ewaybillno">
-                        <div className="SugarSaleReturnSale-form-group">
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label className="SugarSaleReturnSale-form-label">Item Amount:</label>
                           <input
                             type="text"
                             tabIndex="5"
@@ -2497,16 +1949,11 @@ const SugarSaleReturnSale = () => {
                             value={formDataDetail.item_Amount}
                             onChange={handleChangeDetail}
                           />
+                          {formErrors.item_Amount && <p className="error-message">{formErrors.item_Amount}</p>}
                         </div>
-                        {formErrors.item_Amount && <p className="error-message">{formErrors.item_Amount}</p>}
-                      </div>
-                      <label className="SugarSaleReturnSale-form-label">
-                        Narration:
-                      </label>
-                      <div className="SugarSaleReturnSale-col-Ewaybillno">
-                        <div className="SugarSaleReturnSale-form-group">
+                        <div className="form-group">
+                          <label className="SugarSaleReturnSale-form-label">Narration:</label>
                           <textarea
-                            type="text"
                             tabIndex="5"
                             className="SugarSaleReturnSale-form-control"
                             name="narration"
@@ -2556,6 +2003,7 @@ const SugarSaleReturnSale = () => {
               </div>
             </div>
           )}
+
           <div style={{ display: "flex" }}>
             <div
               style={{
@@ -2608,8 +2056,8 @@ const SugarSaleReturnSale = () => {
                   <tr key={user.id}>
                     <td>
                       {user.rowaction === "add" ||
-                      user.rowaction === "update" ||
-                      user.rowaction === "Normal" ? (
+                        user.rowaction === "update" ||
+                        user.rowaction === "Normal" ? (
                         <>
                           <button
                             className="btn btn-warning"
@@ -2664,476 +2112,568 @@ const SugarSaleReturnSale = () => {
             </table>
           </div>
         </div>
-
         <div className="SugarSaleReturnSale-row">
-          <label className="SugarSaleReturnSale-form-label">Net Quantal</label>
-          <div className="SugarSaleReturnSale-col-Text">
-            <div className="SugarSaleReturnSale-form-group">
-              <input
-                tabIndex="9"
-                type="text"
+          <Grid container spacing={2} className="SugarSaleReturnSale-row">
+            <Grid item xs={12} md={1}>
+              <TextField
+                label="Net Quantal"
+                variant="outlined"
+                fullWidth
                 name="NETQNTL"
                 autoComplete="off"
                 value={formData.NETQNTL}
                 onChange={handleChange}
-                disabled={!isEditing && addOneButtonEnabled}
                 onKeyDown={handleKeyDownCalculations}
+                disabled={!isEditing && addOneButtonEnabled}
+                error={!!formErrors.NETQNTL}
+                helperText={formErrors.NETQNTL}
+                size="small"
+                InputLabelProps={{
+                  shrink: true,
+                }}
               />
-            </div>
-            {formErrors.NETQNTL && <p className="error-message">{formErrors.NETQNTL}</p>}
-          </div>
-          <label className="SugarSaleReturnSale-form-label">Due Days</label>
-          <div className="SugarSaleReturnSale-col-Text">
-            <div className="SugarSaleReturnSale-form-group">
-              <input
-                tabIndex="9"
-                type="text"
-                className="SugarSaleReturnSale-form-control"
+            </Grid>
+            <Grid item xs={12} md={1}>
+              <TextField
+                label="Due Days"
+                variant="outlined"
+                fullWidth
                 name="Due_Days"
                 autoComplete="off"
                 value={formData.Due_Days}
                 onChange={handleChange}
                 disabled={!isEditing && addOneButtonEnabled}
+                size="small"
+                InputLabelProps={{
+                  shrink: true,
+                }}
               />
-            </div>
-          </div>
-
-          <label className="SugarSaleReturnSale-form-label">PO Details</label>
-          <div className="SugarSaleReturnSale-col-Ewaybillno">
-            <div className="SugarSaleReturnSale-form-group">
-              <input
-                tabIndex="9"
-                type="text"
-                className="SugarSaleReturnSale-form-control"
+            </Grid>
+            <Grid item xs={12} md={1}>
+              <TextField
+                label="PO Details"
+                variant="outlined"
+                fullWidth
                 name="PO_Details"
                 autoComplete="off"
                 value={formData.PO_Details}
                 onChange={handleChange}
                 disabled={!isEditing && addOneButtonEnabled}
+                size="small"
+                InputLabelProps={{
+                  shrink: true,
+                }}
               />
-            </div>
-          </div>
-
-          <div className="SugarSaleReturnSale-row">
-            <label
-              htmlFor="Transport_Code"
-              className="SugarSaleReturnSale-form-label"
-            >
-              Transport:
-            </label>
-            <div className="SugarSaleReturnSale-col">
-              <div className="SugarSaleReturnSale-form-group">
-                <AccountMasterHelp
-                  onAcCodeClick={handleTransport}
-                  CategoryName={transportName}
-                  CategoryCode={transportCode}
-                  name="Transport_Code"
-                  tabIndexHelp={6}
-                  disabledFeild={!isEditing && addOneButtonEnabled}
-                />
+            </Grid>
+            <div className="SugarSaleReturnSale-row">
+              <label
+                htmlFor="Transport_Code"
+                style={{ marginTop: "20px", marginLeft: "20px" }}
+              >
+                Transport:
+              </label>
+              <div className="SugarSaleReturnSale-col">
+                <div className="SugarSaleReturnSale-form-group" style={{ marginTop: "20px" }}>
+                  <AccountMasterHelp
+                    onAcCodeClick={handleTransport}
+                    CategoryName={transportName}
+                    CategoryCode={transportCode}
+                    name="Transport_Code"
+                    disabledFeild={!isEditing && addOneButtonEnabled}
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          </Grid>
         </div>
-        <div className="SugarSaleReturnSale-row">
-          <label className="SugarSaleReturnSale-form-label">ASN/GRN No:</label>
-          <div className="SugarSaleReturnSale-col-Ewaybillno">
-            <div className="SugarSaleReturnSale-form-group">
-              <input
-                type="text"
-                className="SugarSaleReturnSale-form-control"
-                name="ASN_No"
-                autoComplete="off"
-                value={formData.ASN_No}
-                onChange={handleChange}
-                tabIndex="10"
-                disabled={!isEditing && addOneButtonEnabled}
-              />
-            </div>
-          </div>
+        <br></br>
+        <br></br>
+        <Grid container spacing={2} className="SugarSaleReturnSale-row">
+          <Grid item xs={12} md={2}>
+            <TextField
+              label="ASN/GRN No"
+              variant="outlined"
+              fullWidth
+              name="ASN_No"
+              autoComplete="off"
+              value={formData.ASN_No}
+              onChange={handleChange}
+              disabled={!isEditing && addOneButtonEnabled}
+              size="small"
+              InputLabelProps={{
+                shrink: true,
+              }}
+            />
+          </Grid>
+          <Grid item xs={12} md={2}>
+            <TextField
+              label="EWayBill No"
+              variant="outlined"
+              fullWidth
+              name="Eway_Bill_No"
+              autoComplete="off"
+              value={formData.Eway_Bill_No}
+              onChange={handleChange}
+              disabled={!isEditing && addOneButtonEnabled}
+              size="small"
+              InputLabelProps={{
+                shrink: true,
+              }}
+            />
+          </Grid>
+          <Grid item xs={12} md={2}>
+            <TextField
+              label="ACK No"
+              variant="outlined"
+              fullWidth
+              name="ackno"
+              autoComplete="off"
+              value={formData.ackno}
+              onChange={handleChange}
+              disabled={!isEditing && addOneButtonEnabled}
+              size="small"
+              InputLabelProps={{
+                shrink: true,
+              }}
+            />
+          </Grid>
+          <Grid item xs={12} md={2}>
+            <TextField
+              label="EInvoice No"
+              variant="outlined"
+              fullWidth
+              name="einvoiceno"
+              autoComplete="off"
+              value={formData.einvoiceno}
+              onChange={handleChange}
+              disabled={!isEditing && addOneButtonEnabled}
+              size="small"
+              InputLabelProps={{
+                shrink: true,
+              }}
+            />
+          </Grid>
+        </Grid>
+        <br></br>
 
-          <label className="SugarSaleReturnSale-form-label">EWayBill No</label>
-          <div className="SugarSaleReturnSale-col-Ewaybillno">
-            <div className="SugarSaleReturnSale-form-group">
-              <input
-                type="text"
-                className="SugarSaleReturnSale-form-control"
-                name="Eway_Bill_No"
-                autoComplete="off"
-                value={formData.Eway_Bill_No}
-                onChange={handleChange}
-                tabIndex="10"
-                disabled={!isEditing && addOneButtonEnabled}
-              />
-            </div>
-          </div>
+        <Grid container style={{ float: "right" }}>
+          <Grid item xs={1}>
+            <label className="debitCreditNote-form-label">Subtotal:</label>
+          </Grid>
+          <Grid item xs={12} sm={2}>
+            <TextField
+              variant="outlined"
+              name="subTotal"
+              autoComplete="off"
+              value={formData.subTotal}
+              disabled={!isEditing && addOneButtonEnabled}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              error={!!formErrors.subTotal}
+              helperText={formErrors.subTotal}
+              onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
+              size="small"
+              inputProps={{
+                sx: { textAlign: 'right' },
+                inputMode: 'decimal',
+                pattern: '[0-9]*[.,]?[0-9]+',
+                onInput: validateNumericInput,
+              }}
+            />
+          </Grid>
+        </Grid>
+        <Grid container spacing={1} alignItems="center" style={{ marginTop: '-6px' }} >
+          <Grid item xs={1}>
+            <label className="debitCreditNote-form-label">Add Frt. Rs:</label>
+          </Grid>
+          <Grid item xs={12} sm={1}>
+            <TextField
+              variant="outlined"
+              name="LESS_FRT_RATE"
+              autoComplete="off"
+              value={formData.LESS_FRT_RATE}
+              onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
+              disabled={!isEditing && addOneButtonEnabled}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              error={!!formErrors.LESS_FRT_RATE}
+              helperText={formErrors.LESS_FRT_RATE}
+              size="small"
+              inputProps={{
+                sx: { textAlign: 'right' },
+                inputMode: 'decimal',
+                pattern: '[0-9]*[.,]?[0-9]+',
+                onInput: validateNumericInput,
+              }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={1}>
+            <TextField
+              variant="outlined"
+              name="freight"
+              autoComplete="off"
+              value={formData.freight}
+              onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
+              disabled={!isEditing && addOneButtonEnabled}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              error={!!formErrors.freight}
+              helperText={formErrors.freight}
+              size="small"
+              inputProps={{
+                sx: { textAlign: 'right' },
+                inputMode: 'decimal',
+                pattern: '[0-9]*[.,]?[0-9]+',
+                onInput: validateNumericInput,
+              }}
+            />
+          </Grid>
+        </Grid>
+        <Grid container spacing={1} alignItems="center" style={{ marginTop: '-6px' }} >
+          <Grid item xs={1}>
+            <label className="debitCreditNote-form-label">CGST:</label>
+          </Grid>
+          <Grid item xs={12} sm={1}>
+            <TextField
+              variant="outlined"
+              name="CGSTRate"
+              autoComplete="off"
+              value={formData.CGSTRate}
+              onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
+              disabled={!isEditing && addOneButtonEnabled}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              error={!!formErrors.CGSTRate}
+              helperText={formErrors.CGSTRate}
+              size="small"
+              inputProps={{
+                sx: { textAlign: 'right' },
+                inputMode: 'decimal',
+                pattern: '[0-9]*[.,]?[0-9]+',
+                onInput: validateNumericInput,
+              }}
+            />
 
-          <label className="SugarSaleReturnSale-form-label">ACK No:</label>
-          <div className="SugarSaleReturnSale-col-Ewaybillno">
-            <div className="SugarSaleReturnSale-form-group">
-              <input
-                type="text"
-                className="SugarSaleReturnSale-form-control"
-                name="ackno"
-                autoComplete="off"
-                value={formData.ackno}
-                onChange={handleChange}
-                tabIndex="11"
-                disabled={!isEditing && addOneButtonEnabled}
-              />
-            </div>
-          </div>
-          <label className="SugarSaleReturnSale-form-label">EInvoice No:</label>
-          <div className="SugarSaleReturnSale-col-Ewaybillno">
-            <div className="SugarSaleReturnSale-form-group">
-              <input
-                type="text"
-                className="SugarSaleReturnSale-form-control"
-                name="einvoiceno"
-                autoComplete="off"
-                value={formData.einvoiceno}
-                onChange={handleChange}
-                tabIndex="10"
-                disabled={!isEditing && addOneButtonEnabled}
-              />
-            </div>
-          </div>
-        </div>
-        <div className="SugarSaleReturnSale-row">
-          <label className="SugarSaleReturnSale-form-label">SubTotal:</label>
-          <div className="SugarSaleReturnSale-col-Text">
-            <div className="SugarSaleReturnSale-form-group">
-              <input
-                tabIndex="13"
-                type="text"
-                className="SugarSaleReturnSale-form-control"
-                name="subTotal"
-                autoComplete="off"
-                value={formData.subTotal}
-                onChange={handleChange}
-                disabled={!isEditing && addOneButtonEnabled}
-                onKeyDown={handleKeyDownCalculations}
-              />
-            </div>
-          </div>
-          <label className="SugarSaleReturnSale-form-label">Add Frt. Rs:</label>
-          <div className="SugarSaleReturnSale-col-Text">
-            <div className="SugarSaleReturnSale-form-group">
-              <input
-                tabIndex="14"
-                type="text"
-                className="SugarSaleReturnSale-form-control"
-                name="LESS_FRT_RATE"
-                autoComplete="off"
-                value={formData.LESS_FRT_RATE}
-                onChange={handleChange}
-                disabled={!isEditing && addOneButtonEnabled}
-                onKeyDown={handleKeyDownCalculations}
-              />
-              {formErrors.LESS_FRT_RATE && <p className="error-message">{formErrors.LESS_FRT_RATE}</p>}
+          </Grid>
+          <Grid item xs={12} sm={1}>
+            <TextField
 
-              <input
-                tabIndex="15"
-                type="text"
-                className="SugarSaleReturnSale-form-control"
-                name="freight"
-                autoComplete="off"
-                value={formData.freight}
-                onChange={handleChange}
-                disabled={!isEditing && addOneButtonEnabled}
-                onKeyDown={handleKeyDownCalculations}
-              />
-            </div>
-            {formErrors.freight && <p className="error-message">{formErrors.freight}</p>}
-          </div>
+              variant="outlined"
+              name="CGSTAmount"
+              autoComplete="off"
+              value={formData.CGSTAmount}
+              onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
+              disabled={!isEditing && addOneButtonEnabled}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              error={!!formErrors.CGSTAmount}
+              helperText={formErrors.CGSTAmount}
+              size="small"
+              inputProps={{
+                sx: { textAlign: 'right' },
+                inputMode: 'decimal',
+                pattern: '[0-9]*[.,]?[0-9]+',
+                onInput: validateNumericInput,
+              }}
+            />
+          </Grid>
+        </Grid>
 
-          {/* <label className="SugarSaleReturnSale-form-label">Taxable Amount:</label>
-          <div className="SugarSaleReturnSale-col-Text">
-            <div className="SugarSaleReturnSale-form-group">
-              <input
-                tabIndex="13"
-                type="text"
-                className="SugarSaleReturnSale-form-control"
-                name="TaxableAmount"
-                autoComplete="off"
-                value={formData.TaxableAmount}
-                onChange={handleChange}
-                disabled={!isEditing && addOneButtonEnabled}
-              />
-            </div>
-          </div> */}
+        <Grid container spacing={1} alignItems="center" style={{ marginTop: '-6px' }} >
+          <Grid item xs={1}>
+            <label className="debitCreditNote-form-label">SGST:</label>
+          </Grid>
+          <Grid item xs={12} sm={1}>
+            <TextField
+              variant="outlined"
+              name="SGSTRate"
+              autoComplete="off"
+              value={formData.SGSTRate}
+              onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
+              disabled={!isEditing && addOneButtonEnabled}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              error={!!formErrors.SGSTRate}
+              helperText={formErrors.SGSTRate}
+              size="small"
+              inputProps={{
+                sx: { textAlign: 'right' },
+                inputMode: 'decimal',
+                pattern: '[0-9]*[.,]?[0-9]+',
+                onInput: validateNumericInput,
+              }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={1}>
+            <TextField
+              variant="outlined"
+              name="SGSTAmount"
+              autoComplete="off"
+              value={formData.SGSTAmount}
+              onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
+              disabled={!isEditing && addOneButtonEnabled}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              error={!!formErrors.SGSTAmount}
+              helperText={formErrors.SGSTAmount}
+              size="small"
+              inputProps={{
+                sx: { textAlign: 'right' },
+                inputMode: 'decimal',
+                pattern: '[0-9]*[.,]?[0-9]+',
+                onInput: validateNumericInput,
+              }}
+            />
+          </Grid>
+        </Grid>
+        <Grid container spacing={1} alignItems="center" style={{ marginTop: '-6px' }} >
+          <Grid item xs={1}>
+            <label className="debitCreditNote-form-label">IGST:</label>
+          </Grid>
+          <Grid item xs={12} sm={1}>
+            <TextField
+              variant="outlined"
+              name="IGSTRate"
+              autoComplete="off"
+              value={formData.IGSTRate}
+              onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
+              disabled={!isEditing && addOneButtonEnabled}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              error={!!formErrors.IGSTRate}
+              helperText={formErrors.IGSTRate}
+              size="small"
+              inputProps={{
+                sx: { textAlign: 'right' },
+                inputMode: 'decimal',
+                pattern: '[0-9]*[.,]?[0-9]+',
+                onInput: validateNumericInput,
+              }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={1}>
+            <TextField
+              variant="outlined"
+              name="IGSTAmount"
+              autoComplete="off"
+              value={formData.IGSTAmount}
+              onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
+              disabled={!isEditing && addOneButtonEnabled}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              error={!!formErrors.IGSTAmount}
+              helperText={formErrors.IGSTAmount}
+              size="small"
+              inputProps={{
+                sx: { textAlign: 'right' },
+                inputMode: 'decimal',
+                pattern: '[0-9]*[.,]?[0-9]+',
+                onInput: validateNumericInput,
+              }}
+            />
+          </Grid>
+        </Grid>
+        <Grid container spacing={1} alignItems="center" style={{ marginTop: '-6px' }}>
+          <Grid item xs={1}>
+            <label className="debitCreditNote-form-label">MISC:</label>
+          </Grid>
+          <Grid item xs={12} sm={2}>
+            <TextField
+              variant="outlined"
+              fullWidth
+              name="OTHER_AMT"
+              value={formData.OTHER_AMT}
+              onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
+              disabled={!isEditing && addOneButtonEnabled}
+              error={Boolean(formErrors.OTHER_AMT)}
+              helperText={formErrors.OTHER_AMT || ''}
+              size="small"
+              inputProps={{
+                sx: { textAlign: 'right' },
+                inputMode: 'decimal',
+                pattern: '[0-9]*[.,]?[0-9]+',
+                onInput: validateNumericInput,
+              }}
+            />
+          </Grid>
+        </Grid>
+        <Grid container spacing={1} alignItems="center" style={{ marginTop: '-6px' }}>
+          <Grid item xs={1}>
+            <label className="debitCreditNote-form-label">Cash Advance:</label>
+          </Grid>
+          <Grid item xs={12} sm={2}>
+            <TextField
+              variant="outlined"
+              fullWidth
+              name="cash_advance"
+              value={formData.cash_advance}
+              onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
+              disabled={!isEditing && addOneButtonEnabled}
+              error={Boolean(formErrors.cash_advance)}
+              helperText={formErrors.cash_advance || ''}
+              size="small"
+              inputProps={{
+                sx: { textAlign: 'right' },
+                inputMode: 'decimal',
+                pattern: '[0-9]*[.,]?[0-9]+',
+                onInput: validateNumericInput,
+              }}
+            />
+          </Grid>
+        </Grid>
 
-          <label className="SugarSaleReturnSale-form-label">CGST:</label>
-          <div className="SugarSaleReturnSale-col-Text">
-            <div className="SugarSaleReturnSale-form-group">
-              <input
-                tabIndex="14"
-                type="text"
-                className="SugarSaleReturnSale-form-control"
-                name="CGSTRate"
-                autoComplete="off"
-                value={formData.CGSTRate}
-                onChange={handleChange}
-                disabled={!isEditing && addOneButtonEnabled}
-                onKeyDown={handleKeyDownCalculations}
-              />
+        <Grid container spacing={1} alignItems="center" style={{ marginTop: '-6px' }}>
+          <Grid item xs={1}>
+            <label className="debitCreditNote-form-label">Bill Amount:</label>
+          </Grid>
+          <Grid item xs={12} sm={2}>
+            <TextField
+              variant="outlined"
+              fullWidth
+              name="Bill_Amount"
+              value={formData.Bill_Amount || 0}
+              onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
+              disabled={!isEditing && addOneButtonEnabled}
+              error={Boolean(formErrors.Bill_Amount)}
+              helperText={formErrors.Bill_Amount || ''}
+              size="small"
+              inputProps={{
+                sx: { textAlign: 'right' },
+                inputMode: 'decimal',
+                pattern: '[0-9]*[.,]?[0-9]+',
+                onInput: validateNumericInput,
+              }}
+            />
+          </Grid>
+        </Grid>
+        <Grid container spacing={1} alignItems="center" style={{ marginTop: '-6px' }} >
+          <Grid item xs={1}>
+            <label className="debitCreditNote-form-label">TCS:</label>
+          </Grid>
+          <Grid item xs={12} sm={1}>
+            <TextField
+              variant="outlined"
+              fullWidth
+              name="TCS_Rate"
+              value={formData.TCS_Rate}
+              onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
+              disabled={!isEditing && addOneButtonEnabled}
+              error={Boolean(formErrors.TCS_Rate)}
+              helperText={formErrors.TCS_Rate || ''}
+              size="small"
+              inputProps={{
+                sx: { textAlign: 'right' },
+                inputMode: 'decimal',
+                pattern: '[0-9]*[.,]?[0-9]+',
+                onInput: validateNumericInput,
+              }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={1}>
+            <TextField
+              variant="outlined"
+              fullWidth
+              name="TCS_Amt"
+              value={formData.TCS_Amt || 0}
+              onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
+              disabled={!isEditing && addOneButtonEnabled}
+              error={Boolean(formErrors.TCS_Amt)}
+              helperText={formErrors.TCS_Amt || ''}
+              size="small"
+              inputProps={{
+                sx: { textAlign: 'right' },
+                inputMode: 'decimal',
+                pattern: '[0-9]*[.,]?[0-9]+',
+                onInput: validateNumericInput,
+              }}
+            />
+          </Grid>
+        </Grid>
 
-              <input
-                tabIndex="15"
-                type="text"
-                className="SugarSaleReturnSale-form-control"
-                name="CGSTAmount"
-                autoComplete="off"
-                value={formData.CGSTAmount}
-                onChange={handleChange}
-                disabled={!isEditing && addOneButtonEnabled}
-                onKeyDown={handleKeyDownCalculations}
-              />
-            </div>
-          </div>
-
-          <label className="SugarSaleReturnSale-form-label">SGST:</label>
-          <div className="SugarSaleReturnSale-col-Text">
-            <div className="SugarSaleReturnSale-form-group">
-              <input
-                tabIndex="16"
-                type="text"
-                className="SugarSaleReturnSale-form-control"
-                name="SGSTRate"
-                autoComplete="off"
-                value={formData.SGSTRate}
-                onChange={handleChange}
-                disabled={!isEditing && addOneButtonEnabled}
-                onKeyDown={handleKeyDownCalculations}
-              />
-
-              <input
-                tabIndex="17"
-                type="text"
-                className="SugarSaleReturnSale-form-control"
-                name="SGSTAmount"
-                autoComplete="off"
-                value={formData.SGSTAmount}
-                onChange={handleChange}
-                disabled={!isEditing && addOneButtonEnabled}
-                onKeyDown={handleKeyDownCalculations}
-              />
-            </div>
-          </div>
-
-          <label className="SugarSaleReturnSale-form-label">IGST:</label>
-          <div className="SugarSaleReturnSale-col-Text">
-            <div className="SugarSaleReturnSale-form-group">
-              <input
-                tabIndex="18"
-                type="text"
-                className="SugarSaleReturnSale-form-control"
-                name="IGSTRate"
-                autoComplete="off"
-                value={formData.IGSTRate}
-                onChange={handleChange}
-                disabled={!isEditing && addOneButtonEnabled}
-                onKeyDown={handleKeyDownCalculations}
-              />
-
-              <input
-                tabIndex="19"
-                type="text"
-                className="SugarSaleReturnSale-form-control"
-                name="IGSTAmount"
-                autoComplete="off"
-                value={formData.IGSTAmount}
-                onChange={handleChange}
-                disabled={!isEditing && addOneButtonEnabled}
-                onKeyDown={handleKeyDownCalculations}
-              />
-            </div>
-          </div>
-
-          {/* <label className="SugarSaleReturnSale-form-label">Rate Diff:</label>
-          <div className="SugarSaleReturnSale-col-Text">
-            <div className="SugarSaleReturnSale-form-group">
-              <input
-                tabIndex="18"
-                type="text"
-                className="SugarSaleReturnSale-form-control"
-                name="RateDiff"
-                autoComplete="off"
-                value={formData.RateDiff}
-                onChange={handleChange}
-                disabled={!isEditing && addOneButtonEnabled}
-                onKeyDown={handleKeyDownCalculations}
-              />
-              {formErrors.RateDiff && <p className="error-message">{formErrors.RateDiff}</p>}
-
-              <input
-                tabIndex="19"
-                type="text"
-                className="SugarSaleReturnSale-form-control"
-                name="RateDiffAmount"
-                autoComplete="off"
-                value={calculateRateDiffAmount()}
-                onChange={handleChange}
-                disabled={!isEditing && addOneButtonEnabled}
-                onKeyDown={handleKeyDownCalculations}
-              />
-            </div>
-          </div> */}
-
-          <label className="SugarSaleReturnSale-form-label">MISC:</label>
-          <div className="SugarSaleReturnSale-col-Text">
-            <div className="SugarSaleReturnSale-form-group">
-              <input
-                tabIndex="20"
-                type="text"
-                className="SugarSaleReturnSale-form-control"
-                name="OTHER_AMT"
-                autoComplete="off"
-                value={formData.OTHER_AMT}
-                onChange={handleChange}
-                disabled={!isEditing && addOneButtonEnabled}
-                onKeyDown={handleKeyDownCalculations}
-              />
-               
-            </div>
-            {formErrors.OTHER_AMT && <p className="error-message">{formErrors.OTHER_AMT}</p>}
-          </div>
-          <label className="SugarSaleReturnSale-form-label">Cash Advance</label>
-          <div className="SugarSaleReturnSale-col-Text">
-            <div className="SugarSaleReturnSale-form-group">
-              <input
-                tabIndex="18"
-                type="text"
-                className="SugarSaleReturnSale-form-control"
-                name="cash_advance"
-                autoComplete="off"
-                value={formData.cash_advance}
-                onChange={handleChange}
-                disabled={!isEditing && addOneButtonEnabled}
-                onKeyDown={handleKeyDownCalculations}
-              />
-            </div>
-          </div>
-
-          {/* <label className="SugarSaleReturnSale-form-label">Round Off</label>
-          <div className="SugarSaleReturnSale-col-Text">
-            <div className="SugarSaleReturnSale-form-group">
-              <input
-                tabIndex="18"
-                type="text"
-                className="SugarSaleReturnSale-form-control"
-                name="RoundOff"
-                autoComplete="off"
-                value={formData.RoundOff}
-                onChange={handleChange}
-                disabled={!isEditing && addOneButtonEnabled}
-                onKeyDown={handleKeyDownCalculations}
-              />
-            </div>
-            {formErrors.RoundOff && <p className="error-message">{formErrors.RoundOff}</p>}
-          </div> */}
-
-          <label className="SugarSaleReturnSale-form-label">Bill Amount:</label>
-          <div className="SugarSaleReturnSale-col-Text">
-            <div className="SugarSaleReturnSale-form-group">
-              <input
-                tabIndex="21"
-                type="text"
-                className="SugarSaleReturnSale-form-control"
-                name="Bill_Amount"
-                autoComplete="off"
-                value={formData.Bill_Amount}
-                onChange={handleChange}
-                style={{ color: "red", fontWeight: "bold" }}
-                disabled={!isEditing && addOneButtonEnabled}
-                onKeyDown={handleKeyDownCalculations}
-              />
-            </div>
-            {formErrors.Bill_Amount && <p className="error-message">{formErrors.Bill_Amount}</p>}
-          </div>
-
-          <label className="SugarSaleReturnSale-form-label">TCS %:</label>
-          <div className="SugarSaleReturnSale-col-Text">
-            <div className="SugarSaleReturnSale-form-group">
-              <input
-                tabIndex="22"
-                type="text"
-                className="SugarSaleReturnSale-form-control"
-                name="TCS_Rate"
-                autoComplete="off"
-                value={formData.TCS_Rate}
-                onChange={handleChange}
-                disabled={!isEditing && addOneButtonEnabled}
-                onKeyDown={handleKeyDownCalculations}
-              />
-              {formErrors.TCS_Rate && <p className="error-message">{formErrors.TCS_Rate}</p>}
-              <input
-                tabIndex="23"
-                type="text"
-                className="SugarSaleReturnSale-form-control"
-                name="TCS_Amt"
-                autoComplete="off"
-                value={formData.TCS_Amt}
-                onChange={handleChange}
-                disabled={!isEditing && addOneButtonEnabled}
-                onKeyDown={handleKeyDownCalculations}
-              />
-            </div>
-            {formErrors.TCS_Amt && <p className="error-message">{formErrors.TCS_Amt}</p>}
-          </div>
-
-          <label className="SugarSaleReturnSale-form-label">Net Payable:</label>
-          <div className="SugarSaleReturnSale-col-Text">
-            <div className="SugarSaleReturnSale-form-group">
-              <input
-                tabIndex="24"
-                type="text"
-                className="SugarSaleReturnSale-form-control"
-                name="TCS_Net_Payable"
-                autoComplete="off"
-                style={{ color: "red", fontWeight: "bold" }}
-                value={formData.TCS_Net_Payable}
-                onChange={handleChange}
-                disabled={!isEditing && addOneButtonEnabled}
-                onKeyDown={handleKeyDownCalculations}
-              />
-            </div>
-            {formErrors.TCS_Net_Payable && <p className="error-message">{formErrors.TCS_Net_Payable}</p>}
-          </div>
-        </div>
-
-        <div className="SugarSaleReturnSale-row">
-          <label className="SugarSaleReturnSale-form-label">TDS %:</label>
-          <div className="SugarSaleReturnSale-col-Text">
-            <div className="SugarSaleReturnSale-form-group">
-              <input
-                tabIndex="25"
-                type="text"
-                className="SugarSaleReturnSale-form-control"
-                name="TDS_Rate"
-                autoComplete="off"
-                value={formData.TDS_Rate}
-                onChange={handleChange}
-                disabled={!isEditing && addOneButtonEnabled}
-                onKeyDown={handleKeyDownCalculations}
-              />
-              {formErrors.TDS_Rate && <p className="error-message">{formErrors.TDS_Rate}</p>}
-              <input
-                tabIndex="26"
-                type="text"
-                className="SugarSaleReturnSale-form-control"
-                name="TDS_Amt"
-                autoComplete="off"
-                value={formData.TDS_Amt !== null ? formData.TDS_Amt : ""}
-                // value={formData.TDS_Amt}
-                onChange={handleChange}
-                disabled={!isEditing && addOneButtonEnabled}
-                onKeyDown={handleKeyDownCalculations}
-              />
-            </div>
-            {formErrors.TDS_Amt && <p className="error-message">{formErrors.TDS_Amt}</p>}
-          </div>
-        </div>
+        <Grid container spacing={1} alignItems="center" style={{ marginTop: '-6px' }} >
+          <Grid item xs={1}>
+            <label className="debitCreditNote-form-label">TDS:</label>
+          </Grid>
+          <Grid item xs={12} sm={1}>
+            <TextField
+              variant="outlined"
+              fullWidth
+              name="TDS_Rate"
+              value={formData.TDS_Rate}
+              onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
+              disabled={!isEditing && addOneButtonEnabled}
+              error={Boolean(formErrors.TDS_Rate)}
+              helperText={formErrors.TDS_Rate || ''}
+              size="small"
+              inputProps={{
+                sx: { textAlign: 'right' },
+                inputMode: 'decimal',
+                pattern: '[0-9]*[.,]?[0-9]+',
+                onInput: validateNumericInput,
+              }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={1}>
+            <TextField
+              variant="outlined"
+              fullWidth
+              name="TDS_Amt"
+              value={formData.TDS_Amt !== null ? formData.TDS_Amt : ""}
+              onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
+              disabled={!isEditing && addOneButtonEnabled}
+              error={Boolean(formErrors.TDS_Amt)}
+              helperText={formErrors.TDS_Amt || ''}
+              size="small"
+              inputProps={{
+                sx: { textAlign: 'right' },
+                inputMode: 'decimal',
+                pattern: '[0-9]*[.,]?[0-9]+',
+                onInput: validateNumericInput,
+              }}
+            />
+          </Grid>
+        </Grid>
+        <Grid container spacing={1} alignItems="center" style={{ marginTop: '-6px' }}>
+          <Grid item xs={1}>
+            <label className="debitCreditNote-form-label">Net Payable:</label>
+          </Grid>
+          <Grid item xs={12} sm={2}>
+            <TextField
+              variant="outlined"
+              fullWidth
+              name="TCS_Net_Payable"
+              value={formData.TCS_Net_Payable || 0}
+              onChange={handleChange}
+              onKeyDown={handleKeyDownCalculations}
+              disabled={!isEditing && addOneButtonEnabled}
+              error={Boolean(formErrors.TCS_Net_Payable)}
+              helperText={formErrors.TCS_Net_Payable || ''}
+              size="small"
+              inputProps={{
+                sx: { textAlign: 'right' },
+                inputMode: 'decimal',
+                pattern: '[0-9]*[.,]?[0-9]+',
+                onInput: validateNumericInput,
+              }}
+            />
+          </Grid>
+        </Grid>
       </form>
     </>
   );

@@ -705,6 +705,8 @@ async def insert_DeliveryOrder():
 
         tenderid = tender_head.tenderid
 
+        print("tenderid", tenderid)
+
         # Generate new ID for the detail entry
         max_detail_id = db.session.query(func.max(TenderDetails.ID)).filter_by(tenderid=tenderid).scalar() or 0
         new_detail_id = max_detail_id + 1
@@ -712,6 +714,7 @@ async def insert_DeliveryOrder():
         detail_record = db.session.execute(text("select * from nt_1_tenderdetails where ID=:id and tenderid=:tenderid" ),{'id':1,'tenderid':tenderid})
         
         detail_record = detail_record.fetchall()
+
 
         result = [dict(row._mapping) for row in detail_record]
 

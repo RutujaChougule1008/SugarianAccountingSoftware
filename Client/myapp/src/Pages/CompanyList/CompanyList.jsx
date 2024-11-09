@@ -26,7 +26,7 @@ const CompanyList = () => {
   const usernameRef = useRef(null); // Ref for the username input
 
   const navigate = useNavigate();
-  const API_URL = process.env.REACT_APP_API_URL;
+  const API_URL = process.env.REACT_APP_API;
 
   useEffect(() => {
     const fetchCompanies = async () => {
@@ -88,7 +88,7 @@ const CompanyList = () => {
       return;
     }
     try {
-      const response = await axios.post(`${API_URL}/api/userlogin`, {
+      const response = await axios.post(`${API_URL}/userlogin`, {
         User_Name: username,
         User_Password: password
       });
@@ -102,14 +102,10 @@ const CompanyList = () => {
       
       }
 
-      const selfAcResponse = await axios.get(`http://localhost:8080/api/get_self_ac?Company_Code=${ selectedCompany.Company_Code}&Year_Code=${selectedAccountingYear.yearCode}`)
+      const selfAcResponse = await axios.get(`${API_URL}/get_self_ac?Company_Code=${ selectedCompany.Company_Code}&Year_Code=${selectedAccountingYear.yearCode}`)
       console.log("selfAcResponse",selfAcResponse)
       sessionStorage.setItem('SELF_AC', selfAcResponse.data.SELF_AC);
       sessionStorage.setItem('Self_acid', selfAcResponse.data.Self_acid);
-
-      // const permissionResponse = await axios.get(`http://localhost:8080/api/sugarian/get_user_permissions?uid=${response.data.user_id}`);
-      // const permissions = permissionResponse.data.permissions;  
-      // sessionStorage.setItem('permissions', JSON.stringify(permissions)); 
 
       sessionStorage.setItem('Year_Code', selectedAccountingYear.yearCode);
       sessionStorage.setItem('username', username);

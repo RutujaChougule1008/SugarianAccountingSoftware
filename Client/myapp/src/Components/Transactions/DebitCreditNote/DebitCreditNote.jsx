@@ -11,22 +11,10 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./DebitCreditNote.css";
 import { HashLoader } from "react-spinners";
-import { z } from "zod";
-
-// Validation Part Using Zod Library
-const stringToNumber = z
-  .string()
-  .refine((value) => !isNaN(Number(value)), {
-    message: "This field must be a number",
-  })
-  .transform((value) => Number(value));
-
-// Validation Schemas
-const DebitCreditNoteSchema = z.object({
-  //   texable_amount: stringToNumber.refine(value => value !== undefined && value >= 0),
-  //   bill_amount: stringToNumber.refine(value => value !== undefined && value >= 0),
-  //   TCS_Net_Payable: stringToNumber.refine(value => value !== undefined && value >= 0),
-});
+import {
+  TextField,
+  Grid
+} from '@mui/material';
 
 // Global Variables
 var newDcid = "";
@@ -58,7 +46,7 @@ const DebitCreditNote = () => {
   // Detail Help State Management
   const [users, setUsers] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
-  const [popupMode, setPopupMode] = useState("add"); // 'add' or 'edit'
+  const [popupMode, setPopupMode] = useState("add");
   const [selectedUser, setSelectedUser] = useState({});
   const [deleteMode, setDeleteMode] = useState(false);
   const [expacCode, setExpacCode] = useState("");
@@ -92,10 +80,14 @@ const DebitCreditNote = () => {
   // In utility page record doubleClicked that record show for edit functionality
   const location = useLocation();
   const selectedRecord = location.state?.selectedRecord;
+  const handleTransType = location.state?.tran_type;
+
+  console.log("handleTransType", handleTransType)
+
+
   const navigate = useNavigate();
   const setFocusTaskdate = useRef(null);
   selectedfilter = location.state?.selectedfilter;
-  const permissions = location.state?.permissionsData;
   const [tranType, setTranType] = useState(selectedfilter);
   const [isHandleChange, setIsHandleChange] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -143,7 +135,6 @@ const DebitCreditNote = () => {
     TDS_Rate: 0.0,
     TDS_Amt: 0.0,
     IsDeleted: 1,
-    tran_type: tranType
   };
 
   // Head data functionality code.
@@ -158,31 +149,22 @@ const DebitCreditNote = () => {
 
   const handleChange = async (event) => {
     const { name, value } = event.target;
-
-    validateField(name, value);
-
     setFormData((prevData) => ({
       ...prevData,
       [name]: value,
     }));
   };
 
-  console.log("permission", permissions)
   const handleKeyDownCalculations = async (event) => {
     if (event.key === "Tab") {
-      // event.preventDefault();
-
       const { name, value } = event.target;
       let gstRate = GstRate;
-
       if (!gstRate || gstRate === 0) {
         const cgstRate = parseFloat(formData.cgst_rate) || 0;
         const sgstRate = parseFloat(formData.sgst_rate) || 0;
         const igstRate = parseFloat(formData.igst_rate) || 0;
-
         gstRate = igstRate > 0 ? igstRate : cgstRate + sgstRate;
       }
-
       const updatedFormData = await calculateDependentValues(
         name,
         value,
@@ -190,9 +172,7 @@ const DebitCreditNote = () => {
         matchStatus,
         gstRate
       );
-
       setFormData(updatedFormData);
-      validateField(name, value);
     }
   };
 
@@ -211,42 +191,10 @@ const DebitCreditNote = () => {
     setFocusTaskdate.current.focus();
   }, [tranType]);
 
-  // Validation Part
-  const validateField = (name, value) => {
-    try {
-      DebitCreditNoteSchema.pick({ [name]: true }).parse({ [name]: value });
-      setFormErrors((prevErrors) => {
-        const updatedErrors = { ...prevErrors };
-        delete updatedErrors[name];
-        return updatedErrors;
-      });
-    } catch (err) {
-      setFormErrors((prevErrors) => ({
-        ...prevErrors,
-        [name]: err.errors[0].message,
-      }));
-    }
-  };
-
-  const validateForm = () => {
-    try {
-      DebitCreditNoteSchema.parse(formData);
-      setFormErrors({});
-      return true;
-    } catch (err) {
-      const errors = {};
-      err.errors.forEach((error) => {
-        errors[error.path[0]] = error.message;
-      });
-      setFormErrors(errors);
-      return false;
-    }
-  };
-
   // Fetch Last Record Doc No from database
   const fetchLastRecord = () => {
     fetch(
-      `${API_URL}/get-lastdebitcreditnotedata?Company_Code=${companyCode}&Year_Code=${Year_Code}&tran_type=${tranType}`
+      `${API_URL}/get-lastdebitcreditnotedata?Company_Code=${companyCode}&Year_Code=${Year_Code}&tran_type=${tranType || handleTransType}`
     )
       .then((response) => {
         if (!response.ok) {
@@ -314,19 +262,13 @@ const DebitCreditNote = () => {
 
   // Handle New record insert in database and update the record Functionality
   const handleSaveOrUpdate = async () => {
-    if (!validateForm()) return;
     setIsEditing(true);
     setIsLoading(true);
-
     const headData = {
       ...formData,
       gst_code: gstCode || GSTCode,
       tran_type: tranType,
     };
-
-    console.log("HeadData",headData)
-
-    // Remove dcid from headData if in edit mode
     if (isEditMode) {
       delete headData.dcid;
     }
@@ -403,7 +345,6 @@ const DebitCreditNote = () => {
       try {
         const deleteApiUrl = `${API_URL}/delete_data_by_dcid?dcid=${newDcid}&Company_Code=${companyCode}&doc_no=${formData.doc_no}&Year_Code=${Year_Code}&tran_type=${tranType}`;
         const response = await axios.delete(deleteApiUrl);
-
         if (response.status === 200) {
           if (response.data) {
             toast.success("Data delete successfully!");
@@ -946,11 +887,11 @@ const DebitCreditNote = () => {
     }
 
     updatedFormData = await calculateDependentValues(
-      "gst_code", // Pass the name of the field being changed
-      gstRate, // Pass the correct gstRate
+      "gst_code",
+      gstRate,
       updatedFormData,
       matchStatus,
-      gstRate // Pass gstRate explicitly to calculateDependentValues
+      gstRate
     );
 
     setFormData(updatedFormData);
@@ -994,17 +935,15 @@ const DebitCreditNote = () => {
       const cgstRate = parseFloat(formData.cgst_rate) || 0;
       const sgstRate = parseFloat(formData.sgst_rate) || 0;
       const igstRate = parseFloat(formData.igst_rate) || 0;
-
-      // Assume that if IGST is present, it should be used; otherwise, use CGST + SGST
       gstRate = igstRate > 0 ? igstRate : cgstRate + sgstRate;
     }
 
     updatedFormData = await calculateDependentValues(
-      "gst_code", // Pass the name of the field being changed
-      gstRate, // Pass the correct gstRate
+      "gst_code",
+      gstRate,
       updatedFormData,
       matchStatus,
-      gstRate // Pass gstRate explicitly to calculateDependentValues
+      gstRate
     );
 
     setFormData(updatedFormData);
@@ -1044,23 +983,22 @@ const DebitCreditNote = () => {
       const sgstRate = parseFloat(formData.sgst_rate) || 0;
       const igstRate = parseFloat(formData.igst_rate) || 0;
 
-      // Assume that if IGST is present, it should be used; otherwise, use CGST + SGST
       gstRate = igstRate > 0 ? igstRate : cgstRate + sgstRate;
     }
 
     updatedFormData = await calculateDependentValues(
-      "gst_code", // Pass the name of the field being changed
-      gstRate, // Pass the correct gstRate
+      "gst_code",
+      gstRate,
       updatedFormData,
       matchStatus,
-      gstRate // Pass gstRate explicitly to calculateDependentValues
+      gstRate
     );
 
     setFormData(updatedFormData);
   };
 
   // Functionality to help section to set the record
-  const handleItemCode = (code, accoid,  name, HSN) => {
+  const handleItemCode = (code, accoid, name, HSN) => {
     setItemCode(code);
     setItemCodeAccoid(accoid);
     setHSNNo(HSN);
@@ -1072,10 +1010,6 @@ const DebitCreditNote = () => {
     setExpacCode(code);
     setExpacAccoid(accoid);
     setExpacName(name);
-
-    console.log("handleExpAcCode called", { code, accoid, name });
-
-    // Update expacAccoid for all users with the same expac_code
     const updatedUsers = users.map((user) => {
       if (user.expac_code === code) {
         return {
@@ -1109,7 +1043,7 @@ const DebitCreditNote = () => {
     }
   };
 
-  const handleBillNo = () => {};
+  const handleBillNo = () => { };
 
   const handleBillTo = (code, accoid) => {
     setBillTo(code);
@@ -1162,21 +1096,20 @@ const DebitCreditNote = () => {
 
       let gstRate = GstRate;
 
-    if (!gstRate || gstRate === 0) {
-      const cgstRate = parseFloat(formData.cgst_rate) || 0;
-      const sgstRate = parseFloat(formData.sgst_rate) || 0;
-      const igstRate = parseFloat(formData.igst_rate) || 0;
+      if (!gstRate || gstRate === 0) {
+        const cgstRate = parseFloat(formData.cgst_rate) || 0;
+        const sgstRate = parseFloat(formData.sgst_rate) || 0;
+        const igstRate = parseFloat(formData.igst_rate) || 0;
 
-      gstRate = igstRate > 0 ? igstRate : cgstRate + sgstRate;
-    }
+        gstRate = igstRate > 0 ? igstRate : cgstRate + sgstRate;
+      }
 
-      // Perform the calculation after setting BillFrom
       updatedFormData = await calculateDependentValues(
         "gst_code",
         GstRate,
         updatedFormData,
         matchStatusResult,
-        gstRate // Explicitly pass the GstRate state variable
+        gstRate
       );
       setFormData(updatedFormData);
     } catch (error) {
@@ -1204,18 +1137,16 @@ const DebitCreditNote = () => {
         Year_Code
       );
       setMatchStatus(matchStatusResult);
-
-      // Calculate the dependent values based on the match status
       const newFormData = await calculateDependentValues(
         "gst_code",
         rate,
         updatedFormData,
-        matchStatusResult, // Use the matchStatusResult
-        rate // Explicitly pass the gstRate
+        matchStatusResult,
+        rate
       );
 
       setFormData(newFormData);
-    } catch (error) {}
+    } catch (error) { }
   };
 
   const calculateTotalTaxableAmount = (users) => {
@@ -1290,14 +1221,17 @@ const DebitCreditNote = () => {
     return updatedFormData;
   };
 
+  const validateNumericInput = (e) => {
+    e.target.value = e.target.value.replace(/[^0-9.]/g, '');
+  };
+
   return (
     <>
       <ToastContainer />
       <h3 className="mt-4 mb-4 text-center custom-heading">
         Debit Credit Note
       </h3>
-      {/* Action button  */}
-      <div className="container">
+      <div >
         <ActionButtonGroup
           handleAddOne={handleAddOne}
           addOneButtonEnabled={addOneButtonEnabled}
@@ -1312,10 +1246,8 @@ const DebitCreditNote = () => {
           cancelButtonEnabled={cancelButtonEnabled}
           handleBack={handleBack}
           backButtonEnabled={backButtonEnabled}
-          permissions={permissions}
         />
         <div>
-          {/* Navigation Buttons */}
           <NavigationButtons
             handleFirstButtonClick={handleFirstButtonClick}
             handlePreviousButtonClick={handlePreviousButtonClick}
@@ -1327,90 +1259,88 @@ const DebitCreditNote = () => {
         </div>
       </div>
 
-      {/* Head Part Form and Validation part */}
-      <form className="debitCreditNote-container" onSubmit={handleSubmit}>
-        <div className="debitCreditNote-row">
-          <label className="debitCreditNote-form-label">Change No:</label>
-          <div className="debitCreditNote-col-Text">
-            <div className="debitCreditNote-form-group">
-              <input
-                type="text"
-                className="debitCreditNote-form-control"
+      <form onSubmit={handleSubmit}>
+        <div className="debitCreditNote-form">
+          <Grid container spacing={1}>
+            <Grid item xs={12} sm={1}>
+              <TextField
+                label="Change No"
                 name="changeNo"
-                autoComplete="off"
+                variant="outlined"
+                fullWidth
                 onKeyDown={handleKeyDown}
                 disabled={!addOneButtonEnabled}
+                size="small"
               />
-            </div>
-          </div>
-          <label className="debitCreditNote-form-label">Entry No:</label>
-          <div className="debitCreditNote-col-Text">
-            <div className="debitCreditNote-form-group">
-              <input
-                ref={setFocusTaskdate}
-                type="text"
-                className="debitCreditNote-form-control"
+            </Grid>
+            <Grid item xs={12} sm={1}>
+              <TextField
+                label="Entry No"
                 name="doc_no"
-                autoComplete="off"
+                variant="outlined"
+                fullWidth
                 value={formData.doc_no}
                 onChange={handleChange}
                 disabled
+                inputRef={setFocusTaskdate}
+                size="small"
               />
-            </div>
-          </div>
-          <label htmlFor="tran_type" className="debitCreditNote-form-label">
-            Type:
-          </label>
-          <div className="debitCreditNote-col">
-            <div className="debitCreditNote-form-group-type">
+            </Grid>
+            <label htmlFor="tran_type" className="debitCreditNote-form-label" style={{ marginTop: "12px", marginLeft: '12px' }}>
+              Type:
+            </label>
+            <Grid item xs={12} sm={2}>
               <select
                 id="tran_type"
                 name="tran_type"
                 className="debitCreditNote-custom-select"
                 value={formData.tran_type}
                 onChange={handleChange}
+                disabled={!isEditing && addOneButtonEnabled}
               >
                 <option value="DN">Debit Note To Customer</option>
                 <option value="CN">Credit Note To Customer</option>
                 <option value="DS">Debit Note To Supplier</option>
                 <option value="CS">Credit Note To Supplier</option>
               </select>
-            </div>
-          </div>
-          <label className="debitCreditNote-form-label">Entry Date:</label>
-          <div className="debitCreditNote-col">
-            <div className="debitCreditNote-form-group">
-              <input
-                tabIndex="1"
-                ref={setFocusTaskdate}
+            </Grid>
+            <Grid item xs={12} sm={2}>
+              <TextField
+                label="Entry Date"
                 type="date"
-                className="debitCreditNote-form-control"
-                id="datePicker"
                 name="doc_date"
+                variant="outlined"
+                fullWidth
                 value={formData.doc_date}
                 onChange={(e) => handleDateChange(e, "doc_date")}
                 disabled={!isEditing && addOneButtonEnabled}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                inputRef={setFocusTaskdate}
+                size="small"
               />
+            </Grid>
+            <label htmlFor="Bill_From" className="debitCreditNote-form-label" style={{ marginTop: "12px", marginLeft: '20px' }}>
+              Bill From:
+            </label>
+            <div >
+              <div >
+                <AccountMasterHelp
+                  onAcCodeClick={handleBillFrom}
+                  CategoryName={BillFromName}
+                  CategoryCode={BillFormCode}
+                  name="ac_code"
+                  disabledFeild={!isEditing && addOneButtonEnabled}
+                />
+              </div>
             </div>
-          </div>
-          <label htmlFor="Bill_From" className="debitCreditNote-form-label">
-            Bill From:
-          </label>
-          <div className="debitCreditNote-col">
-            <div className="debitCreditNote-form-group">
-              <AccountMasterHelp
-                onAcCodeClick={handleBillFrom}
-                CategoryName={BillFromName}
-                CategoryCode={BillFormCode}
-                name="ac_code"
-                tabIndexHelp={2}
-                disabledFeild={!isEditing && addOneButtonEnabled}
-              />
-            </div>
-          </div>
+          </Grid>
         </div>
+        <br></br>
+
         <div className="debitCreditNote-row">
-          <label htmlFor="Bill_No" className="debitCreditNote-form-label">
+          <label htmlFor="Bill_No" className="debitCreditNote-form-label" style={{ marginTop: "12px", marginLeft: '12px' }}>
             Bill No:
           </label>
           <div className="debitCreditNote-col">
@@ -1420,7 +1350,6 @@ const DebitCreditNote = () => {
                 CategoryName=""
                 CategoryCode=""
                 name="Bill_No"
-                tabIndexHelp={3}
                 disabledFeild={!isEditing && addOneButtonEnabled}
               />
             </div>
@@ -1429,7 +1358,6 @@ const DebitCreditNote = () => {
           <div className="debitCreditNote-col">
             <div className="debitCreditNote-form-group">
               <input
-                tabIndex="4"
                 type="date"
                 className="debitCreditNote-form-control"
                 id="datePicker"
@@ -1440,7 +1368,7 @@ const DebitCreditNote = () => {
               />
             </div>
           </div>
-          <label htmlFor="Bill_To" className="debitCreditNote-form-label">
+          <label htmlFor="Bill_To" className="debitCreditNote-form-label" style={{ marginTop: "10px", marginLeft: '12px' }}>
             Bill To:
           </label>
           <div className="debitCreditNote-col">
@@ -1450,12 +1378,11 @@ const DebitCreditNote = () => {
                 CategoryName={BillToName}
                 CategoryCode={BillToCode}
                 name="Bill_To"
-                tabIndexHelp={5}
                 disabledFeild={!isEditing && addOneButtonEnabled}
               />
             </div>
           </div>
-          <label htmlFor="Mill" className="debitCreditNote-form-label">
+          <label htmlFor="Mill" className="debitCreditNote-form-label" style={{ marginTop: "10px", marginLeft: '12px' }}>
             Mill:
           </label>
           <div className="debitCreditNote-col">
@@ -1465,12 +1392,11 @@ const DebitCreditNote = () => {
                 CategoryName={MillName}
                 CategoryCode={MillCode}
                 name="Mill"
-                tabIndexHelp={6}
                 disabledFeild={!isEditing && addOneButtonEnabled}
               />
             </div>
           </div>
-          <label htmlFor="Ship_To" className="debitCreditNote-form-label">
+          <label htmlFor="Ship_To" className="debitCreditNote-form-label" style={{ marginTop: "10px", marginLeft: '12px' }}>
             Ship To:
           </label>
           <div className="debitCreditNote-col">
@@ -1480,13 +1406,11 @@ const DebitCreditNote = () => {
                 CategoryName={ShipToName}
                 CategoryCode={ShipToCode}
                 name="Ship_To"
-                tabIndexHelp={7}
                 disabledFeild={!isEditing && addOneButtonEnabled}
               />
             </div>
           </div>
         </div>
-
         {isLoading && (
           <div className="loading-overlay">
             <div className="spinner-container">
@@ -1494,37 +1418,36 @@ const DebitCreditNote = () => {
             </div>
           </div>
         )}
-
         {/*detail part popup functionality and Validation part Grid view */}
-        <div className="container mt-4">
-          <button
-            className="btn btn-primary"
-            onClick={() => openPopup("add")}
-            disabled={!isEditing}
-            tabIndex="8"
-            onKeyDown={(event) => {
-              if (event.key === 13) {
-                openPopup("add");
-              }
-            }}
-          >
-            Add
-          </button>
-          <button
-            className="btn btn-danger"
-            disabled={!isEditing}
-            style={{ marginLeft: "10px" }}
-            tabIndex="9"
-          >
-            Close
-          </button>
+        <div >
+          <div style={{ float: "left", marginBottom: '5px' }}>
+            <button
+              className="btn btn-primary"
+              onClick={() => openPopup("add")}
+              disabled={!isEditing}
+              onKeyDown={(event) => {
+                if (event.key === 13) {
+                  openPopup("add");
+                }
+              }}
+            >
+              Add
+            </button>
+            <button
+              className="btn btn-danger"
+              disabled={!isEditing}
+              style={{ marginLeft: "10px" }}
+            >
+              Close
+            </button>
+          </div>
           {showPopup && (
             <div className="modal" role="dialog" style={{ display: "block" }}>
               <div className="modal-dialog" role="document">
                 <div className="modal-content">
                   <div className="modal-header">
                     <h5 className="modal-title">
-                      {selectedUser.id ? "Edit User" : "Add User"}
+                      {selectedUser.id ? "Edit" : "Add"}
                     </h5>
                     <button
                       type="button"
@@ -1545,10 +1468,9 @@ const DebitCreditNote = () => {
                       <div className="form-element">
                         <AccountMasterHelp
                           onAcCodeClick={handleExpAcCode}
-                          CategoryName={expacName }
+                          CategoryName={expacName}
                           CategoryCode={expacCode}
                           name="expac_code"
-                          tabIndexHelp={10}
                           className="account-master-help"
                         />
                       </div>
@@ -1560,7 +1482,6 @@ const DebitCreditNote = () => {
                         <div className="debitCreditNote-form-group">
                           <input
                             type="text"
-                            tabIndex="11"
                             className="debitCreditNote-form-control"
                             name="value"
                             autoComplete="off"
@@ -1577,7 +1498,6 @@ const DebitCreditNote = () => {
                           CategoryName={itemName}
                           CategoryCode={itemCode}
                           name="Item_Code"
-                          tabIndexHelp={13}
                           SystemType="I"
                           className="account-master-help"
                         />
@@ -1588,7 +1508,6 @@ const DebitCreditNote = () => {
                         <div className="debitCreditNote-form-group">
                           <input
                             type="text"
-                            tabIndex="14"
                             className="debitCreditNote-form-control"
                             name="HSN"
                             autoComplete="off"
@@ -1604,7 +1523,6 @@ const DebitCreditNote = () => {
                         <div className="debitCreditNote-form-group">
                           <input
                             type="text"
-                            tabIndex="15"
                             className="debitCreditNote-form-control"
                             name="Quantal"
                             autoComplete="off"
@@ -1620,7 +1538,6 @@ const DebitCreditNote = () => {
                       <button
                         className="btn btn-primary"
                         onClick={updateUser}
-                        tabIndex="16"
                         onKeyDown={(event) => {
                           if (event.key === 13) {
                             updateUser();
@@ -1633,7 +1550,6 @@ const DebitCreditNote = () => {
                       <button
                         className="btn btn-primary"
                         onClick={addUser}
-                        tabIndex="17"
                         onKeyDown={(event) => {
                           if (event.key === 13) {
                             addUser();
@@ -1647,7 +1563,6 @@ const DebitCreditNote = () => {
                       type="button"
                       className="btn btn-secondary"
                       onClick={closePopup}
-                      tabIndex="18"
                     >
                       Cancel
                     </button>
@@ -1678,8 +1593,8 @@ const DebitCreditNote = () => {
                 <tr key={user.id}>
                   <td>
                     {user.rowaction === "add" ||
-                    user.rowaction === "update" ||
-                    user.rowaction === "Normal" ? (
+                      user.rowaction === "update" ||
+                      user.rowaction === "Normal" ? (
                       <>
                         <button
                           className="btn btn-warning"
@@ -1690,7 +1605,6 @@ const DebitCreditNote = () => {
                               editUser(user);
                             }
                           }}
-                          tabIndex="19"
                         >
                           Edit
                         </button>
@@ -1703,7 +1617,6 @@ const DebitCreditNote = () => {
                             }
                           }}
                           disabled={!isEditing}
-                          tabIndex="20"
                         >
                           Delete
                         </button>
@@ -1733,12 +1646,10 @@ const DebitCreditNote = () => {
             </tbody>
           </table>
         </div>
-        <br></br>
-        <br></br>
-        <br></br>
+
 
         <div className="debitCreditNote-row">
-          <label htmlFor="gst_code" className="debitCreditNote-form-label">
+          <label htmlFor="gst_code" >
             GST Rate Code:
           </label>
           <div className="debitCreditNote-col">
@@ -1748,327 +1659,431 @@ const DebitCreditNote = () => {
                 GstRateName={GSTName}
                 GstRateCode={GSTCode}
                 name="gst_code"
-                tabIndexHelp={21}
                 disabledFeild={!isEditing && addOneButtonEnabled}
               />
-            </div>
-          </div>
+              <Grid container spacing={1}>
+                <Grid item xs={12} sm={3} ml={2}>
+                  <TextField
+                    label="ASN No"
+                    name="ASNNO"
+                    variant="outlined"
+                    fullWidth
+                    value={formData.ASNNO}
+                    onChange={handleChange}
+                    disabled={!isEditing && addOneButtonEnabled}
+                    autoComplete="off"
+                    size="small"
+                  />
+                </Grid>
 
-          <label className="debitCreditNote-form-label">ASN No:</label>
-          <div className="debitCreditNote-col-Text">
-            <div className="debitCreditNote-form-group">
-              <input
-                tabIndex="22"
-                type="text"
-                className="debitCreditNote-form-control"
-                name="ASNNO"
-                autoComplete="off"
-                value={formData.ASNNO}
-                onChange={handleChange}
-                disabled={!isEditing && addOneButtonEnabled}
-              />
+                <Grid item xs={12} sm={3} ml={2}>
+                  <TextField
+                    label="EInvoice No"
+                    name="Ewaybillno"
+                    variant="outlined"
+                    fullWidth
+                    value={formData.Ewaybillno}
+                    onChange={handleChange}
+                    disabled={!isEditing && addOneButtonEnabled}
+                    autoComplete="off"
+                    size="small"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={2}>
+                  <TextField
+                    label="ACK No"
+                    name="ackno"
+                    variant="outlined"
+                    fullWidth
+                    value={formData.ackno}
+                    onChange={handleChange}
+                    disabled={!isEditing && addOneButtonEnabled}
+                    autoComplete="off"
+                    size="small"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={12}>
+                  <TextField
+                    label="Narration"
+                    name="Narration"
+                    variant="outlined"
+                    fullWidth
+                    multiline
+                    rows={4}
+                    value={formData.Narration}
+                    onChange={handleChange}
+                    autoComplete="off"
+                    size="small"
+                    disabled={!isEditing && addOneButtonEnabled}
+                  />
+                </Grid>
+              </Grid>
             </div>
-          </div>
-          <label className="debitCreditNote-form-label">EInvoice No:</label>
-          <div className="debitCreditNote-col-Ewaybillno">
-            <div className="debitCreditNote-form-group">
-              <input
-                type="text"
-                className="debitCreditNote-form-control"
-                name="Ewaybillno"
-                autoComplete="off"
-                value={formData.Ewaybillno}
-                onChange={handleChange}
-                tabIndex="23"
-                disabled={!isEditing && addOneButtonEnabled}
-              />
-            </div>
-          </div>
-
-          <label className="debitCreditNote-form-label">ACK No:</label>
-          <div className="debitCreditNote-col-Ewaybillno">
-            <div className="debitCreditNote-form-group">
-              <input
-                type="text"
-                className="debitCreditNote-form-control"
-                name="ackno"
-                autoComplete="off"
-                value={formData.ackno}
-                onChange={handleChange}
-                tabIndex="24"
-                disabled={!isEditing && addOneButtonEnabled}
-              />
-            </div>
-          </div>
-
-          <label
-            className="debitCreditNote-form-label"
-            style={{ fontWeight: "bold" }}
-          >
-            Narration:
-          </label>
-          <div className="debitCreditNote-col">
-            <textarea
-              name="Narration"
-              value={formData.Narration}
-              onChange={handleChange}
-              autoComplete="off"
-              tabIndex="25"
-              disabled={!isEditing && addOneButtonEnabled}
-            />
           </div>
         </div>
-        <div className="debitCreditNote-row">
-          <label className="debitCreditNote-form-label">Taxeble Amount:</label>
-          <div className="debitCreditNote-col-Text">
-            <div className="debitCreditNote-form-group">
-              <input
-                tabIndex="26"
+
+        <div className="debitcredit-taxation" >
+          <Grid container spacing={1} alignItems="center" style={{ float: "right" }}>
+            <Grid item xs={1}>
+              <label className="debitCreditNote-form-label">Taxable Amount:</label>
+            </Grid>
+            <Grid item xs={12} sm={2}>
+              <TextField
                 type="text"
-                className="debitCreditNote-form-control"
+                variant="outlined"
+                fullWidth
                 name="texable_amount"
                 autoComplete="off"
                 value={formData.texable_amount}
                 onChange={handleChange}
                 onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                error={Boolean(formErrors.texable_amount)}
+                helperText={formErrors.texable_amount}
+                size="small"
+                inputProps={{
+                  sx: { textAlign: 'right' },
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-              {formErrors.texable_amount && (
-                <span className="error">{formErrors.texable_amount}</span>
-              )}
-            </div>
-          </div>
+            </Grid>
+          </Grid>
 
-          <label className="debitCreditNote-form-label">CGST:</label>
-          <div className="debitCreditNote-col-Text">
-            <div className="debitCreditNote-form-group">
-              <input
-                tabIndex="27"
+          <Grid container spacing={1} alignItems="center" style={{ marginTop: '-6px' }} >
+            <Grid item xs={1}>
+              <label className="debitCreditNote-form-label">CGST:</label>
+            </Grid>
+            <Grid item xs={12} sm={1}>
+              <TextField
                 type="text"
-                className="debitCreditNote-form-control"
+                variant="outlined"
+                fullWidth
                 name="cgst_rate"
                 autoComplete="off"
                 value={formData.cgst_rate}
-                onKeyDown={handleKeyDownCalculations}
                 onChange={handleChange}
+                onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                error={Boolean(formErrors.cgst_rate)}
+                helperText={formErrors.cgst_rate}
+                size="small"
+                inputProps={{
+                  sx: { textAlign: 'right' },
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-              {formErrors.cgst_rate && (
-                <span className="error">{formErrors.cgst_rate}</span>
-              )}
-              <input
-                tabIndex="28"
+            </Grid>
+            <Grid item xs={12} sm={1}>
+              <TextField
                 type="text"
-                className="debitCreditNote-form-control"
+                variant="outlined"
+                fullWidth
                 name="cgst_amount"
                 autoComplete="off"
                 value={formData.cgst_amount}
                 onChange={handleChange}
                 onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                error={Boolean(formErrors.cgst_amount)}
+                helperText={formErrors.cgst_amount}
+                size="small"
+                inputProps={{
+                  sx: { textAlign: 'right' },
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-              {formErrors.cgst_amount && (
-                <span className="error">{formErrors.cgst_amount}</span>
-              )}
-            </div>
-          </div>
-          <label className="debitCreditNote-form-label">SGST:</label>
-          <div className="debitCreditNote-col-Text">
-            <div className="debitCreditNote-form-group">
-              <input
-                tabIndex="29"
+            </Grid>
+          </Grid>
+
+          <Grid container spacing={1} alignItems="center" style={{ marginTop: '-6px' }}>
+            <Grid item xs={1}>
+              <label className="debitCreditNote-form-label">SGST:</label>
+            </Grid>
+            <Grid item xs={12} sm={1}>
+              <TextField
                 type="text"
-                className="debitCreditNote-form-control"
+                variant="outlined"
+                fullWidth
                 name="sgst_rate"
                 autoComplete="off"
                 value={formData.sgst_rate}
                 onChange={handleChange}
                 onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                error={Boolean(formErrors.sgst_rate)}
+                helperText={formErrors.sgst_rate}
+                size="small"
+                inputProps={{
+                  sx: { textAlign: 'right' },
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-              {formErrors.sgst_rate && (
-                <span className="error">{formErrors.sgst_rate}</span>
-              )}
-              <input
-                tabIndex="30"
+            </Grid>
+            <Grid item xs={12} sm={1}>
+              <TextField
                 type="text"
-                className="debitCreditNote-form-control"
+                variant="outlined"
+                fullWidth
                 name="sgst_amount"
                 autoComplete="off"
                 value={formData.sgst_amount}
                 onChange={handleChange}
                 onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                error={Boolean(formErrors.sgst_amount)}
+                helperText={formErrors.sgst_amount}
+                size="small"
+                inputProps={{
+                  sx: { textAlign: 'right' },
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-              {formErrors.sgst_amount && (
-                <span className="error">{formErrors.sgst_amount}</span>
-              )}
-            </div>
-          </div>
+            </Grid>
+          </Grid>
 
-          <label className="debitCreditNote-form-label">IGST:</label>
-          <div className="debitCreditNote-col-Text">
-            <div className="debitCreditNote-form-group">
-              <input
-                tabIndex="31"
+          <Grid container spacing={1} alignItems="center" style={{ marginTop: '-6px' }}>
+            <Grid item xs={1}>
+              <label className="debitCreditNote-form-label">IGST:</label>
+            </Grid>
+            <Grid item xs={12} sm={1}>
+              <TextField
                 type="text"
-                className="debitCreditNote-form-control"
+                variant="outlined"
+                fullWidth
                 name="igst_rate"
                 autoComplete="off"
                 value={formData.igst_rate}
                 onChange={handleChange}
                 onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                error={Boolean(formErrors.igst_rate)}
+                helperText={formErrors.igst_rate}
+                size="small"
+                inputProps={{
+                  sx: { textAlign: 'right' },
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-              {formErrors.igst_rate && (
-                <span className="error">{formErrors.igst_rate}</span>
-              )}
-              <input
-                tabIndex="32"
+            </Grid>
+            <Grid item xs={12} sm={1}>
+              <TextField
                 type="text"
-                className="debitCreditNote-form-control"
+                variant="outlined"
+                fullWidth
                 name="igst_amount"
                 autoComplete="off"
                 value={formData.igst_amount}
                 onChange={handleChange}
                 onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                error={Boolean(formErrors.igst_amount)}
+                helperText={formErrors.igst_amount}
+                size="small"
+                inputProps={{
+                  sx: { textAlign: 'right' },
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-              {formErrors.igst_amount && (
-                <span className="error">{formErrors.igst_amount}</span>
-              )}
-            </div>
-          </div>
+            </Grid>
+          </Grid>
 
-          <label className="debitCreditNote-form-label">MISC:</label>
-          <div className="debitCreditNote-col-Text">
-            <div className="debitCreditNote-form-group">
-              <input
-                tabIndex="33"
+          <Grid container spacing={1} alignItems="center" style={{ marginTop: '-6px' }}>
+            <Grid item xs={1}>
+              <label className="debitCreditNote-form-label">MISC:</label>
+            </Grid>
+            <Grid item xs={12} sm={2}>
+              <TextField
                 type="text"
-                className="debitCreditNote-form-control"
+                variant="outlined"
+                fullWidth
                 name="misc_amount"
                 autoComplete="off"
                 value={formData.misc_amount}
                 onChange={handleChange}
                 onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                error={Boolean(formErrors.misc_amount)}
+                helperText={formErrors.misc_amount}
+                size="small"
+                inputProps={{
+                  sx: { textAlign: 'right' },
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-              {formErrors.misc_amount && (
-                <span className="error">{formErrors.misc_amount}</span>
-              )}
-            </div>
-          </div>
+            </Grid>
+          </Grid>
 
-          <label className="debitCreditNote-form-label">Final Amount:</label>
-          <div className="debitCreditNote-col-Text">
-            <div className="debitCreditNote-form-group">
-              <input
-                tabIndex="34"
+          <Grid container spacing={1} alignItems="center" style={{ marginTop: '-6px' }}>
+            <Grid item xs={1}>
+              <label className="debitCreditNote-form-label">Final Amount:</label>
+            </Grid>
+            <Grid item xs={12} sm={2}>
+              <TextField
                 type="text"
-                className="debitCreditNote-form-control"
+                variant="outlined"
+                fullWidth
                 name="bill_amount"
                 autoComplete="off"
                 value={formData.bill_amount}
                 onChange={handleChange}
                 onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                error={Boolean(formErrors.bill_amount)}
+                helperText={formErrors.bill_amount}
+                size="small"
+                inputProps={{
+                  sx: { textAlign: 'right' },
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-              {formErrors.bill_amount && (
-                <span className="error">{formErrors.bill_amount}</span>
-              )}
-            </div>
-          </div>
+            </Grid>
+          </Grid>
 
-          <label className="debitCreditNote-form-label">TCS %:</label>
-          <div className="debitCreditNote-col-Text">
-            <div className="debitCreditNote-form-group">
-              <input
-                tabIndex="35"
+          <Grid container spacing={1} alignItems="center" style={{ marginTop: '-6px' }}>
+            <Grid item xs={1}>
+              <label className="debitCreditNote-form-label">TCS %:</label>
+            </Grid>
+            <Grid item xs={12} sm={1}>
+              <TextField
                 type="text"
-                className="debitCreditNote-form-control"
+                variant="outlined"
+                fullWidth
                 name="TCS_Rate"
                 autoComplete="off"
                 value={formData.TCS_Rate}
                 onChange={handleChange}
                 onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                error={Boolean(formErrors.TCS_Rate)}
+                helperText={formErrors.TCS_Rate}
+                size="small"
+                inputProps={{
+                  sx: { textAlign: 'right' },
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-              {formErrors.TCS_Rate && (
-                <span className="error">{formErrors.TCS_Rate}</span>
-              )}
-              <input
-                tabIndex="36"
+            </Grid>
+            <Grid item xs={12} sm={1}>
+              <TextField
                 type="text"
-                className="debitCreditNote-form-control"
+                variant="outlined"
+                fullWidth
                 name="TCS_Amt"
                 autoComplete="off"
                 value={formData.TCS_Amt}
                 onChange={handleChange}
                 onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                error={Boolean(formErrors.TCS_Amt)}
+                helperText={formErrors.TCS_Amt}
+                size="small"
+                inputProps={{
+                  sx: { textAlign: 'right' },
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-              {formErrors.TCS_Amt && (
-                <span className="error">{formErrors.TCS_Amt}</span>
-              )}
-            </div>
-          </div>
+            </Grid>
+          </Grid>
 
-          <label className="debitCreditNote-form-label">Net Payable:</label>
-          <div className="debitCreditNote-col-Text">
-            <div className="debitCreditNote-form-group">
-              <input
-                tabIndex="37"
+          <Grid container spacing={1} alignItems="center" style={{ marginTop: '-6px' }}>
+            <Grid item xs={1}>
+              <label className="debitCreditNote-form-label">Net Payable:</label>
+            </Grid>
+            <Grid item xs={12} sm={2}>
+              <TextField
                 type="text"
-                className="debitCreditNote-form-control"
+                variant="outlined"
+                fullWidth
                 name="TCS_Net_Payable"
                 autoComplete="off"
                 value={formData.TCS_Net_Payable}
                 onChange={handleChange}
                 onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                error={Boolean(formErrors.TCS_Net_Payable)}
+                helperText={formErrors.TCS_Net_Payable}
+                size="small"
+                inputProps={{
+                  sx: { textAlign: 'right' },
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-              {formErrors.TCS_Net_Payable && (
-                <span className="error">{formErrors.TCS_Net_Payable}</span>
-              )}
-            </div>
-          </div>
-        </div>
-        <div className="debitCreditNote-row">
-          <label className="debitCreditNote-form-label">TDS %:</label>
-          <div className="debitCreditNote-col-Text">
-            <div className="debitCreditNote-form-group">
-              <input
-                tabIndex="38"
+            </Grid>
+          </Grid>
+
+          <Grid container spacing={1} alignItems="center" style={{ marginTop: '-6px' }}>
+            <Grid item xs={1}>
+              <label className="debitCreditNote-form-label">TDS %:</label>
+            </Grid>
+            <Grid item xs={12} sm={1}>
+              <TextField
                 type="text"
-                className="debitCreditNote-form-control"
+                variant="outlined"
+                fullWidth
                 name="TDS_Rate"
                 autoComplete="off"
                 value={formData.TDS_Rate}
                 onChange={handleChange}
                 onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                error={Boolean(formErrors.TDS_Rate)}
+                helperText={formErrors.TDS_Rate}
+                size="small"
+                inputProps={{
+                  sx: { textAlign: 'right' },
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-              {formErrors.TDS_Rate && (
-                <span className="error">{formErrors.TDS_Rate}</span>
-              )}
-              <input
-                tabIndex="39"
+            </Grid>
+            <Grid item xs={12} sm={1}>
+              <TextField
                 type="text"
-                className="debitCreditNote-form-control"
+                variant="outlined"
+                fullWidth
                 name="TDS_Amt"
                 autoComplete="off"
-                value={formData.TDS_Amt !== null ? formData.TDS_Amt : ""}
-                // value={formData.TDS_Amt}
+                value={formData.TDS_Amt || ""}
                 onChange={handleChange}
                 onKeyDown={handleKeyDownCalculations}
                 disabled={!isEditing && addOneButtonEnabled}
+                error={Boolean(formErrors.TDS_Amt)}
+                helperText={formErrors.TDS_Amt}
+                size="small"
+                inputProps={{
+                  sx: { textAlign: 'right' },
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*[.,]?[0-9]+',
+                  onInput: validateNumericInput,
+                }}
               />
-              {formErrors.TDS_Amt && (
-                <span className="error">{formErrors.TDS_Amt}</span>
-              )}
-            </div>
-          </div>
+            </Grid>
+          </Grid>
         </div>
       </form>
     </>

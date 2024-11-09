@@ -3,9 +3,11 @@ from app import app, db
 from app.models.Company.UserLogin.UserLoginModels import UserLogin
 from sqlalchemy import text
 from app.utils.CommonGLedgerFunctions import get_accoid
+import os
+API_URL= os.getenv('API_URL')
 
 
-@app.route('/api/userlogin', methods=['POST'])
+@app.route(API_URL+'/userlogin', methods=['POST'])
 def userlogin():
     # Parse login credentials from JSON request data
     login_data = request.get_json()
@@ -33,7 +35,7 @@ def userlogin():
     return jsonify({'message': 'Login successful', 'user_id': user.uid}), 200
 
 
-@app.route('/api/get_self_ac', methods=['GET'])
+@app.route(API_URL+'/get_self_ac', methods=['GET'])
 def get_self_ac():
     # Parse query parameters
     company_code = request.args.get('Company_Code')

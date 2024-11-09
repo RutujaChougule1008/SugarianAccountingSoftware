@@ -21,7 +21,7 @@ const API_URL = process.env.REACT_APP_API;
 const companyCode = sessionStorage.getItem('Company_Code');
 const Year_Code = sessionStorage.getItem('Year_Code');
 
-function SaleBillUtility() {
+function ServiceBillUtility() {
     const [fetchedData, setFetchedData] = useState([]);
     const [filteredData, setFilteredData] = useState([]);
     const [perPage, setPerPage] = useState(15);
@@ -36,7 +36,7 @@ function SaleBillUtility() {
                 const response = await axios.get(apiUrl);
                 if (response.data && response.data.all_data_servicebill) {
                     setFetchedData(response.data.all_data_servicebill);
-                    setFilteredData(response.data.all_data_servicebill); 
+                    setFilteredData(response.data.all_data_servicebill);
                 }
             } catch (error) {
                 console.error("Error fetching data:", error);
@@ -49,10 +49,27 @@ function SaleBillUtility() {
     useEffect(() => {
         const filtered = fetchedData.filter(post => {
             const searchTermLower = searchTerm.toLowerCase();
-            return Object.keys(post).some(key =>
-                String(post[key]).toLowerCase().includes(searchTermLower)
-            );
+            return Object.keys(post).some(key => {
+                const value = post[key];
+                if (key === 'service_bill_head_data') {
+                    return Object.values(value).some(val =>
+                        String(val).toLowerCase().includes(searchTermLower)
+                    );
+                }
+                if (key === 'service_labels') {
+                    return value.some(label =>
+                        String(label.partyname).toLowerCase().includes(searchTermLower)
+                    );
+                }
+                if (key === 'service_bill_details') {
+                    return value.some(detail =>
+                        String(detail.Item_Code).toLowerCase().includes(searchTermLower)
+                    );
+                }
+                return String(value).toLowerCase().includes(searchTermLower);
+            });
         });
+
         setFilteredData(filtered);
         setCurrentPage(1);
     }, [searchTerm, fetchedData]);
@@ -63,13 +80,13 @@ function SaleBillUtility() {
     };
 
     const handleSearchTermChange = (event) => {
-        const term = event.target.value;
-        setSearchTerm(term);
+        setSearchTerm(event.target.value);
     };
 
     const pageCount = Math.ceil(filteredData.length / perPage);
 
     const paginatedPosts = filteredData.slice((currentPage - 1) * perPage, currentPage * perPage);
+
     const handlePageChange = (pageNumber) => {
         setCurrentPage(pageNumber);
     };
@@ -83,19 +100,13 @@ function SaleBillUtility() {
         navigate("/service-bill", { state: { selectedRecord } });
     };
 
-    const handleSearchClick = () => {
-        // Handle search button click if needed
-    };
-
     const handleBack = () => {
         navigate("/DashBoard");
     };
 
     return (
-        <div className="container" style={{ padding: '20px', overflow: 'hidden' }}>
-            <Typography variant="h4" gutterBottom style={{ textAlign: 'center', marginBottom: '20px' }}>
-            Service Bill
-            </Typography>
+        <div>
+            <Typography variant="h5">Service Bill</Typography>
             <Grid container spacing={2} alignItems="center">
                 <Grid item>
                     <Button variant="contained" color="primary" onClick={handleClick}>
@@ -110,17 +121,16 @@ function SaleBillUtility() {
                 <Grid item>
                     <PerPageSelect value={perPage} onChange={handlePerPageChange} />
                 </Grid>
-                <Grid item xs={12} sm={4} sx={{ marginLeft: 2 }}>
+                <Grid item xs={12} sm={10} sx={{ marginLeft: 2 }}>
                     <SearchBar
                         value={searchTerm}
                         onChange={handleSearchTermChange}
-                        onSearchClick={handleSearchClick}
                     />
                 </Grid>
                 <Grid item xs={12}>
-                    <Paper elevation={3}>
-                        <TableContainer style={{ maxHeight: '400px' }}>
-                            <Table stickyHeader>
+                    <Paper elevation={20}>
+                        <TableContainer>
+                            <Table>
                                 <TableHead>
                                     <TableRow>
                                         <TableCell>Doc No</TableCell>
@@ -129,14 +139,12 @@ function SaleBillUtility() {
                                         <TableCell>Account Name</TableCell>
                                         <TableCell>GST Rate Code</TableCell>
                                         <TableCell>Item Code</TableCell>
-                                        <TableCell> Amount</TableCell>
+                                        <TableCell>Amount</TableCell>
                                         <TableCell>Final Amount</TableCell>
                                         <TableCell>TDS%</TableCell>
                                         <TableCell>ACK No</TableCell>
                                         <TableCell>RbId</TableCell>
                                         <TableCell>IsDeleted</TableCell>
-                                        
-                                        
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -159,7 +167,6 @@ function SaleBillUtility() {
                                             <TableCell>{post.service_bill_head_data.ackno}</TableCell>
                                             <TableCell>{post.service_bill_head_data.rbid}</TableCell>
                                             <TableCell>{post.service_bill_head_data.IsDeleted}</TableCell>
-                                           
                                         </TableRow>
                                     ))}
                                 </TableBody>
@@ -178,5 +185,4 @@ function SaleBillUtility() {
         </div>
     );
 }
-
-export default SaleBillUtility;
+export default ServiceBillUtility;
